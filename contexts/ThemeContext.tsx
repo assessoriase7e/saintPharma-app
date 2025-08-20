@@ -39,7 +39,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { theme, themeMode, loadTheme } = useThemeStore();
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const { colorScheme } = useColorScheme();
 
   // Carregar preferência salva na inicialização
   useEffect(() => {
@@ -57,9 +57,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     if (theme !== newTheme) {
       useThemeStore.setState({ theme: newTheme });
-      setColorScheme(newTheme);
     }
-  }, [colorScheme, themeMode, theme, setColorScheme]);
+  }, [colorScheme, themeMode, theme]);
 
   return (
     <View style={themes[theme]} className="flex-1">
