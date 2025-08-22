@@ -69,6 +69,30 @@ function TabsLayout() {
             ),
           }}
         />
+        <Tabs.Screen
+          name="aula/[id]"
+          options={{
+            href: null, // Remove from tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="curso/[id]"
+          options={{
+            href: null, // Remove from tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="prova/[id]"
+          options={{
+            href: null, // Remove from tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="resultado/[quizId]"
+          options={{
+            href: null, // Remove from tab bar
+          }}
+        />
       </Tabs>
     );
 }

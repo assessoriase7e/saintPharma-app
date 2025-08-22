@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, View, ScrollView, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import "./global.css";
 
 const estatisticas = [
@@ -193,7 +194,10 @@ export default function Index() {
                     </Text>
                   </View>
                 </View>
-                <Pressable className="bg-primary rounded-lg py-2 px-4">
+                <Pressable 
+                  className="bg-primary rounded-lg py-2 px-4"
+                  onPress={() => router.push(`/curso/${curso.id}` as any)}
+                >
                   <Text className="text-white text-center font-medium">
                     Iniciar Curso
                   </Text>
