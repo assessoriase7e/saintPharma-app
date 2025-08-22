@@ -14,6 +14,7 @@ interface QuizResults {
   userAnswers: any[];
   timeSpent: number;
   totalQuestions: number;
+  livesLost?: number;
 }
 
 function formatTime(seconds: number): string {
@@ -250,6 +251,14 @@ export default function QuizResult() {
             value={formatTime(timeSpent)}
             color="#f59e0b"
           />
+          {results.livesLost !== undefined && results.livesLost > 0 && (
+            <StatCard 
+              icon="heart-outline" 
+              label="Vidas Perdidas" 
+              value={results.livesLost.toString()}
+              color="#ef4444"
+            />
+          )}
         </View>
         
         <PerformanceBreakdown results={results} quiz={quiz} />

@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Text, View, ScrollView, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useLives } from "../contexts/LivesContext";
+import { LivesBlockedModal } from "./vidas-bloqueadas";
 import "./global.css";
 
 const estatisticas = [
@@ -82,18 +84,53 @@ const cursosMockados = [
   },
 ];
 
-export default function Index() {
+export default function Home() {
+  const { userLives } = useLives();
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+
+  const handleCoursePress = (courseId: number) => {
+    if (userLives.currentLives > 0) {
+      router.push(`/curso/${courseId}` as any);
+    } else {
+      setShowBlockedModal(true);
+    }
+  };
+
   return (
+    <>
     <ScrollView className="flex-1 bg-background">
       <View className="pt-12 px-4 pb-4">
         {/* Header */}
         <View className="mb-6">
-          <Text className="text-3xl font-bold text-text-primary mb-2">
-            Cursos
-          </Text>
-          <Text className="text-text-secondary">
-            Continue seu aprendizado e desenvolva suas habilidades
-          </Text>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-1">
+              <Text className="text-3xl font-bold text-text-primary mb-2">
+                Cursos
+              </Text>
+              <Text className="text-text-secondary">
+                Continue seu aprendizado e desenvolva suas habilidades
+              </Text>
+            </View>
+            
+            {/* Indicador de Vidas */}
+            <View className="bg-card border border-border rounded-lg px-3 py-2">
+              <View className="flex-row items-center">
+                <Ionicons 
+                  name="heart" 
+                  size={20} 
+                  color={userLives.currentLives > 0 ? "#ef4444" : "#9ca3af"} 
+                />
+                <Text className={`ml-1 font-semibold ${
+                  userLives.currentLives > 0 ? 'text-red-500' : 'text-gray-400'
+                }`}>
+                  {userLives.currentLives}
+                </Text>
+              </View>
+              <Text className="text-text-secondary text-xs text-center mt-1">
+                Vidas
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Estatísticas */}
@@ -195,11 +232,15 @@ export default function Index() {
                   </View>
                 </View>
                 <Pressable 
-                  className="bg-primary rounded-lg py-2 px-4"
-                  onPress={() => router.push(`/curso/${curso.id}` as any)}
+                  className={`rounded-lg py-2 px-4 ${
+                    userLives.currentLives > 0 
+                      ? 'bg-primary' 
+                      : 'bg-gray-400'
+                  }`}
+                  onPress={() => handleCoursePress(curso.id)}
                 >
                   <Text className="text-white text-center font-medium">
-                    Iniciar Curso
+                    {userLives.currentLives > 0 ? 'Iniciar Curso' : 'Sem Vidas'}
                   </Text>
                 </Pressable>
               </View>
@@ -208,5 +249,11 @@ export default function Index() {
         </View>
       </View>
     </ScrollView>
+    
+    <LivesBlockedModal 
+      visible={showBlockedModal}
+      onClose={() => setShowBlockedModal(false)}
+    />
+    </>
   );
 }

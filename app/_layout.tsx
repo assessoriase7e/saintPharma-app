@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { LivesProvider } from "../contexts/LivesContext";
 
 function TabsLayout() {
   const { theme } = useTheme();
@@ -93,6 +94,12 @@ function TabsLayout() {
             href: null, // Remove from tab bar
           }}
         />
+        <Tabs.Screen
+          name="vidas-bloqueadas"
+          options={{
+            href: null, // Remove from tab bar
+          }}
+        />
       </Tabs>
     );
 }
@@ -100,7 +107,9 @@ function TabsLayout() {
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <TabsLayout />
+      <LivesProvider>
+        <TabsLayout />
+      </LivesProvider>
     </ThemeProvider>
   );
 }

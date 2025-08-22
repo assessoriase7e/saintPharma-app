@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getQuizById } from '../../data/mockData';
 import Card from '../../components/Card';
 import { Question, QuestionOption, UserAnswer, QuizAttempt } from '../types/course';
+import { useLives } from '../../contexts/LivesContext';
 
 interface QuestionCardProps {
   question: Question;
@@ -114,6 +115,7 @@ export default function QuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const quizId = parseInt(id || '0');
   const quiz = getQuizById(quizId);
+  const { loseLives } = useLives();
   
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [questionId: number]: string }>({});
@@ -251,11 +253,18 @@ export default function QuizScreen() {
     const endTime = new Date();
     const timeSpent = startTime ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000) : 0;
     
+    // Calcular quantas vidas perder baseado nos erros
+    const wrongAnswers = totalQuestions - results.correctAnswers;
+    if (wrongAnswers > 0) {
+      loseLives(wrongAnswers, `Erros no quiz: ${quiz.titulo}`, quiz.id);
+    }
+    
     // Navigate to results screen with results data
     router.push(`/resultado/${quiz.id}?results=${encodeURIComponent(JSON.stringify({
       ...results,
       timeSpent,
-      totalQuestions
+      totalQuestions,
+      livesLost: wrongAnswers
     }))}` as any);
   };
 
