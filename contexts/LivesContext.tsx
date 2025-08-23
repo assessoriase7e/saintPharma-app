@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@clerk/clerk-expo';
 import { UserLives, LivesContextType, LivesHistoryEntry, DEFAULT_LIVES_CONFIG } from '../types/lives';
+import { useApiClient } from '../services/api';
 
 const LIVES_STORAGE_KEY = '@saintpharma_user_lives';
 
@@ -20,13 +22,20 @@ interface LivesProviderProps {
 export function LivesProvider({ children }: LivesProviderProps) {
   const [userLives, setUserLives] = useState<UserLives>(getInitialLives());
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { userId, isSignedIn } = useAuth();
+  const apiClient = useApiClient();
 
-  // Carregar dados do AsyncStorage
+  // Carregar dados da API ou AsyncStorage
   useEffect(() => {
-    loadLivesFromStorage();
-  }, []);
+    if (isSignedIn && userId) {
+      loadLivesFromAPI();
+    } else {
+      loadLivesFromStorage();
+    }
+  }, [isSignedIn, userId]);
 
-  // Auto-regeneração de vidas
+  // Auto-regeneração de vidas e sincronização com API
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -40,14 +49,38 @@ export function LivesProvider({ children }: LivesProviderProps) {
       }
     };
 
-    // Verificar imediatamente
+    const syncWithAPI = async () => {
+      if (isSignedIn && userId) {
+        try {
+          const apiLives = await apiClient.getUserLives();
+          // Atualizar apenas se houver diferença significativa
+          if (apiLives.remainingLives !== userLives.currentLives) {
+            setUserLives(prev => ({
+              ...prev,
+              currentLives: apiLives.remainingLives,
+              maxLives: apiLives.totalLives
+            }));
+          }
+        } catch (error) {
+          console.error('Erro na sincronização com API:', error);
+        }
+      }
+    };
+
+    // Verificar regeneração imediatamente
     checkRegeneration();
 
-    // Verificar a cada minuto
-    const interval = setInterval(checkRegeneration, 60000);
+    // Verificar regeneração a cada minuto
+    const regenInterval = setInterval(checkRegeneration, 60000);
 
-    return () => clearInterval(interval);
-  }, [userLives.lastRegeneration, isLoaded]);
+    // Sincronizar com API a cada 5 minutos (apenas se autenticado)
+    const syncInterval = setInterval(syncWithAPI, 300000);
+
+    return () => {
+      clearInterval(regenInterval);
+      clearInterval(syncInterval);
+    };
+  }, [userLives.lastRegeneration, isLoaded, isSignedIn, userId]);
 
   // Salvar no AsyncStorage sempre que houver mudanças
   useEffect(() => {
@@ -55,6 +88,32 @@ export function LivesProvider({ children }: LivesProviderProps) {
       saveLivesToStorage();
     }
   }, [userLives, isLoaded]);
+
+  const loadLivesFromAPI = async () => {
+    try {
+      setError(null);
+      const apiLives = await apiClient.getUserLives();
+      
+      // Converter dados da API para o formato local
+      const convertedLives: UserLives = {
+        currentLives: apiLives.remainingLives,
+        maxLives: apiLives.totalLives,
+        lastRegeneration: apiLives.lastDamageAt ? new Date(apiLives.lastDamageAt) : new Date(),
+        livesHistory: [] // Histórico será mantido localmente por enquanto
+      };
+      
+      setUserLives(convertedLives);
+      // Salvar também no AsyncStorage como backup
+      await saveLivesToStorage(convertedLives);
+    } catch (error) {
+      console.error('Erro ao carregar vidas da API:', error);
+      setError('Erro ao carregar vidas da API');
+      // Fallback para AsyncStorage
+      await loadLivesFromStorage();
+    } finally {
+      setIsLoaded(true);
+    }
+  };
 
   const loadLivesFromStorage = async () => {
     try {
@@ -76,9 +135,10 @@ export function LivesProvider({ children }: LivesProviderProps) {
     }
   };
 
-  const saveLivesToStorage = async () => {
+  const saveLivesToStorage = async (livesToSave?: UserLives) => {
     try {
-      await AsyncStorage.setItem(LIVES_STORAGE_KEY, JSON.stringify(userLives));
+      const lives = livesToSave || userLives;
+      await AsyncStorage.setItem(LIVES_STORAGE_KEY, JSON.stringify(lives));
     } catch (error) {
       console.error('Erro ao salvar vidas:', error);
     }
@@ -101,7 +161,8 @@ export function LivesProvider({ children }: LivesProviderProps) {
     }));
   };
 
-  const loseLives = (amount: number, reason: string, quizId?: number, courseId?: number) => {
+  const loseLives = async (amount: number, reason: string, quizId?: number, courseId?: number) => {
+    // Atualizar estado local imediatamente
     setUserLives(prev => {
       const newLives = Math.max(0, prev.currentLives - amount);
       return {
@@ -111,6 +172,16 @@ export function LivesProvider({ children }: LivesProviderProps) {
     });
 
     addHistoryEntry('lost', amount, reason, quizId, courseId);
+
+    // Se o usuário estiver autenticado, sincronizar com a API
+    if (isSignedIn && userId) {
+      try {
+        await apiClient.updateUserLives('reduce', { amount });
+      } catch (error) {
+        console.error('Erro ao atualizar vidas na API:', error);
+        // Em caso de erro, manter apenas o estado local
+      }
+    }
   };
 
   const canAccessCourses = (): boolean => {
@@ -150,6 +221,8 @@ export function LivesProvider({ children }: LivesProviderProps) {
   const contextValue: LivesContextType = {
     userLives,
     config: DEFAULT_LIVES_CONFIG,
+    error,
+    isLoaded,
     loseLives,
     canAccessCourses,
     getTimeUntilNextRegeneration,

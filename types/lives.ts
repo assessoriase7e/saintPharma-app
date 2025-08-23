@@ -25,7 +25,9 @@ export interface LivesConfig {
 export interface LivesContextType {
   userLives: UserLives;
   config: LivesConfig;
-  loseLives: (amount: number, reason: string, quizId?: number, courseId?: number) => void;
+  error: string | null;
+  isLoaded: boolean;
+  loseLives: (amount: number, reason: string, quizId?: number, courseId?: number) => Promise<void>;
   canAccessCourses: () => boolean;
   getTimeUntilNextRegeneration: () => number;
   regenerateLives: () => void;
