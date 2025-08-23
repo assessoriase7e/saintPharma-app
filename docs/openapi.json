@@ -1,0 +1,1126 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SaintPharma Mobile API",
+    "description": "API REST para o aplicativo React Native da SaintPharma",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SaintPharma Dev Team",
+      "email": "dev@saintpharma.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://saintpharma.com/api",
+      "description": "Servidor de Produção"
+    },
+    {
+      "url": "http://localhost:3000/api",
+      "description": "Servidor de Desenvolvimento"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token de API único para autenticação"
+      }
+    },
+    "parameters": {
+      "UserIdHeader": {
+        "name": "X-User-Id",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "ID do usuário no Clerk"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "clerkId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "profileImage": {
+            "type": "string"
+          }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "workload": {
+            "type": "integer"
+          },
+          "points": {
+            "type": "integer"
+          },
+          "image": {
+            "type": "string"
+          }
+        }
+      },
+      "Lecture": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "videoUrl": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Certificate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "courseTitle": {
+            "type": "string"
+          },
+          "workload": {
+            "type": "integer"
+          },
+          "points": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Exam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lectureCMSid": {
+            "type": "string"
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "reproved": {
+            "type": "boolean"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Lives": {
+        "type": "object",
+        "properties": {
+          "totalLives": {
+            "type": "integer"
+          },
+          "remainingLives": {
+            "type": "integer"
+          },
+          "damageCount": {
+            "type": "integer"
+          },
+          "lastDamageAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RankingUser": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "profileImage": {
+                "type": "string"
+              }
+            }
+          },
+          "points": {
+            "type": "integer"
+          },
+          "certificatesCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/user": {
+      "get": {
+        "summary": "Obter informações do usuário",
+        "description": "Retorna informações do usuário autenticado, incluindo pontos e vidas",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informações do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "points": {
+                      "type": "integer"
+                    },
+                    "lives": {
+                      "$ref": "#/components/schemas/Lives"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses": {
+      "get": {
+        "summary": "Listar cursos",
+        "description": "Retorna lista de todos os cursos disponíveis",
+        "responses": {
+          "200": {
+            "description": "Lista de cursos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "courses": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Course"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{id}": {
+      "get": {
+        "summary": "Obter curso por ID",
+        "description": "Retorna detalhes de um curso específico e suas aulas",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID do usuário (opcional, para incluir progresso)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalhes do curso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "course": {
+                      "$ref": "#/components/schemas/Course"
+                    },
+                    "lectures": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Lecture"
+                      }
+                    },
+                    "userProgress": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{id}/complete": {
+      "post": {
+        "summary": "Concluir curso",
+        "description": "Marca um curso como concluído e gera certificado",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Curso concluído com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "certificate": {
+                      "$ref": "#/components/schemas/Certificate"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranking": {
+      "get": {
+        "summary": "Obter ranking geral",
+        "description": "Retorna ranking geral de usuários baseado nos pontos do mês atual",
+        "responses": {
+          "200": {
+            "description": "Ranking de usuários",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ranking": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RankingUser"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ranking/user": {
+      "get": {
+        "summary": "Obter pontos do usuário",
+        "description": "Retorna pontos totais e semanais do usuário",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pontos do usuário",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalPoints": {
+                      "type": "integer"
+                    },
+                    "weeklyPoints": {
+                      "type": "integer"
+                    },
+                    "position": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/lives": {
+      "get": {
+        "summary": "Obter vidas do usuário",
+        "description": "Retorna informações sobre as vidas do usuário",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informações das vidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lives"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams": {
+      "post": {
+        "summary": "Criar exame",
+        "description": "Cria um novo exame para uma aula",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lectureCMSid": {
+                    "type": "string"
+                  }
+                },
+                "required": ["lectureCMSid"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Exame criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "exam": {
+                      "$ref": "#/components/schemas/Exam"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/exams/{id}": {
+      "get": {
+        "summary": "Obter exame por ID",
+        "description": "Busca detalhes de um exame específico",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalhes do exame",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Exam"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar exame",
+        "description": "Atualiza um exame (concluir ou reprovar)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "complete": {
+                    "type": "boolean"
+                  },
+                  "reproved": {
+                    "type": "boolean"
+                  },
+                  "courseId": {
+                    "type": "string",
+                    "description": "Obrigatório se complete = true"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Exame atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "exam": {
+                      "$ref": "#/components/schemas/Exam"
+                    },
+                    "lectureCompleted": {
+                      "type": "boolean"
+                    },
+                    "lifeLost": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/certificates": {
+      "get": {
+        "summary": "Obter certificados do usuário",
+        "description": "Retorna todos os certificados do usuário",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de certificados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "certificates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Certificate"
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lectures": {
+      "get": {
+        "summary": "Obter aulas de um curso",
+        "description": "Retorna aulas de um curso com progresso do usuário",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de aulas com progresso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "lectures": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Lecture"
+                      }
+                    },
+                    "totalLectures": {
+                      "type": "integer"
+                    },
+                    "completedLectures": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lectures/{id}/complete": {
+      "post": {
+        "summary": "Marcar aula como concluída",
+        "description": "Marca uma aula como concluída",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "courseId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["courseId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Aula marcada como concluída",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "userLecture": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "lectureCmsId": {
+                          "type": "string"
+                        },
+                        "courseId": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/lives": {
+      "delete": {
+        "summary": "Deletar/reduzir vidas do usuário",
+        "description": "Remove vidas do usuário ou deleta registros de dano",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": ["reduce", "delete_damage", "reset_all"]
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "damageId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Operação realizada com sucesso"
+          }
+        }
+      }
+    },
+    "/user/courses": {
+      "post": {
+        "summary": "Relacionar usuário a curso concluído",
+        "description": "Cria uma relação entre usuário e curso concluído",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "courseId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["courseId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Relação criada com sucesso"
+          }
+        }
+      },
+      "get": {
+        "summary": "Obter cursos concluídos do usuário",
+        "description": "Retorna lista de cursos concluídos pelo usuário",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cursos concluídos"
+          }
+        }
+      }
+    },
+    "/certificates/create": {
+      "post": {
+        "summary": "Criar certificado manualmente",
+        "description": "Cria um certificado para um usuário e curso específico",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string"
+                  },
+                  "courseId": {
+                    "type": "string"
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "required": ["courseId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Certificado criado com sucesso"
+          }
+        }
+      }
+    },
+    "/user/points": {
+      "put": {
+        "summary": "Alterar pontuação do usuário",
+        "description": "Altera a pontuação do usuário com diferentes operações",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "enum": ["set", "add", "subtract"]
+                  },
+                  "points": {
+                    "type": "integer"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": ["operation", "points"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pontuação alterada com sucesso"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Alterar pontuação do usuário (alias)",
+        "description": "Alias para PUT que determina operação pelo sinal dos pontos",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "points": {
+                    "type": "integer"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "required": ["points"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pontuação alterada com sucesso"
+          }
+        }
+      }
+    },
+    "/user/summary": {
+      "get": {
+        "summary": "Obter resumo do usuário",
+        "description": "Retorna resumo completo com horas estudadas, cursos em progresso e concluídos",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["week", "month", "all"],
+              "default": "all"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumo do usuário"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login via Clerk API",
+        "description": "Autentica usuário via Clerk e retorna informações completas",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "clerkUserId": {
+                    "type": "string"
+                  },
+                  "createIfNotExists": {
+                    "type": "boolean",
+                    "default": true
+                  }
+                },
+                "required": ["clerkUserId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout do usuário",
+        "description": "Realiza logout e atualiza informações de sessão",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionDuration": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso"
+          }
+        }
+      }
+    },
+    "/user/progress": {
+      "get": {
+        "summary": "Obter progresso detalhado por curso",
+        "description": "Retorna progresso detalhado do usuário por curso",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["in_progress", "completed", "not_started", "all"],
+              "default": "all"
+            }
+          },
+          {
+            "name": "includeDetails",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progresso detalhado por curso"
+          }
+        }
+      }
+    }
+  }
+}

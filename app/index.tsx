@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { Text, View, ScrollView, Pressable, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Text, View, ScrollView, Pressable, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useLives } from "../contexts/LivesContext";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
+import { useApiClient } from "../services/api";
+import { Course } from "./types/api";
 import "./global.css";
 
 const estatisticas = [
@@ -28,6 +30,7 @@ const estatisticas = [
   },
 ];
 
+// Dados mockados como fallback
 const cursosMockados = [
   {
     id: 1,
@@ -90,6 +93,41 @@ export default function Home() {
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const apiClient = useApiClient();
+
+  // Buscar cursos da API
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiClient.getCourses();
+        setCourses(response.courses);
+      } catch (err) {
+        console.error('Erro ao buscar cursos:', err);
+        setError('Erro ao carregar cursos. Usando dados locais.');
+        // Usar dados mockados como fallback
+         const mockCoursesFormatted = cursosMockados.map(curso => ({
+           _id: curso.id.toString(),
+           name: curso.titulo,
+           description: curso.descricao,
+           workload: parseInt(curso.duracao.replace(/\D/g, '')),
+           points: 100, // Valor padrão
+           premiumPoints: null,
+           slug: null,
+           banner: undefined
+         }));
+        setCourses(mockCoursesFormatted);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -103,7 +141,7 @@ export default function Home() {
     router.replace("/(auth)/sign-in" as any);
   };
 
-  const handleCoursePress = (courseId: number) => {
+  const handleCoursePress = (courseId: string | number) => {
     if (!isSignedIn) {
       handleSignIn();
       return;
@@ -112,7 +150,7 @@ export default function Home() {
     router.push(`/curso/${courseId}` as any);
   };
 
-  const handleStartCourse = (courseId: number) => {
+  const handleStartCourse = (courseId: string | number) => {
     if (!isSignedIn) {
       handleSignIn();
       return;
@@ -237,60 +275,76 @@ export default function Home() {
           <Text className="text-lg font-semibold text-text-primary mb-4">
             Cursos Disponíveis
           </Text>
-          <View className="space-y-3">
-            {cursosMockados.map((curso) => (
-              <View
-                key={curso.id}
-                className="bg-card border border-border rounded-lg p-4"
-              >
-                <View className="flex-row justify-between items-start mb-2">
-                  <View className="flex-1">
-                    <Text className="text-lg font-semibold text-text-primary mb-1">
-                      {curso.titulo}
-                    </Text>
-                    <Text className="text-sm text-text-secondary mb-2">
-                      {curso.descricao}
-                    </Text>
-                  </View>
-                  <View className="bg-blue-100 px-3 py-1 rounded-full">
-                    <Text className="text-xs font-medium text-blue-800">
-                      {curso.nivel}
-                    </Text>
-                  </View>
-                </View>
-                <View className="flex-row justify-between items-center mb-3">
-                  <View className="flex-row items-center">
-                    <Ionicons name="time" size={16} color="#6b7280" style={{ marginRight: 4 }} />
-                    <Text className="text-sm text-text-secondary">
-                      {curso.duracao}
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Ionicons name="library" size={16} color="#6b7280" style={{ marginRight: 4 }} />
-                    <Text className="text-sm text-text-secondary">
-                      {curso.categoria}
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity 
-                  className={`rounded-lg py-2 px-4 ${
-                    userLives.currentLives > 0 
-                      ? 'bg-primary' 
-                      : 'bg-gray-400'
-                  }`}
-                  onPress={() => handleCoursePress(curso.id)}
-                  activeOpacity={0.7}
+          
+          {/* Indicador de erro */}
+          {error && (
+            <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <Text className="text-yellow-800 text-sm">{error}</Text>
+            </View>
+          )}
+          
+          {/* Indicador de carregamento */}
+          {loading ? (
+            <View className="flex-1 justify-center items-center py-8">
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text className="text-text-secondary mt-2">Carregando cursos...</Text>
+            </View>
+          ) : (
+            <View className="space-y-3">
+              {courses.map((curso) => (
+                <View
+                  key={curso._id}
+                  className="bg-card border border-border rounded-lg p-4"
                 >
-                  <Text className="text-white text-center font-medium">
-                    {isSignedIn 
-                      ? (userLives.currentLives > 0 ? 'Ver grade' : 'Sem Vidas')
-                      : 'Ver grade'
-                    }
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+                  <View className="flex-row justify-between items-start mb-2">
+                    <View className="flex-1">
+                      <Text className="text-lg font-semibold text-text-primary mb-1">
+                         {curso.name}
+                       </Text>
+                      <Text className="text-sm text-text-secondary mb-2">
+                        {curso.description}
+                      </Text>
+                    </View>
+                    <View className="bg-blue-100 px-3 py-1 rounded-full">
+                      <Text className="text-xs font-medium text-blue-800">
+                        {curso.points} pts
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="flex-row justify-between items-center mb-3">
+                    <View className="flex-row items-center">
+                      <Ionicons name="time" size={16} color="#6b7280" style={{ marginRight: 4 }} />
+                      <Text className="text-sm text-text-secondary">
+                        {curso.workload}h
+                      </Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <Ionicons name="star" size={16} color="#6b7280" style={{ marginRight: 4 }} />
+                      <Text className="text-sm text-text-secondary">
+                        {curso.points} pontos
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    className={`rounded-lg py-2 px-4 ${
+                      userLives.currentLives > 0 
+                        ? 'bg-primary' 
+                        : 'bg-gray-400'
+                    }`}
+                    onPress={() => handleCoursePress(curso._id)}
+                    activeOpacity={0.7}
+                  >
+                    <Text className="text-white text-center font-medium">
+                      {isSignedIn 
+                        ? (userLives.currentLives > 0 ? 'Ver grade' : 'Sem Vidas')
+                        : 'Ver grade'
+                      }
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </View>
     </ScrollView>
