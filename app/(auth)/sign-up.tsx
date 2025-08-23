@@ -1,4 +1,4 @@
-import { useOAuth, useSignUp } from "@clerk/clerk-expo";
+import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  const { startSSOFlow } = useSSO();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -72,7 +72,7 @@ export default function SignUpScreen() {
   const onGoogleSignUp = async () => {
     setLoading(true);
     try {
-      const { createdSessionId, setActive } = await startOAuthFlow();
+      const { createdSessionId, setActive } = await startSSOFlow({ strategy: "oauth_google" });
       
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
@@ -169,10 +169,10 @@ export default function SignUpScreen() {
                     onPress={onGoogleSignUp}
                     disabled={loading}
                   >
-                    <Ionicons 
-                      name="logo-google" 
-                      size={20} 
-                      color="#4285F4" 
+                    <Ionicons
+                      name="logo-google"
+                      size={20}
+                      color="#4285F4"
                       style={{ marginRight: 12 }}
                     />
                     <Text className="text-text-primary font-semibold text-base">

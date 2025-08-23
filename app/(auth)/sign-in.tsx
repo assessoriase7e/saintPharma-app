@@ -1,4 +1,4 @@
-import { useOAuth, useSignIn } from "@clerk/clerk-expo";
+import { useSignIn, useSSO } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  const { startSSOFlow } = useSSO();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -51,7 +51,7 @@ export default function SignInScreen() {
   const onGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { createdSessionId, setActive } = await startOAuthFlow();
+      const { createdSessionId, setActive } = await startSSOFlow({ strategy: "oauth_google" });
       
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
