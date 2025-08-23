@@ -31,7 +31,7 @@ export default function OpcoesScreen() {
       {/* Content */}
       <View className="flex-1 px-4 py-6">
         {/* Profile Section */}
-        <View className="bg-card border border-border rounded-xl p-6 mb-6 shadow-sm">
+        <View className="bg-card border border-border rounded-xl p-6 mb-6 ">
           <View className="flex-row items-center mb-4">
             <Avatar size="large" name="João Silva" showBorder={true} />
             <View className="ml-4 flex-1">
@@ -46,7 +46,7 @@ export default function OpcoesScreen() {
         </View>
 
         {/* Options */}
-        <View className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        <View className="bg-card border border-border rounded-xl  overflow-hidden">
           {/* Theme Toggle */}
           <View className="px-6 py-4 border-b border-border">
             <View className="flex-row items-center justify-between">

@@ -53,7 +53,7 @@ export default function Certificados() {
 
         {/* Estatísticas */}
         <View className="flex-row justify-between mb-6">
-          <View className="bg-card border border-border rounded-lg p-4 flex-1 mr-2 shadow-sm">
+          <View className="bg-card border border-border rounded-lg p-4 flex-1 mr-2 ">
             <View className="flex-row items-center mb-2">
               <Ionicons name="ribbon" size={20} color="#10B981" />
               <Text className="text-sm text-text-secondary ml-2">
@@ -63,7 +63,7 @@ export default function Certificados() {
             <Text className="text-2xl font-bold text-text-primary">3</Text>
           </View>
 
-          <View className="bg-card border border-border rounded-lg p-4 flex-1 ml-2 shadow-sm">
+          <View className="bg-card border border-border rounded-lg p-4 flex-1 ml-2 ">
             <View className="flex-row items-center mb-2">
               <Ionicons name="time" size={20} color="#F59E0B" />
               <Text className="text-sm text-text-secondary ml-2">
@@ -79,7 +79,7 @@ export default function Certificados() {
           {certificados.map((certificado) => (
             <View
               key={certificado.id}
-              className="bg-card border border-border rounded-lg p-4 shadow-sm"
+              className="bg-card border border-border rounded-lg p-4 "
             >
               <View className="flex-row justify-between items-start mb-3">
                 <View className="flex-1">
