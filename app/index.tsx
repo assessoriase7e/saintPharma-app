@@ -1,7 +1,7 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,8 +12,8 @@ import {
 } from "react-native";
 import { useLives } from "../contexts/LivesContext";
 import { useApiClient } from "../services/api";
-import "./global.css";
 import { Course } from "../types/api";
+import "./global.css";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
 
 const estatisticas = [
@@ -136,14 +136,6 @@ export default function Home() {
     fetchCourses();
   }, []);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    }
-  };
-
   const handleSignIn = () => {
     router.replace("/(auth)/sign-in" as any);
   };
@@ -184,9 +176,7 @@ export default function Home() {
                 </Text>
                 <Text className="text-text-secondary">
                   {isSignedIn
-                    ? `Olá, ${
-                        user?.emailAddresses[0]?.emailAddress || "Usuário"
-                      }! Continue seu aprendizado`
+                    ? `Olá, ${user?.fullName || "Usuário"}!`
                     : "Explore nossos cursos e desenvolva suas habilidades"}
                 </Text>
               </View>
