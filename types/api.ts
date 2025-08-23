@@ -143,9 +143,83 @@ export interface UserPointsResponse {
 }
 
 export interface UserInfoResponse {
-  user: User;
+  id: string;
+  clerkId: string;
+  name: string;
+  email: string;
+  profileImage?: string;
   points: number;
-  lives: Lives;
+  lives: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Tipos para resumo do usuário
+export interface UserSummaryResponse {
+  totalPoints: number;
+  weeklyPoints: number;
+  monthlyPoints: number;
+  completedCourses: number;
+  completedLectures: number;
+  certificates: number;
+  currentStreak: number;
+  longestStreak: number;
+  averageScore: number;
+  totalTimeSpent: number; // em minutos
+  lastActivity: string;
+}
+
+// Tipos para progresso do usuário
+export interface UserProgress {
+  id: string;
+  courseId: string;
+  courseName: string;
+  lectureId: string;
+  lectureTitle: string;
+  status: "completed" | "in_progress" | "not_started";
+  completedAt?: string;
+  score?: number;
+  timeSpent?: number; // em minutos
+}
+
+export interface UserProgressResponse {
+  progress: UserProgress[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+  summary: {
+    totalCourses: number;
+    completedCourses: number;
+    inProgressCourses: number;
+    totalLectures: number;
+    completedLectures: number;
+  };
+}
+
+// Tipos para cursos do usuário
+export interface UserCourse {
+  id: string;
+  courseId: string;
+  course: Course;
+  enrolledAt: string;
+  completedAt?: string;
+  progress: {
+    completedLectures: number;
+    totalLectures: number;
+    percentage: number;
+  };
+  lastAccessedAt?: string;
+}
+
+export interface UserCoursesResponse {
+  courses: UserCourse[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
 }
 
 // Tipos de requisição

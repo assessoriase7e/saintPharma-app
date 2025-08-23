@@ -1,6 +1,6 @@
+import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Avatar from "../components/Avatar";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -8,6 +8,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 export default function OpcoesScreen() {
   const { theme } = useTheme();
+  const { signOut } = useAuth();
   const isDark = theme === "dark";
 
   return (
@@ -62,6 +63,19 @@ export default function OpcoesScreen() {
               <ThemeToggle />
             </View>
           </View>
+
+          {/* Sign Out */}
+          <TouchableOpacity
+            onPress={async () => await signOut()}
+            className="px-6 py-4 active:opacity-70"
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+              <Text className="ml-3 text-base font-medium text-red-500">
+                Sair da conta
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

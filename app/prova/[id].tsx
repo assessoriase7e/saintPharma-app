@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getQuizById } from '../../data/mockData';
 import Card from '../../components/Card';
-import { Question, QuestionOption, UserAnswer, QuizAttempt } from '../types/course';
+import { Question, QuestionOption, UserAnswer, QuizAttempt } from '../../types/course';
 import { useLives } from '../../contexts/LivesContext';
 
 interface QuestionCardProps {

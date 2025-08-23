@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { getLessonById } from '../../data/mockData';
 import Card from '../../components/Card';
-import { ContentBlock } from '../types/course';
+import { ContentBlock } from '../../types/course';
 
 const { width: screenWidth } = Dimensions.get('window');
 

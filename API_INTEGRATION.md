@@ -44,6 +44,7 @@ A API retorna cursos no seguinte formato:
 ## 📱 Funcionalidades Implementadas
 
 ### 1. Busca de Cursos
+
 - ✅ Integração com endpoint `/courses`
 - ✅ Exibição dos cursos na tela principal
 - ✅ Fallback para dados mockados em caso de erro
@@ -51,11 +52,13 @@ A API retorna cursos no seguinte formato:
 - ✅ Tratamento de erros
 
 ### 2. Tipos TypeScript
+
 - ✅ Interface `Course` atualizada com campos reais da API
 - ✅ Interface `CoursesResponse` para resposta da API
 - ✅ Tipos para configuração e erros da API
 
 ### 3. Cliente da API
+
 - ✅ Classe `ApiClient` configurada
 - ✅ Autenticação com Bearer token
 - ✅ Headers personalizados (`X-User-Id`)
@@ -72,6 +75,7 @@ node test-api.js
 ```
 
 **Resultado do teste:**
+
 - ✅ API respondendo corretamente
 - ✅ Endpoint `/courses` funcionando
 - ✅ 1 curso encontrado na base de dados
@@ -80,12 +84,14 @@ node test-api.js
 ## 🚀 Como Executar
 
 1. **Certifique-se de que a API está rodando:**
+
    ```bash
    # A API deve estar disponível em localhost:3000
    curl http://localhost:3000/api/courses
    ```
 
 2. **Execute o aplicativo:**
+
    ```bash
    yarn start
    ```
@@ -97,11 +103,13 @@ node test-api.js
 ## 📋 Arquivos Modificados
 
 ### Criados:
+
 - `app/types/api.ts` - Tipos TypeScript para API
 - `test-api.js` - Script de teste da API
 - `API_INTEGRATION.md` - Esta documentação
 
 ### Modificados:
+
 - `.env` - URL da API corrigida (https → http)
 - `app/index.tsx` - Integração com API real
 - `services/api.ts` - Cliente da API (já existia)
@@ -117,6 +125,7 @@ node test-api.js
 ## 🛠️ Próximos Passos
 
 ### Funcionalidades Sugeridas:
+
 - [ ] Implementar cache local dos cursos
 - [ ] Adicionar pull-to-refresh
 - [ ] Implementar paginação
@@ -125,6 +134,7 @@ node test-api.js
 - [ ] Implementar sincronização offline
 
 ### Melhorias Técnicas:
+
 - [ ] Adicionar testes unitários
 - [ ] Implementar retry automático
 - [ ] Adicionar logs detalhados
@@ -133,6 +143,7 @@ node test-api.js
 ## 🐛 Troubleshooting
 
 ### API não responde
+
 ```bash
 # Verifique se a API está rodando
 curl http://localhost:3000/api/courses
@@ -142,10 +153,12 @@ echo $EXPO_PUBLIC_API_BASE_URL
 ```
 
 ### Erro de CORS
+
 - Certifique-se de que a API permite requisições do localhost
 - Verifique os headers CORS no servidor
 
 ### Dados não aparecem
+
 - Verifique o console do Expo para erros
 - Execute o script de teste: `node test-api.js`
 - Verifique se o token de API está correto

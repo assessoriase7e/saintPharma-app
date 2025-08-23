@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getCourseById } from '../../data/mockData';
 import Card from '../../components/Card';
-import { Lesson } from '../types/course';
+import { Lesson } from '../../types/course';
 
 interface LessonCardProps {
   lesson: Lesson;

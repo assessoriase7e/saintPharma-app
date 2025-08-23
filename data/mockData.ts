@@ -1,4 +1,4 @@
-import { Course, Lesson, Quiz, Question } from '../app/types/course';
+import { Course, Lesson, Quiz, Question } from '../types/course';
 
 export const mockCourses: Course[] = [
   {

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserLives, LivesContextType, LivesHistoryEntry, DEFAULT_LIVES_CONFIG } from '../app/types/lives';
+import { UserLives, LivesContextType, LivesHistoryEntry, DEFAULT_LIVES_CONFIG } from '../types/lives';
 
 const LIVES_STORAGE_KEY = '@saintpharma_user_lives';
 

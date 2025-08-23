@@ -13,10 +13,13 @@ import {
   Lives,
   RankingResponse,
   UpdateExamRequest,
+  UserCoursesResponse,
   UserInfoResponse,
   UserLectureResponse,
   UserPointsResponse,
-} from "../app/types/api";
+  UserProgressResponse,
+  UserSummaryResponse,
+} from "../types/api";
 
 class ApiClient {
   private config: ApiConfig;
@@ -184,18 +187,23 @@ class ApiClient {
   }
 
   // Métodos de Resumo
-  async getUserSummary(period: "week" | "month" | "all" = "all"): Promise<any> {
-    return this.request<any>(`/user/summary?period=${period}`);
+  async getUserSummary(
+    period: "week" | "month" | "all" = "all"
+  ): Promise<UserSummaryResponse> {
+    return this.request<UserSummaryResponse>(`/user/summary?period=${period}`);
   }
 
   // Métodos de Progresso
-  async getUserProgress(courseId?: string, status?: string): Promise<any> {
+  async getUserProgress(
+    courseId?: string,
+    status?: string
+  ): Promise<UserProgressResponse> {
     const params = new URLSearchParams();
     if (courseId) params.append("courseId", courseId);
     if (status) params.append("status", status);
 
     const queryString = params.toString();
-    return this.request<any>(
+    return this.request<UserProgressResponse>(
       `/user/progress${queryString ? `?${queryString}` : ""}`
     );
   }
@@ -208,8 +216,10 @@ class ApiClient {
     });
   }
 
-  async getUserCourses(page = 1, limit = 10): Promise<any> {
-    return this.request<any>(`/user/courses?page=${page}&limit=${limit}`);
+  async getUserCourses(page = 1, limit = 10): Promise<UserCoursesResponse> {
+    return this.request<UserCoursesResponse>(
+      `/user/courses?page=${page}&limit=${limit}`
+    );
   }
 }
 
