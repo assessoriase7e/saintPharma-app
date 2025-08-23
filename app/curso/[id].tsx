@@ -216,6 +216,24 @@ export default function CourseLessons() {
           </View>
         </Card>
         
+        {/* Botão Iniciar Curso */}
+        <View className="mt-6">
+          <Pressable 
+            className="bg-primary rounded-lg py-4 px-6"
+            onPress={() => {
+              // Encontrar a primeira aula não concluída ou a primeira aula
+              const firstIncompleteLesson = course.lessons.find(lesson => !lesson.completed) || course.lessons[0];
+              if (firstIncompleteLesson) {
+                router.push(`/aula/${firstIncompleteLesson.id}` as any);
+              }
+            }}
+          >
+            <Text className="text-white text-center font-semibold text-lg">
+              Iniciar Curso
+            </Text>
+          </Pressable>
+        </View>
+        
         <View className="h-6" />
       </ScrollView>
     </View>

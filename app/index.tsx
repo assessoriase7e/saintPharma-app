@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Text, View, ScrollView, Pressable } from "react-native";
+import { Text, View, ScrollView, Pressable, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useLives } from "../contexts/LivesContext";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
 import "./global.css";
@@ -86,11 +87,40 @@ const cursosMockados = [
 
 export default function Home() {
   const { userLives } = useLives();
+  const { isSignedIn, signOut } = useAuth();
+  const { user } = useUser();
   const [showBlockedModal, setShowBlockedModal] = useState(false);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
+  };
+
+  const handleSignIn = () => {
+    router.replace("/(auth)/sign-in" as any);
+  };
+
   const handleCoursePress = (courseId: number) => {
+    if (!isSignedIn) {
+      handleSignIn();
+      return;
+    }
+    
+    router.push(`/curso/${courseId}` as any);
+  };
+
+  const handleStartCourse = (courseId: number) => {
+    if (!isSignedIn) {
+      handleSignIn();
+      return;
+    }
+    
     if (userLives.currentLives > 0) {
-      router.push(`/curso/${courseId}` as any);
+      // Iniciar a primeira aula do curso
+      router.push(`/aula/1` as any); // Assumindo que a primeira aula tem ID 1
     } else {
       setShowBlockedModal(true);
     }
@@ -102,21 +132,27 @@ export default function Home() {
       <View className="pt-12 px-4 pb-4">
         {/* Header */}
         <View className="mb-6">
-          <View className="flex-row items-center justify-between mb-2">
+          <View className="flex-row items-center justify-between mb-4">
             <View className="flex-1">
               <Text className="text-3xl font-bold text-text-primary mb-2">
                 Cursos
               </Text>
               <Text className="text-text-secondary">
-                Continue seu aprendizado e desenvolva suas habilidades
+                {isSignedIn 
+                  ? `Olá, ${user?.emailAddresses[0]?.emailAddress || 'Usuário'}! Continue seu aprendizado` 
+                  : 'Explore nossos cursos e desenvolva suas habilidades'
+                }
               </Text>
             </View>
             
-            {/* Indicador de Vidas */}
-            <View className="bg-card border border-border rounded-lg px-3 py-2">
-              <View className="flex-row items-center">
-                <Ionicons 
-                  name="heart" 
+
+            
+            {/* Indicador de Vidas - apenas para usuários logados */}
+            {isSignedIn && (
+              <View className="bg-card border border-border rounded-lg px-3 py-2">
+                <View className="flex-row items-center">
+                  <Ionicons 
+                    name="heart" 
                   size={20} 
                   color={userLives.currentLives > 0 ? "#ef4444" : "#9ca3af"} 
                 />
@@ -130,14 +166,16 @@ export default function Home() {
                 Vidas
               </Text>
             </View>
+            )}
           </View>
         </View>
 
-        {/* Estatísticas */}
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-text-primary mb-4">
-            Resumo dos Estudos
-          </Text>
+        {/* Estatísticas - apenas para usuários autenticados */}
+        {isSignedIn && (
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-text-primary mb-4">
+              Resumo dos Estudos
+            </Text>
           <View className="flex-row justify-between">
             {estatisticas.map((stat, index) => (
               <View
@@ -155,12 +193,14 @@ export default function Home() {
             ))}
           </View>
         </View>
+        )}
 
-        {/* Cursos em Progresso */}
-        <View className="mb-6">
-          <Text className="text-lg font-semibold text-text-primary mb-4">
-            Continue Estudando
-          </Text>
+        {/* Cursos em Progresso - apenas para usuários autenticados */}
+        {isSignedIn && (
+          <View className="mb-6">
+            <Text className="text-lg font-semibold text-text-primary mb-4">
+              Continue Estudando
+            </Text>
           
           <View className="bg-card border border-border rounded-lg p-4 mb-3">
             <View className="flex-row justify-between items-start mb-3">
@@ -190,6 +230,7 @@ export default function Home() {
           
 
         </View>
+        )}
 
         {/* Cursos Disponíveis */}
         <View className="mb-6">
@@ -231,18 +272,22 @@ export default function Home() {
                     </Text>
                   </View>
                 </View>
-                <Pressable 
+                <TouchableOpacity 
                   className={`rounded-lg py-2 px-4 ${
                     userLives.currentLives > 0 
                       ? 'bg-primary' 
                       : 'bg-gray-400'
                   }`}
                   onPress={() => handleCoursePress(curso.id)}
+                  activeOpacity={0.7}
                 >
                   <Text className="text-white text-center font-medium">
-                    {userLives.currentLives > 0 ? 'Iniciar Curso' : 'Sem Vidas'}
+                    {isSignedIn 
+                      ? (userLives.currentLives > 0 ? 'Ver grade' : 'Sem Vidas')
+                      : 'Ver grade'
+                    }
                   </Text>
-                </Pressable>
+                </TouchableOpacity>
               </View>
             ))}
           </View>

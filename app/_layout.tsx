@@ -1,13 +1,30 @@
+import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { Redirect, Tabs, useSegments } from "expo-router";
 import { LivesProvider } from "../contexts/LivesContext";
+import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 
 function TabsLayout() {
   const { theme } = useTheme();
-  
+  const { isSignedIn, isLoaded } = useAuth();
+  const segments = useSegments();
+
   const isDark = theme === "dark";
-  
+
+  // Mostrar loading enquanto carrega
+  if (!isLoaded) {
+    return null;
+  }
+
+  // Permitir acesso público à página inicial e rotas de autenticação
+  const currentRoute = segments[0];
+  const isPublicRoute = !currentRoute || currentRoute === '(auth)'; // Rota raiz (/) e rotas de auth são públicas
+
+  if (!isSignedIn && !isPublicRoute) {
+    return <Redirect href="/" />;
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -24,92 +41,100 @@ function TabsLayout() {
         },
         headerShown: false,
       }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: "Cursos",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="book" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="ranking"
-          options={{
-            title: "Ranking",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="trophy" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="certificados"
-          options={{
-            title: "Certificados",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="ribbon" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="perfil"
-          options={{
-            title: "Perfil",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="opcoes"
-          options={{
-            title: "Opções",
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="settings" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="aula/[id]"
-          options={{
-            href: null, // Remove from tab bar
-          }}
-        />
-        <Tabs.Screen
-          name="curso/[id]"
-          options={{
-            href: null, // Remove from tab bar
-          }}
-        />
-        <Tabs.Screen
-          name="prova/[id]"
-          options={{
-            href: null, // Remove from tab bar
-          }}
-        />
-        <Tabs.Screen
-          name="resultado/[quizId]"
-          options={{
-            href: null, // Remove from tab bar
-          }}
-        />
-        <Tabs.Screen
-          name="vidas-bloqueadas"
-          options={{
-            href: null, // Remove from tab bar
-          }}
-        />
-      </Tabs>
-    );
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Cursos",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ranking"
+        options={{
+          title: "Ranking",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trophy" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="certificados"
+        options={{
+          title: "Certificados",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="ribbon" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="opcoes"
+        options={{
+          title: "Opções",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="aula/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="curso/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="prova/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="resultado/[quizId]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="vidas-bloqueadas"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="(auth)"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+    </Tabs>
+  );
 }
 
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <LivesProvider>
-        <TabsLayout />
-      </LivesProvider>
+      <ClerkProvider tokenCache={tokenCache}>
+        <LivesProvider>
+          <TabsLayout />
+        </LivesProvider>
+      </ClerkProvider>
     </ThemeProvider>
   );
 }
