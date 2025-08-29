@@ -1,74 +1,63 @@
-import React from 'react';
-import { Text, View, ScrollView, Pressable } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { getCourseById } from '../../data/mockData';
-import Card from '../../components/Card';
-import { Lesson } from '../../types/course';
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import Card from "../../components/Card";
+import { useApiClient } from "../../services/api";
+import { Lecture } from "../../types/api";
 
-interface LessonCardProps {
-  lesson: Lesson;
-  courseId: number;
+interface LectureCardProps {
+  lecture: Lecture;
+  courseId: string;
+  index: number;
 }
 
-function LessonCard({ lesson, courseId }: LessonCardProps) {
-  const handleLessonPress = () => {
-    router.push(`/aula/${lesson.id}` as any);
+function LectureCard({ lecture, courseId, index }: LectureCardProps) {
+  const handleLecturePress = () => {
+    router.push(`/aula/${lecture._id}` as any);
   };
 
   const handleQuizPress = () => {
-    if (lesson.quiz) {
-      router.push(`/prova/${lesson.quiz.id}` as any);
-    }
+    // Implementar navegação para quiz quando disponível
+    console.log("Quiz não implementado ainda");
   };
 
   return (
     <Card className="mb-4">
-      <Pressable onPress={handleLessonPress} className="p-4">
+      <Pressable onPress={handleLecturePress} className="p-4">
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-1">
             <Text className="text-text-primary text-lg font-semibold mb-1">
-              {lesson.ordem}. {lesson.titulo}
+              Aula {index + 1}: {lecture.title}
             </Text>
             <Text className="text-text-secondary text-sm mb-2">
-              {lesson.descricao}
+              {lecture.description}
             </Text>
             <View className="flex-row items-center">
               <Ionicons name="time-outline" size={16} color="#6b7280" />
-              <Text className="text-text-secondary text-sm ml-1">
-                {lesson.duracao}
-              </Text>
+              <Text className="text-text-secondary text-sm ml-1">15 min</Text>
             </View>
           </View>
           <View className="ml-4">
-            {lesson.completed ? (
-              <View className="w-8 h-8 bg-secondary rounded-full items-center justify-center">
-                <Ionicons name="checkmark" size={20} color="white" />
-              </View>
-            ) : (
-              <View className="w-8 h-8 bg-border rounded-full items-center justify-center">
-                <Text className="text-text-secondary text-xs">{lesson.ordem}</Text>
-              </View>
-            )}
+            <View
+              className={`w-8 h-8 rounded-full items-center justify-center ${
+                lecture.completed ? "bg-secondary" : "bg-border"
+              }`}
+            >
+              <Ionicons
+                name={lecture.completed ? "checkmark" : "play"}
+                size={16}
+                color={lecture.completed ? "white" : "#6b7280"}
+              />
+            </View>
           </View>
         </View>
-        
-        {lesson.quiz && (
-          <View className="mt-3 pt-3 border-t border-border">
-            <Pressable 
-              onPress={handleQuizPress}
-              className="flex-row items-center justify-between p-3 bg-primary/10 rounded-lg"
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="help-circle-outline" size={20} color="#3b82f6" />
-                <Text className="text-primary font-medium ml-2">
-                  Quiz Disponível
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
-            </Pressable>
-          </View>
-        )}
       </Pressable>
     </Card>
   );
@@ -76,10 +65,50 @@ function LessonCard({ lesson, courseId }: LessonCardProps) {
 
 export default function CourseLessons() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const courseId = parseInt(id || '0');
-  const course = getCourseById(courseId);
+  const courseId = id || "";
+  const [course, setCourse] = useState<any>(null);
+  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const apiClient = useApiClient();
 
-  if (!course) {
+  useEffect(() => {
+    const fetchCourseData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Buscar detalhes do curso e aulas
+        const [courseResponse, lecturesResponse] = await Promise.all([
+          apiClient.getCourseById(courseId),
+          apiClient.getLectures(courseId),
+        ]);
+
+        setCourse(courseResponse.course);
+        setLectures(lecturesResponse.lectures);
+      } catch (err) {
+        console.error("Erro ao buscar dados do curso:", err);
+        setError("Erro ao carregar o curso. Verifique sua conexão.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (courseId) {
+      fetchCourseData();
+    }
+  }, [courseId]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text className="text-text-secondary mt-4">Carregando curso...</Text>
+      </View>
+    );
+  }
+
+  if (error || !course) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-6">
         <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
@@ -87,9 +116,10 @@ export default function CourseLessons() {
           Curso não encontrado
         </Text>
         <Text className="text-text-secondary text-center mb-6">
-          O curso que você está procurando não existe ou foi removido.
+          {error ||
+            "O curso que você está procurando não existe ou foi removido."}
         </Text>
-        <Pressable 
+        <Pressable
           onPress={() => router.back()}
           className="bg-primary px-6 py-3 rounded-lg"
         >
@@ -99,9 +129,12 @@ export default function CourseLessons() {
     );
   }
 
-  const completedLessons = course.lessons.filter(lesson => lesson.completed).length;
-  const totalLessons = course.lessons.length;
-  const progressPercentage = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+  const completedLectures = lectures.filter(
+    (lecture) => lecture.completed
+  ).length;
+  const totalLectures = lectures.length;
+  const progressPercentage =
+    totalLectures > 0 ? (completedLectures / totalLectures) * 100 : 0;
 
   return (
     <View className="flex-1 bg-background">
@@ -112,35 +145,33 @@ export default function CourseLessons() {
             <Ionicons name="arrow-back" size={24} color="#3b82f6" />
           </Pressable>
           <Text className="text-text-primary text-xl font-bold flex-1">
-            {course.titulo}
+            {course.title}
           </Text>
         </View>
-        
-        <Text className="text-text-secondary mb-4">
-          {course.descricao}
-        </Text>
-        
+
+        <Text className="text-text-secondary mb-4">{course.description}</Text>
+
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
             <View className="bg-primary/20 px-3 py-1 rounded-full mr-3">
               <Text className="text-primary text-sm font-medium">
-                {course.nivel}
+                {course.workload || 0}h
               </Text>
             </View>
             <View className="bg-secondary/20 px-3 py-1 rounded-full">
               <Text className="text-secondary text-sm font-medium">
-                {course.categoria}
+                {course.points || 0} pts
               </Text>
             </View>
           </View>
           <View className="flex-row items-center">
             <Ionicons name="time-outline" size={16} color="#6b7280" />
             <Text className="text-text-secondary text-sm ml-1">
-              {course.duracao}
+              {totalLectures} aulas
             </Text>
           </View>
         </View>
-        
+
         {/* Progress Bar */}
         <View className="mb-2">
           <View className="flex-row justify-between items-center mb-2">
@@ -148,11 +179,11 @@ export default function CourseLessons() {
               Progresso do Curso
             </Text>
             <Text className="text-text-secondary text-sm">
-              {completedLessons}/{totalLessons} aulas
+              {completedLectures}/{totalLectures} aulas
             </Text>
           </View>
           <View className="h-2 bg-border rounded-full overflow-hidden">
-            <View 
+            <View
               className="h-full bg-primary rounded-full"
               style={{ width: `${progressPercentage}%` }}
             />
@@ -166,65 +197,75 @@ export default function CourseLessons() {
       {/* Lessons List */}
       <ScrollView className="flex-1 px-6 py-6">
         <Text className="text-text-primary text-lg font-semibold mb-4">
-          Aulas do Curso ({totalLessons})
+          Aulas do Curso ({totalLectures})
         </Text>
-        
-        {course.lessons.map((lesson) => (
-          <LessonCard 
-            key={lesson.id} 
-            lesson={lesson} 
+
+        {lectures.map((lecture, index) => (
+          <LectureCard
+            key={lecture._id}
+            lecture={lecture}
             courseId={courseId}
+            index={index}
           />
         ))}
-        
+
         {/* Course Stats */}
         <Card className="mt-6">
           <View className="p-4">
             <Text className="text-text-primary text-lg font-semibold mb-4">
               Estatísticas do Curso
             </Text>
-            
+
             <View className="flex-row justify-between items-center mb-3">
               <View className="flex-row items-center">
                 <Ionicons name="book-outline" size={20} color="#3b82f6" />
                 <Text className="text-text-secondary ml-2">Total de Aulas</Text>
               </View>
               <Text className="text-text-primary font-semibold">
-                {totalLessons}
+                {totalLectures}
               </Text>
             </View>
-            
+
             <View className="flex-row justify-between items-center mb-3">
               <View className="flex-row items-center">
-                <Ionicons name="checkmark-circle-outline" size={20} color="#10b981" />
-                <Text className="text-text-secondary ml-2">Aulas Concluídas</Text>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color="#10b981"
+                />
+                <Text className="text-text-secondary ml-2">
+                  Aulas Concluídas
+                </Text>
               </View>
               <Text className="text-text-primary font-semibold">
-                {completedLessons}
+                {completedLectures}
               </Text>
             </View>
-            
+
             <View className="flex-row justify-between items-center">
               <View className="flex-row items-center">
-                <Ionicons name="help-circle-outline" size={20} color="#f59e0b" />
-                <Text className="text-text-secondary ml-2">Quizzes Disponíveis</Text>
+                <Ionicons name="star" size={20} color="#f59e0b" />
+                <Text className="text-text-secondary ml-2">
+                  Pontos do Curso
+                </Text>
               </View>
               <Text className="text-text-primary font-semibold">
-                {course.lessons.filter(l => l.quiz).length}
+                {course.points || 0}
               </Text>
             </View>
           </View>
         </Card>
-        
+
         {/* Botão Iniciar Curso */}
         <View className="mt-6">
-          <Pressable 
+          <Pressable
             className="bg-primary rounded-lg py-4 px-6"
             onPress={() => {
               // Encontrar a primeira aula não concluída ou a primeira aula
-              const firstIncompleteLesson = course.lessons.find(lesson => !lesson.completed) || course.lessons[0];
-              if (firstIncompleteLesson) {
-                router.push(`/aula/${firstIncompleteLesson.id}` as any);
+              const firstIncompleteLecture =
+                lectures.find((lecture) => !lecture.completed) || lectures[0];
+              if (firstIncompleteLecture) {
+                router.push(`/aula/${firstIncompleteLecture._id}` as any);
               }
             }}
           >
@@ -233,7 +274,7 @@ export default function CourseLessons() {
             </Text>
           </Pressable>
         </View>
-        
+
         <View className="h-6" />
       </ScrollView>
     </View>

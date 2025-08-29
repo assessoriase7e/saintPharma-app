@@ -7,91 +7,33 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { useLives } from "../contexts/LivesContext";
 import { useApiClient } from "../services/api";
-import { Course } from "../types/api";
+import { UserCourse } from "../types/api";
 import "./global.css";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
 
-const estatisticas = [
+// Estatísticas padrão quando não há dados da API
+const defaultStats = [
   {
     titulo: "Concluídos",
-    valor: "12",
+    valor: "0",
     icone: "checkmark-circle" as const,
     cor: "#10b981",
   },
   {
     titulo: "Em Progresso",
-    valor: "3",
+    valor: "0",
     icone: "play-circle" as const,
     cor: "#3b82f6",
   },
   {
     titulo: "Horas Estudadas",
-    valor: "127h",
+    valor: "0h",
     icone: "time" as const,
     cor: "#f59e0b",
-  },
-];
-
-// Dados mockados como fallback
-const cursosMockados = [
-  {
-    id: 1,
-    titulo: "Farmacologia Básica",
-    descricao: "Fundamentos da farmacologia moderna",
-    duracao: "8 horas",
-    nivel: "Iniciante",
-    categoria: "Farmácia",
-    progresso: 0,
-  },
-  {
-    id: 2,
-    titulo: "Análises Clínicas",
-    descricao: "Interpretação de exames laboratoriais",
-    duracao: "12 horas",
-    nivel: "Intermediário",
-    categoria: "Laboratório",
-    progresso: 0,
-  },
-  {
-    id: 3,
-    titulo: "Atenção Farmacêutica",
-    descricao: "Cuidado farmacêutico ao paciente",
-    duracao: "6 horas",
-    nivel: "Avançado",
-    categoria: "Clínica",
-    progresso: 0,
-  },
-  {
-    id: 4,
-    titulo: "Cosmetologia",
-    descricao: "Formulação e desenvolvimento de cosméticos",
-    duracao: "10 horas",
-    nivel: "Intermediário",
-    categoria: "Cosmética",
-    progresso: 0,
-  },
-  {
-    id: 5,
-    titulo: "Fitoterapia",
-    descricao: "Plantas medicinais e seus usos terapêuticos",
-    duracao: "14 horas",
-    nivel: "Avançado",
-    categoria: "Natural",
-    progresso: 0,
-  },
-  {
-    id: 6,
-    titulo: "Farmácia Hospitalar",
-    descricao: "Gestão farmacêutica em ambiente hospitalar",
-    duracao: "16 horas",
-    nivel: "Avançado",
-    categoria: "Hospitalar",
-    progresso: 0,
   },
 ];
 
@@ -100,41 +42,88 @@ export default function Home() {
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
   const [showBlockedModal, setShowBlockedModal] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<UserCourse[]>([]);
+  const [statistics, setStatistics] = useState(defaultStats);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const apiClient = useApiClient();
 
-  // Buscar cursos da API
+  // Buscar cursos e estatísticas da API
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await apiClient.getCourses();
-        setCourses(response.courses);
+
+        if (isSignedIn) {
+          // Usuário logado: buscar cursos do usuário
+          const coursesResponse = await apiClient.getUserCourses();
+          setCourses(coursesResponse.courses);
+        } else {
+          // Usuário não logado: buscar todos os cursos disponíveis
+          const coursesResponse = await apiClient.getCourses();
+          // Converter Course[] para UserCourse[] para compatibilidade
+          const allCourses = coursesResponse.courses.map(course => ({
+            id: course._id,
+            courseId: course._id,
+            course: course,
+            enrolledAt: new Date().toISOString(),
+            progress: {
+              completedLectures: 0,
+              totalLectures: 0,
+              percentage: 0
+            }
+          }));
+          setCourses(allCourses);
+        }
+
+        // Buscar estatísticas do usuário (apenas se logado)
+        if (isSignedIn) {
+          try {
+            const summaryResponse = await apiClient.getUserSummary();
+            const newStats = [
+              {
+                titulo: "Concluídos",
+                valor: summaryResponse.completedCourses.toString(),
+                icone: "checkmark-circle" as const,
+                cor: "#10b981",
+              },
+              {
+                titulo: "Em Progresso",
+                valor: (
+                  courses.length -
+                  summaryResponse.completedCourses
+                ).toString(),
+                icone: "play-circle" as const,
+                cor: "#3b82f6",
+              },
+              {
+                titulo: "Horas Estudadas",
+                valor: `${Math.floor(summaryResponse.totalTimeSpent / 60)}h`,
+                icone: "time" as const,
+                cor: "#f59e0b",
+              },
+            ];
+            setStatistics(newStats);
+          } catch (statsError) {
+            console.warn("Erro ao buscar estatísticas:", statsError);
+            // Manter estatísticas padrão se houver erro
+          }
+        } else {
+          // Usuário não logado: manter estatísticas padrão
+          setStatistics(defaultStats);
+        }
       } catch (err) {
-        console.error("Erro ao buscar cursos:", err);
-        setError("Erro ao carregar cursos. Usando dados locais.");
-        // Usar dados mockados como fallback
-        const mockCoursesFormatted = cursosMockados.map((curso) => ({
-          _id: curso.id.toString(),
-          name: curso.titulo,
-          description: curso.descricao,
-          workload: parseInt(curso.duracao.replace(/\D/g, "")),
-          points: 100, // Valor padrão
-          premiumPoints: null,
-          slug: null,
-          banner: undefined,
-        }));
-        setCourses(mockCoursesFormatted);
+        console.error("Erro ao buscar dados:", err);
+        setError("Erro ao carregar os cursos. Verifique sua conexão.");
+        setCourses([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourses();
-  }, []);
+    fetchData();
+  }, [isSignedIn]);
 
   const handleSignIn = () => {
     router.replace("/(auth)/sign-in" as any);
@@ -215,7 +204,7 @@ export default function Home() {
                 Resumo dos Estudos
               </Text>
               <View className="flex-row justify-between">
-                {estatisticas.map((stat, index) => (
+                {statistics.map((stat, index) => (
                   <View
                     key={index}
                     className="bg-card border border-border rounded-lg p-4 flex-1 mx-1 items-center"
@@ -271,10 +260,10 @@ export default function Home() {
             </View>
           )}
 
-          {/* Cursos Disponíveis */}
+          {/* Cursos */}
           <View className="mb-6">
             <Text className="text-lg font-semibold text-text-primary mb-4">
-              Cursos Disponíveis
+              {isSignedIn ? "Seus Cursos" : "Cursos Disponíveis"}
             </Text>
 
             {/* Indicador de erro */}
@@ -294,68 +283,62 @@ export default function Home() {
               </View>
             ) : (
               <View className="space-y-3">
-                {courses.map((curso) => (
-                  <View
-                    key={curso._id}
-                    className="bg-card border border-border rounded-lg p-4"
+                {courses.map((course) => (
+                  <Pressable
+                    key={course.course._id}
+                    onPress={() =>
+                      router.push(`/curso/${course.course._id}` as any)
+                    }
+                    className="mb-4"
                   >
-                    <View className="flex-row justify-between items-start mb-2">
-                      <View className="flex-1">
-                        <Text className="text-lg font-semibold text-text-primary mb-1">
-                          {curso.name}
-                        </Text>
-                        <Text className="text-sm text-text-secondary mb-2">
-                          {curso.description}
-                        </Text>
-                      </View>
-                      <View className="bg-blue-100 px-3 py-1 rounded-full">
-                        <Text className="text-xs font-medium text-blue-800">
-                          {curso.points} pts
-                        </Text>
-                      </View>
-                    </View>
-                    <View className="flex-row justify-between items-center mb-3">
-                      <View className="flex-row items-center">
-                        <Ionicons
-                          name="time"
-                          size={16}
-                          color="#6b7280"
-                          style={{ marginRight: 4 }}
-                        />
-                        <Text className="text-sm text-text-secondary">
-                          {curso.workload}h
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <Ionicons
-                          name="star"
-                          size={16}
-                          color="#6b7280"
-                          style={{ marginRight: 4 }}
-                        />
-                        <Text className="text-sm text-text-secondary">
-                          {curso.points} pontos
-                        </Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity
-                      className={`rounded-lg py-2 px-4 ${
-                        userLives.currentLives > 0
-                          ? "bg-primary"
-                          : "bg-gray-400"
-                      }`}
-                      onPress={() => handleCoursePress(curso._id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text className="text-white text-center font-medium">
-                        {isSignedIn
-                          ? userLives.currentLives > 0
-                            ? "Ver grade"
-                            : "Sem Vidas"
-                          : "Ver grade"}
+                    <View className="bg-card p-4 rounded-lg border border-border">
+                      <Text className="text-text-primary text-lg font-semibold mb-2">
+                        {course.course.name}
                       </Text>
-                    </TouchableOpacity>
-                  </View>
+                      <Text className="text-text-secondary text-sm mb-3">
+                        {course.course.description}
+                      </Text>
+                      <View className="flex-row items-center justify-between mb-2">
+                        <View className="flex-row items-center">
+                          <Ionicons
+                            name="time-outline"
+                            size={16}
+                            color="#6b7280"
+                          />
+                          <Text className="text-text-secondary text-sm ml-1">
+                            {course.course.workload}h
+                          </Text>
+                        </View>
+                        <View className="flex-row items-center">
+                          <Ionicons name="star" size={16} color="#f59e0b" />
+                          <Text className="text-text-secondary text-sm ml-1">
+                            {course.course.points} pts
+                          </Text>
+                        </View>
+                      </View>
+                      {/* Barra de progresso */}
+                      <View className="mt-2">
+                        <View className="flex-row items-center justify-between mb-1">
+                          <Text className="text-text-secondary text-xs">
+                            Progresso
+                          </Text>
+                          <Text className="text-text-secondary text-xs">
+                            {course.progress.percentage.toFixed(0)}%
+                          </Text>
+                        </View>
+                        <View className="bg-border h-2 rounded-full">
+                          <View
+                            className="bg-primary h-2 rounded-full"
+                            style={{ width: `${course.progress.percentage}%` }}
+                          />
+                        </View>
+                        <Text className="text-text-secondary text-xs mt-1">
+                          {course.progress.completedLectures} de{" "}
+                          {course.progress.totalLectures} aulas
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
                 ))}
               </View>
             )}

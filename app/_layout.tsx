@@ -22,7 +22,7 @@ function TabsLayout() {
   const isPublicRoute = !currentRoute || currentRoute === '(auth)'; // Rota raiz (/) e rotas de auth são públicas
 
   if (!isSignedIn && !isPublicRoute) {
-    return <Redirect href="/" />;
+    return <Redirect href="/(auth)/sign-in" />;
   }
 
   return (
