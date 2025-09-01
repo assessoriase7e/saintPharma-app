@@ -183,7 +183,7 @@ export default function Home() {
                       className={`ml-1 font-semibold ${
                         userLives.currentLives > 0
                           ? "text-red-500"
-                          : "text-gray-400"
+                          : "text-text-secondary"
                       }`}
                     >
                       {userLives.currentLives}

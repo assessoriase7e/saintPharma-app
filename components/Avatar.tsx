@@ -42,9 +42,7 @@ export default function Avatar({
     .slice(0, 2);
 
   const borderClass = showBorder 
-    ? isDark 
-      ? "border-2 border-gray-600" 
-      : "border-2 border-gray-300"
+    ? "border-2 border-border"
     : "";
 
   if (source) {
