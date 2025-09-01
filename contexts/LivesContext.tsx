@@ -269,9 +269,8 @@ export function LivesProvider({ children }: LivesProviderProps) {
     resetLives,
   };
 
-  if (!isLoaded) {
-    return null; // ou um loading spinner
-  }
+  // Sempre fornecer o contexto, mesmo durante o carregamento
+  // O componente que usa o contexto pode verificar isLoaded
 
   return (
     <LivesContext.Provider value={contextValue}>
