@@ -55,49 +55,58 @@ export default function Home() {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Debug temporário para web
-    if (typeof window !== 'undefined') {
-      const debugInfo = {
-        apiUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
-        apiToken: process.env.EXPO_PUBLIC_API_TOKEN ? 'Configurado' : 'Não configurado',
-        hasApiClient: !!apiClient,
-        isSignedIn: isSignedIn,
-        allEnvVars: Object.keys(process.env).filter(key => key.startsWith('EXPO_PUBLIC'))
-      };
-      console.log('🔍 Debug Info:', debugInfo);
-      // Removendo alert para não interromper o fluxo
-    }
-        console.log('👤 Usuário logado:', isSignedIn);
+        if (typeof window !== "undefined") {
+          const debugInfo = {
+            apiUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
+            apiToken: process.env.EXPO_PUBLIC_API_TOKEN
+              ? "Configurado"
+              : "Não configurado",
+            hasApiClient: !!apiClient,
+            isSignedIn: isSignedIn,
+            allEnvVars: Object.keys(process.env).filter((key) =>
+              key.startsWith("EXPO_PUBLIC")
+            ),
+          };
+          console.log("🔍 Debug Info:", debugInfo);
+          // Removendo alert para não interromper o fluxo
+        }
+        console.log("👤 Usuário logado:", isSignedIn);
 
         // Sempre buscar todos os cursos disponíveis
-        console.log('📚 Buscando todos os cursos disponíveis...');
+        console.log("📚 Buscando todos os cursos disponíveis...");
         const allCoursesResponse = await apiClient.getCourses();
-        console.log('✅ Todos os cursos carregados:', allCoursesResponse);
-        
+        console.log("✅ Todos os cursos carregados:", allCoursesResponse);
+
         // Converter Course[] para UserCourse[] para compatibilidade
-        const allCoursesFormatted = allCoursesResponse.courses.map(course => ({
-          id: course._id,
-          courseId: course._id,
-          course: course,
-          enrolledAt: new Date().toISOString(),
-          progress: {
-            completedLectures: 0,
-            totalLectures: 0,
-            percentage: 0
-          }
-        }));
+        const allCoursesFormatted = allCoursesResponse.courses.map(
+          (course) => ({
+            id: course._id,
+            courseId: course._id,
+            course: course,
+            enrolledAt: new Date().toISOString(),
+            progress: {
+              completedLectures: 0,
+              totalLectures: 0,
+              percentage: 0,
+            },
+          })
+        );
         setAllCourses(allCoursesFormatted);
 
         if (isSignedIn) {
           // Usuário logado: também buscar cursos do usuário para mostrar progresso
-          console.log('📚 Buscando cursos do usuário...');
+          console.log("📚 Buscando cursos do usuário...");
           try {
             const userCoursesResponse = await apiClient.getUserCourses();
-            console.log('✅ Cursos do usuário carregados:', userCoursesResponse);
+            console.log(
+              "✅ Cursos do usuário carregados:",
+              userCoursesResponse
+            );
             setUserCourses(userCoursesResponse.courses);
           } catch (userCoursesError) {
-            console.warn('Erro ao buscar cursos do usuário:', userCoursesError);
+            console.warn("Erro ao buscar cursos do usuário:", userCoursesError);
             setUserCourses([]);
           }
         } else {
@@ -118,8 +127,7 @@ export default function Home() {
               {
                 titulo: "Em Progresso",
                 valor: (
-                  (userCourses?.length || 0) -
-                  summaryResponse.completedCourses
+                  (userCourses?.length || 0) - summaryResponse.completedCourses
                 ).toString(),
                 icone: "play-circle" as const,
                 cor: "#3b82f6",
@@ -143,20 +151,30 @@ export default function Home() {
       } catch (err) {
         console.error("❌ Erro ao buscar dados:", err);
         console.error("❌ Tipo do erro:", typeof err);
-        console.error("❌ Mensagem do erro:", err instanceof Error ? err.message : String(err));
-        
+        console.error(
+          "❌ Mensagem do erro:",
+          err instanceof Error ? err.message : String(err)
+        );
+
         if (err instanceof Error) {
-          if (err.message.includes('Network request failed') || err.message.includes('fetch')) {
-            setError("Erro de conexão: Verifique se o servidor da API está rodando em http://localhost:3000");
-          } else if (err.message.includes('404')) {
-            setError("Endpoint não encontrado: Verifique se a API está configurada corretamente");
+          if (
+            err.message.includes("Network request failed") ||
+            err.message.includes("fetch")
+          ) {
+            setError(
+              "Erro de conexão: Verifique se o servidor da API está rodando em http://localhost:3000"
+            );
+          } else if (err.message.includes("404")) {
+            setError(
+              "Endpoint não encontrado: Verifique se a API está configurada corretamente"
+            );
           } else {
             setError(`Erro na API: ${err.message}`);
           }
         } else {
           setError("Erro desconhecido ao carregar os cursos");
         }
-        
+
         // Garantir que os arrays de cursos sejam sempre válidos
         setUserCourses([]);
         setAllCourses([]);
@@ -175,8 +193,10 @@ export default function Home() {
     }
 
     // Para usuários logados, mostrar apenas cursos que não estão matriculados
-    const userCourseIds = userCourses?.map(uc => uc.courseId) || [];
-    return allCourses.filter(course => !userCourseIds.includes(course.courseId));
+    const userCourseIds = userCourses?.map((uc) => uc.courseId) || [];
+    return allCourses.filter(
+      (course) => !userCourseIds.includes(course.courseId)
+    );
   };
 
   const handleSignIn = () => {
@@ -286,8 +306,6 @@ export default function Home() {
             </View>
           )}
 
-
-
           {/* Cursos do Usuário - apenas para usuários logados com cursos */}
           {isSignedIn && userCourses?.length > 0 && (
             <View className="mb-6">
@@ -381,66 +399,72 @@ export default function Home() {
               <View className="space-y-3">
                 {(() => {
                   const exploreCourses = getExploreCourses();
-                  return exploreCourses && exploreCourses.length > 0 ? exploreCourses.map((course) => (
-                  <Pressable
-                    key={course.course._id}
-                    onPress={() =>
-                      router.push(`/curso/${course.course._id}` as any)
-                    }
-                    className="mb-4"
-                  >
-                    <View className="bg-card p-4 rounded-lg border border-border">
-                      <Text className="text-text-primary text-lg font-semibold mb-2">
-                        {course.course.name}
-                      </Text>
-                      <Text className="text-text-secondary text-sm mb-3">
-                        {course.course.description}
-                      </Text>
-                      <View className="flex-row items-center justify-between mb-2">
-                        <View className="flex-row items-center">
-                          <Ionicons
-                            name="time-outline"
-                            size={16}
-                            color="#6b7280"
-                          />
-                          <Text className="text-text-secondary text-sm ml-1">
-                            {course.course.workload}h
+                  return exploreCourses && exploreCourses.length > 0 ? (
+                    exploreCourses.map((course) => (
+                      <Pressable
+                        key={course.course._id}
+                        onPress={() =>
+                          router.push(`/curso/${course.course._id}` as any)
+                        }
+                        className="mb-4"
+                      >
+                        <View className="bg-card p-4 rounded-lg border border-border">
+                          <Text className="text-text-primary text-lg font-semibold mb-2">
+                            {course.course.name}
                           </Text>
-                        </View>
-                        <View className="flex-row items-center">
-                          <Ionicons name="star" size={16} color="#f59e0b" />
-                          <Text className="text-text-secondary text-sm ml-1">
-                            {course.course.points} pts
+                          <Text className="text-text-secondary text-sm mb-3">
+                            {course.course.description}
                           </Text>
+                          <View className="flex-row items-center justify-between mb-2">
+                            <View className="flex-row items-center">
+                              <Ionicons
+                                name="time-outline"
+                                size={16}
+                                color="#6b7280"
+                              />
+                              <Text className="text-text-secondary text-sm ml-1">
+                                {course.course.workload}h
+                              </Text>
+                            </View>
+                            <View className="flex-row items-center">
+                              <Ionicons name="star" size={16} color="#f59e0b" />
+                              <Text className="text-text-secondary text-sm ml-1">
+                                {course.course.points} pts
+                              </Text>
+                            </View>
+                          </View>
+                          {/* Barra de progresso */}
+                          <View className="mt-2">
+                            <View className="flex-row items-center justify-between mb-1">
+                              <Text className="text-text-secondary text-xs">
+                                Progresso
+                              </Text>
+                              <Text className="text-text-secondary text-xs">
+                                {course.progress.percentage.toFixed(0)}%
+                              </Text>
+                            </View>
+                            <View className="bg-border h-2 rounded-full">
+                              <View
+                                className="bg-primary h-2 rounded-full"
+                                style={{
+                                  width: `${course.progress.percentage}%`,
+                                }}
+                              />
+                            </View>
+                            <Text className="text-text-secondary text-xs mt-1">
+                              {course.progress.completedLectures} de{" "}
+                              {course.progress.totalLectures} aulas
+                            </Text>
+                          </View>
                         </View>
-                      </View>
-                      {/* Barra de progresso */}
-                      <View className="mt-2">
-                        <View className="flex-row items-center justify-between mb-1">
-                          <Text className="text-text-secondary text-xs">
-                            Progresso
-                          </Text>
-                          <Text className="text-text-secondary text-xs">
-                            {course.progress.percentage.toFixed(0)}%
-                          </Text>
-                        </View>
-                        <View className="bg-border h-2 rounded-full">
-                          <View
-                            className="bg-primary h-2 rounded-full"
-                            style={{ width: `${course.progress.percentage}%` }}
-                          />
-                        </View>
-                        <Text className="text-text-secondary text-xs mt-1">
-                          {course.progress.completedLectures} de{" "}
-                          {course.progress.totalLectures} aulas
-                        </Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                  )) : (
+                      </Pressable>
+                    ))
+                  ) : (
                     <View className="flex-1 justify-center items-center py-8">
                       <Text className="text-text-secondary text-center">
-                        {error ? "Erro ao carregar cursos" : "Nenhum curso disponível"}
+                        {error
+                          ? "Erro ao carregar cursos"
+                          : "Nenhum curso disponível"}
                       </Text>
                     </View>
                   );

@@ -36,11 +36,13 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
       setCreatingExam(true);
       // Criar exame via API
       const examResponse = await apiClient.createExam({
-        lectureCMSid: lecture._id
+        lectureCMSid: lecture._id,
       });
-      
+
       // Navegar para a tela de prova com o ID do exame criado
-      router.push(`/prova/${examResponse.exam.id}?lectureId=${lecture._id}&courseId=${courseId}` as any);
+      router.push(
+        `/prova/${examResponse.exam.id}?lectureId=${lecture._id}&courseId=${courseId}` as any
+      );
     } catch (error) {
       console.error("Erro ao criar exame:", error);
       alert("Erro ao criar exame. Tente novamente.");
@@ -81,7 +83,7 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
             </View>
           </View>
         </Pressable>
-        
+
         {/* Botão de Prova - só aparece se a aula estiver concluída */}
         {lecture.completed && (
           <View className="mt-3 pt-3 border-t border-border">
@@ -89,7 +91,9 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
               onPress={handleQuizPress}
               disabled={creatingExam}
               className={`flex-row items-center justify-center py-2 px-4 rounded-lg ${
-                creatingExam ? "bg-border" : "bg-primary/10 border border-primary"
+                creatingExam
+                  ? "bg-border"
+                  : "bg-primary/10 border border-primary"
               }`}
             >
               {creatingExam ? (
@@ -101,7 +105,11 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
                 </>
               ) : (
                 <>
-                  <Ionicons name="help-circle-outline" size={18} color="#3b82f6" />
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={18}
+                    color="#3b82f6"
+                  />
                   <Text className="text-primary ml-2 font-medium">
                     Fazer Prova
                   </Text>
