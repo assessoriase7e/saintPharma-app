@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -19,46 +19,98 @@ interface LectureCardProps {
 }
 
 function LectureCard({ lecture, courseId, index }: LectureCardProps) {
+  const [creatingExam, setCreatingExam] = useState(false);
+  const apiClient = useApiClient();
+
   const handleLecturePress = () => {
     router.push(`/aula/${lecture._id}?courseId=${courseId}` as any);
   };
 
-  const handleQuizPress = () => {
-    // Implementar navegação para quiz quando disponível
-    console.log("Quiz não implementado ainda");
+  const handleQuizPress = async () => {
+    if (!lecture.completed) {
+      alert("Você precisa concluir a aula antes de fazer a prova!");
+      return;
+    }
+
+    try {
+      setCreatingExam(true);
+      // Criar exame via API
+      const examResponse = await apiClient.createExam({
+        lectureCMSid: lecture._id
+      });
+      
+      // Navegar para a tela de prova com o ID do exame criado
+      router.push(`/prova/${examResponse.exam.id}?lectureId=${lecture._id}&courseId=${courseId}` as any);
+    } catch (error) {
+      console.error("Erro ao criar exame:", error);
+      alert("Erro ao criar exame. Tente novamente.");
+    } finally {
+      setCreatingExam(false);
+    }
   };
 
   return (
     <Card className="mb-4">
-      <Pressable onPress={handleLecturePress} className="p-4">
-        <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-1">
-            <Text className="text-text-primary text-lg font-semibold mb-1">
-              Aula {index + 1}: {lecture.title}
-            </Text>
-            <Text className="text-text-secondary text-sm mb-2">
-              {lecture.description}
-            </Text>
-            <View className="flex-row items-center">
-              <Ionicons name="time-outline" size={16} color="#6b7280" />
-              <Text className="text-text-secondary text-sm ml-1">15 min</Text>
+      <View className="p-4">
+        <Pressable onPress={handleLecturePress}>
+          <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-1">
+              <Text className="text-text-primary text-lg font-semibold mb-1">
+                Aula {index + 1}: {lecture.title}
+              </Text>
+              <Text className="text-text-secondary text-sm mb-2">
+                {lecture.description}
+              </Text>
+              <View className="flex-row items-center">
+                <Ionicons name="time-outline" size={16} color="#6b7280" />
+                <Text className="text-text-secondary text-sm ml-1">15 min</Text>
+              </View>
+            </View>
+            <View className="ml-4">
+              <View
+                className={`w-8 h-8 rounded-full items-center justify-center ${
+                  lecture.completed ? "bg-secondary" : "bg-border"
+                }`}
+              >
+                <Ionicons
+                  name={lecture.completed ? "checkmark" : "play"}
+                  size={16}
+                  color={lecture.completed ? "white" : "#6b7280"}
+                />
+              </View>
             </View>
           </View>
-          <View className="ml-4">
-            <View
-              className={`w-8 h-8 rounded-full items-center justify-center ${
-                lecture.completed ? "bg-secondary" : "bg-border"
+        </Pressable>
+        
+        {/* Botão de Prova - só aparece se a aula estiver concluída */}
+        {lecture.completed && (
+          <View className="mt-3 pt-3 border-t border-border">
+            <Pressable
+              onPress={handleQuizPress}
+              disabled={creatingExam}
+              className={`flex-row items-center justify-center py-2 px-4 rounded-lg ${
+                creatingExam ? "bg-border" : "bg-primary/10 border border-primary"
               }`}
             >
-              <Ionicons
-                name={lecture.completed ? "checkmark" : "play"}
-                size={16}
-                color={lecture.completed ? "white" : "#6b7280"}
-              />
-            </View>
+              {creatingExam ? (
+                <>
+                  <ActivityIndicator size="small" color="#6b7280" />
+                  <Text className="text-text-secondary ml-2 font-medium">
+                    Criando prova...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="help-circle-outline" size={18} color="#3b82f6" />
+                  <Text className="text-primary ml-2 font-medium">
+                    Fazer Prova
+                  </Text>
+                </>
+              )}
+            </Pressable>
           </View>
-        </View>
-      </Pressable>
+        )}
+      </View>
     </Card>
   );
 }

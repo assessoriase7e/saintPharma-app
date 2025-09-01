@@ -16,11 +16,17 @@ import { useApiClient } from "../../services/api";
 // Interface local para dados completos do exame
 interface ExamData {
   id: string;
-  title: string;
+  lectureCMSid: string;
+  complete: boolean;
+  reproved: boolean;
+  userId: string;
+  createdAt: string;
+  // Campos adicionais para a interface do quiz
+  title?: string;
   description?: string;
   timeLimit?: number; // em minutos
   passingScore?: number;
-  questions: {
+  questions?: {
     id: string;
     question: string;
     points: number;
@@ -148,7 +154,11 @@ function Timer({ timeLeft, totalTime }: TimerProps) {
 }
 
 export default function ExamScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ 
+    id: string; 
+    lectureId?: string; 
+    courseId?: string; 
+  }>();
   const examId = id || "";
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -170,12 +180,27 @@ export default function ExamScreen() {
         setLoading(true);
         setError(null);
 
-        // TODO: Implementar busca de dados do exame via API
-        // const examData = await apiClient.getExam(examId);
-        // setExam(examData);
-        // setTimeLeft(examData.timeLimit! * 60);
+        // Buscar dados do exame via API
+        const response = await apiClient.getExam(examId);
+        const examData = response.exam;
         
-        setError("Funcionalidade de exames ainda não implementada.");
+        if (examData) {
+          // Criar objeto compatível com ExamData
+          const fullExamData: ExamData = {
+            ...examData,
+            title: 'Exame da Aula', // Título padrão
+            description: 'Teste seus conhecimentos sobre esta aula',
+            timeLimit: 30, // 30 minutos padrão
+            passingScore: 70, // 70% para aprovação
+            questions: [], // Será preenchido com dados reais quando disponível
+          };
+          
+          setExam(fullExamData);
+          
+          if (fullExamData.timeLimit) {
+            setTimeLeft(fullExamData.timeLimit * 60);
+          }
+        }
       } catch (err) {
         console.error("Erro ao buscar dados do exame:", err);
         setError("Erro ao carregar o exame. Verifique sua conexão.");
@@ -187,7 +212,67 @@ export default function ExamScreen() {
     if (examId) {
       fetchExam();
     }
-  }, [examId]);
+  }, [examId, apiClient]);
+
+  const handleSubmitQuiz = () => {
+    if (answeredQuestions < totalQuestions) {
+      Alert.alert(
+        "Quiz Incompleto",
+        `Você respondeu ${answeredQuestions} de ${totalQuestions} questões. Deseja continuar mesmo assim?`,
+        [
+          { text: "Continuar Respondendo", style: "cancel" },
+          { text: "Finalizar Mesmo Assim", onPress: submitQuiz },
+        ]
+      );
+    } else {
+      submitQuiz();
+    }
+  };
+
+  const submitQuiz = async () => {
+    const results = calculateResults();
+    const endTime = new Date();
+    const timeSpent = startTime
+      ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
+      : 0;
+
+    try {
+      // Submeter resultados via API
+      await apiClient.updateExam(examId, {
+        complete: results.passed,
+        reproved: !results.passed,
+      });
+
+      // Calcular quantas vidas perder baseado nos erros
+      const wrongAnswers = totalQuestions - results.correctAnswers;
+      if (wrongAnswers > 0) {
+        loseLives(
+          wrongAnswers,
+          `Erros no exame: ${exam?.title || 'Exame'}`,
+          parseInt(exam?.id || '') || undefined
+        );
+      }
+
+      // Navigate to results screen with results data
+      router.push(
+        `/resultado/${exam?.id}?results=${encodeURIComponent(
+          JSON.stringify({
+            ...results,
+            timeSpent,
+            totalQuestions,
+            livesLost: wrongAnswers,
+          })
+        )}` as any
+      );
+    } catch (err) {
+      console.error("Erro ao submeter exame:", err);
+      Alert.alert(
+        "Erro",
+        "Erro ao submeter exame. Tente novamente.",
+        [{ text: "OK" }]
+      );
+    }
+  };
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -207,7 +292,7 @@ export default function ExamScreen() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [quizStarted, timeLeft]);
+  }, [quizStarted, timeLeft, handleSubmitQuiz]);
 
   if (loading) {
     return (
@@ -239,9 +324,9 @@ export default function ExamScreen() {
     );
   }
 
-  const currentQuestion = exam.questions[currentQuestionIndex];
+  const currentQuestion = exam?.questions?.[currentQuestionIndex];
   const selectedAnswer = answers[currentQuestionIndex] || null;
-  const totalQuestions = exam.questions.length;
+  const totalQuestions = exam?.questions?.length || 0;
   const answeredQuestions = Object.keys(answers).length;
 
   const handleStartQuiz = () => {
@@ -273,7 +358,7 @@ export default function ExamScreen() {
     let correctAnswers = 0;
     const userAnswers: any[] = [];
 
-    exam.questions.forEach((question, index) => {
+    exam?.questions?.forEach((question, index) => {
       const selectedOptionId = answers[index];
       const selectedOption = question.options.find(
         (opt) => opt.id === selectedOptionId
@@ -292,12 +377,12 @@ export default function ExamScreen() {
       });
     });
 
-    const maxPoints = exam.questions.reduce(
+    const maxPoints = exam?.questions?.reduce(
       (sum, q) => sum + (q.points || 1),
       0
-    );
+    ) || 0;
     const percentage = (totalPoints / maxPoints) * 100;
-    const passed = percentage >= (exam.passingScore || 70);
+    const passed = percentage >= (exam?.passingScore || 70);
 
     return {
       totalPoints,
@@ -309,50 +394,7 @@ export default function ExamScreen() {
     };
   };
 
-  const handleSubmitQuiz = () => {
-    if (answeredQuestions < totalQuestions) {
-      Alert.alert(
-        "Quiz Incompleto",
-        `Você respondeu ${answeredQuestions} de ${totalQuestions} questões. Deseja continuar mesmo assim?`,
-        [
-          { text: "Continuar Respondendo", style: "cancel" },
-          { text: "Finalizar Mesmo Assim", onPress: submitQuiz },
-        ]
-      );
-    } else {
-      submitQuiz();
-    }
-  };
 
-  const submitQuiz = () => {
-    const results = calculateResults();
-    const endTime = new Date();
-    const timeSpent = startTime
-      ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
-      : 0;
-
-    // Calcular quantas vidas perder baseado nos erros
-    const wrongAnswers = totalQuestions - results.correctAnswers;
-    if (wrongAnswers > 0) {
-      loseLives(
-        wrongAnswers,
-        `Erros no exame: ${exam.title}`,
-        parseInt(exam.id) || undefined
-      );
-    }
-
-    // Navigate to results screen with results data
-    router.push(
-      `/resultado/${exam.id}?results=${encodeURIComponent(
-        JSON.stringify({
-          ...results,
-          timeSpent,
-          totalQuestions,
-          livesLost: wrongAnswers,
-        })
-      )}` as any
-    );
-  };
 
   // Quiz start screen
   if (!quizStarted) {
