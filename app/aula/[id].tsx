@@ -73,17 +73,11 @@ export default function LectureView() {
         setLoading(true);
         setError(null);
 
-        // Dados mockados temporários até a API fornecer método para buscar aula individual
-        const mockLecture: Lecture = {
-          _id: lectureId,
-          title: `Aula ${lectureId}`,
-          description:
-            "Esta é uma aula sobre farmacologia básica. Aprenda sobre os princípios fundamentais dos medicamentos, suas ações no organismo e como são utilizados no tratamento de diversas condições de saúde.",
-          videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          completed: false,
-        };
-
-        setLecture(mockLecture);
+        // TODO: Implementar busca de dados da aula via API
+        // const lectureData = await apiClient.getLecture(lectureId);
+        // setLecture(lectureData);
+        
+        setError("Funcionalidade de aulas ainda não implementada.");
       } catch (err) {
         console.error("Erro ao buscar dados da aula:", err);
         setError("Erro ao carregar a aula. Verifique sua conexão.");

@@ -3,40 +3,9 @@ import React from "react";
 import { ScrollView, Text, View } from "react-native";
 
 export default function Certificados() {
-  const certificados = [
-    {
-      id: 1,
-      nome: "Farmacologia Básica",
-      instituicao: "Instituto de Saúde",
-      dataEmissao: "15/03/2024",
-      status: "Concluído",
-      validade: "15/03/2027",
-    },
-    {
-      id: 2,
-      nome: "Gestão Farmacêutica",
-      instituicao: "Universidade Federal",
-      dataEmissao: "22/01/2024",
-      status: "Concluído",
-      validade: "22/01/2027",
-    },
-    {
-      id: 3,
-      nome: "Atenção Farmacêutica",
-      instituicao: "Conselho Regional",
-      dataEmissao: "10/12/2023",
-      status: "Concluído",
-      validade: "10/12/2026",
-    },
-    {
-      id: 4,
-      nome: "Farmácia Clínica",
-      instituicao: "Centro de Estudos",
-      dataEmissao: "Em andamento",
-      status: "Em Progresso",
-      validade: "-",
-    },
-  ];
+  // TODO: Implementar busca de certificados via API
+  // const certificados = await apiClient.getCertificates();
+  const certificados: any[] = [];
 
   return (
     <ScrollView className="flex-1 bg-background">

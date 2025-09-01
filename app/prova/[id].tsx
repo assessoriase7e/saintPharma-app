@@ -170,71 +170,12 @@ export default function ExamScreen() {
         setLoading(true);
         setError(null);
 
-        // Dados mockados temporários até a API fornecer dados completos
-        const mockExamData: ExamData = {
-          id: examId,
-          title: `Exame da Aula ${examId}`,
-          description: "Teste seus conhecimentos sobre o conteúdo da aula",
-          timeLimit: 30, // 30 minutos
-          passingScore: 70,
-          questions: [
-            {
-              id: "q1",
-              question:
-                "Qual é a principal função dos medicamentos anti-inflamatórios?",
-              points: 10,
-              options: [
-                {
-                  id: "a",
-                  text: "Reduzir a inflamação e a dor",
-                  isCorrect: true,
-                },
-                {
-                  id: "b",
-                  text: "Aumentar a pressão arterial",
-                  isCorrect: false,
-                },
-                {
-                  id: "c",
-                  text: "Estimular o sistema nervoso",
-                  isCorrect: false,
-                },
-                {
-                  id: "d",
-                  text: "Reduzir a frequência cardíaca",
-                  isCorrect: false,
-                },
-              ],
-            },
-            {
-              id: "q2",
-              question:
-                "Qual é a dose recomendada de paracetamol para adultos?",
-              points: 10,
-              options: [
-                { id: "a", text: "500mg a cada 4 horas", isCorrect: false },
-                { id: "b", text: "1000mg a cada 6 horas", isCorrect: true },
-                { id: "c", text: "250mg a cada 2 horas", isCorrect: false },
-                { id: "d", text: "2000mg uma vez ao dia", isCorrect: false },
-              ],
-            },
-            {
-              id: "q3",
-              question:
-                "Quais são os principais efeitos colaterais dos antibióticos?",
-              points: 10,
-              options: [
-                { id: "a", text: "Sonolência e tontura", isCorrect: false },
-                { id: "b", text: "Náusea e diarreia", isCorrect: true },
-                { id: "c", text: "Aumento do apetite", isCorrect: false },
-                { id: "d", text: "Melhora da visão", isCorrect: false },
-              ],
-            },
-          ],
-        };
-
-        setExam(mockExamData);
-        setTimeLeft(mockExamData.timeLimit! * 60); // Convert minutes to seconds
+        // TODO: Implementar busca de dados do exame via API
+        // const examData = await apiClient.getExam(examId);
+        // setExam(examData);
+        // setTimeLeft(examData.timeLimit! * 60);
+        
+        setError("Funcionalidade de exames ainda não implementada.");
       } catch (err) {
         console.error("Erro ao buscar dados do exame:", err);
         setError("Erro ao carregar o exame. Verifique sua conexão.");

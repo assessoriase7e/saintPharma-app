@@ -222,43 +222,7 @@ export default function Home() {
             </View>
           )}
 
-          {/* Cursos em Progresso - apenas para usuários autenticados */}
-          {isSignedIn && (
-            <View className="mb-6">
-              <Text className="text-lg font-semibold text-text-primary mb-4">
-                Continue Estudando
-              </Text>
 
-              <View className="bg-card border border-border rounded-lg p-4 mb-3">
-                <View className="flex-row justify-between items-start mb-3">
-                  <View className="flex-1">
-                    <Text className="text-lg font-semibold text-text-primary mb-1">
-                      Farmacologia Avançada
-                    </Text>
-                    <Text className="text-sm text-text-secondary">
-                      Módulo 3: Farmacocinética
-                    </Text>
-                  </View>
-                  <View className="bg-blue-100 px-3 py-1 rounded-full">
-                    <Text className="text-xs font-medium text-blue-800">
-                      65% concluído
-                    </Text>
-                  </View>
-                </View>
-                <View className="bg-border rounded-full h-2 mb-3">
-                  <View
-                    className="bg-primary h-2 rounded-full"
-                    style={{ width: "65%" }}
-                  />
-                </View>
-                <Pressable className="bg-blue-600 rounded-lg py-2 px-4">
-                  <Text className="text-white text-center font-medium">
-                    Continuar Curso
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          )}
 
           {/* Cursos */}
           <View className="mb-6">
