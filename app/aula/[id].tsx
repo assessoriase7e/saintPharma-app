@@ -407,6 +407,11 @@ export default function LectureView() {
 
       // Atualiza o estado local
       setLecture({ ...lecture, completed: true });
+      
+      // Navega de volta para o curso após completar a aula
+      setTimeout(() => {
+        router.push(`/curso/${courseId}` as any);
+      }, 1000); // Pequeno delay para mostrar o feedback visual
     } catch (err) {
       console.error("Erro ao marcar aula como concluída:", err);
       setError("Erro ao completar a aula. Tente novamente.");
