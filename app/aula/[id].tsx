@@ -1,4 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -12,8 +14,6 @@ import {
   Text,
   View,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
-import * as MediaLibrary from "expo-media-library";
 import { useApiClient } from "../../services/api";
 import { Lecture } from "../../types/api";
 
@@ -33,16 +33,16 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
     try {
       setDownloading((prev) => ({ ...prev, [blockKey]: true }));
 
-      if (Platform.OS === 'web') {
+      if (Platform.OS === "web") {
         // Para web: criar um link de download direto
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = imageUrl;
         link.download = `image_${Date.now()}.jpg`;
-        link.target = '_blank';
+        link.target = "_blank";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         Alert.alert(
           "Download iniciado",
           "O download da imagem foi iniciado. Verifique sua pasta de downloads.",
@@ -70,11 +70,9 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
         // Salvar na galeria
         await MediaLibrary.saveToLibraryAsync(downloadResult.uri);
 
-        Alert.alert(
-          "Sucesso",
-          "Imagem salva na galeria com sucesso!",
-          [{ text: "OK" }]
-        );
+        Alert.alert("Sucesso", "Imagem salva na galeria com sucesso!", [
+          { text: "OK" },
+        ]);
       }
     } catch (error) {
       console.error("Erro ao baixar imagem:", error);
@@ -118,7 +116,7 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
               if (!text.trim()) return null;
 
               const style = block.style || "normal";
-              
+
               switch (style) {
                 case "h1":
                   return (
@@ -274,7 +272,11 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
                     )}
                     {!downloading[blockKey] && (
                       <View className="absolute top-2 right-2 bg-black/50 rounded-full p-2">
-                        <Ionicons name="download-outline" size={20} color="white" />
+                        <Ionicons
+                          name="download-outline"
+                          size={20}
+                          color="white"
+                        />
                       </View>
                     )}
                   </Pressable>
@@ -407,7 +409,7 @@ export default function LectureView() {
 
       // Atualiza o estado local
       setLecture({ ...lecture, completed: true });
-      
+
       // Navega de volta para o curso após completar a aula
       setTimeout(() => {
         router.push(`/curso/${courseId}` as any);

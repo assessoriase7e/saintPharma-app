@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -132,32 +132,41 @@ export default function CourseLessons() {
   const [error, setError] = useState<string | null>(null);
   const apiClient = useApiClient();
 
+  const fetchCourseData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Buscar detalhes do curso e aulas
+      const [courseResponse, lecturesResponse] = await Promise.all([
+        apiClient.getCourseById(courseId),
+        apiClient.getLectures(courseId),
+      ]);
+
+      setCourse(courseResponse.course);
+      setLectures(lecturesResponse.lectures);
+    } catch (err) {
+      console.error("Erro ao buscar dados do curso:", err);
+      setError("Erro ao carregar o curso. Verifique sua conexão.");
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId, apiClient]);
+
   useEffect(() => {
-    const fetchCourseData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Buscar detalhes do curso e aulas
-        const [courseResponse, lecturesResponse] = await Promise.all([
-          apiClient.getCourseById(courseId),
-          apiClient.getLectures(courseId),
-        ]);
-
-        setCourse(courseResponse.course);
-        setLectures(lecturesResponse.lectures);
-      } catch (err) {
-        console.error("Erro ao buscar dados do curso:", err);
-        setError("Erro ao carregar o curso. Verifique sua conexão.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (courseId) {
       fetchCourseData();
     }
-  }, [courseId]);
+  }, [courseId, fetchCourseData]);
+
+  // Atualizar dados quando a tela receber foco (ex: voltando da aula)
+  useFocusEffect(
+    useCallback(() => {
+      if (courseId) {
+        fetchCourseData();
+      }
+    }, [courseId, fetchCourseData])
+  );
 
   if (loading) {
     return (
