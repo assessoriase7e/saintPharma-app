@@ -9,6 +9,7 @@ import {
   CoursesResponse,
   CreateExamRequest,
   ExamResponse,
+  Lecture,
   LecturesResponse,
   Lives,
   RankingResponse,
@@ -104,6 +105,10 @@ class ApiClient {
   // Métodos de Aulas
   async getLectures(courseId: string): Promise<LecturesResponse> {
     return this.request<LecturesResponse>(`/lectures?courseId=${courseId}`);
+  }
+
+  async getLecture(id: string): Promise<Lecture> {
+    return this.request<Lecture>(`/lectures/${id}`);
   }
 
   async completeLecture(

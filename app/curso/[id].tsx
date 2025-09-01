@@ -20,7 +20,7 @@ interface LectureCardProps {
 
 function LectureCard({ lecture, courseId, index }: LectureCardProps) {
   const handleLecturePress = () => {
-    router.push(`/aula/${lecture._id}` as any);
+    router.push(`/aula/${lecture._id}?courseId=${courseId}` as any);
   };
 
   const handleQuizPress = () => {

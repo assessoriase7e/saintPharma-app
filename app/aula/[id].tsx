@@ -60,11 +60,12 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
 }
 
 export default function LectureView() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, courseId } = useLocalSearchParams<{ id: string; courseId?: string }>();
   const lectureId = id || "";
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [completing, setCompleting] = useState(false);
   const apiClient = useApiClient();
 
   useEffect(() => {
@@ -73,11 +74,8 @@ export default function LectureView() {
         setLoading(true);
         setError(null);
 
-        // TODO: Implementar busca de dados da aula via API
-        // const lectureData = await apiClient.getLecture(lectureId);
-        // setLecture(lectureData);
-        
-        setError("Funcionalidade de aulas ainda não implementada.");
+        const lectureData = await apiClient.getLecture(lectureId);
+        setLecture(lectureData);
       } catch (err) {
         console.error("Erro ao buscar dados da aula:", err);
         setError("Erro ao carregar a aula. Verifique sua conexão.");
@@ -122,12 +120,23 @@ export default function LectureView() {
   }
 
   const handleMarkComplete = async () => {
+    if (!lecture || !courseId) {
+      setError("Informações insuficientes para completar a aula.");
+      return;
+    }
+
     try {
-      // Precisa do courseId para completar a aula
-      // Por enquanto, apenas atualiza o estado local
+      setCompleting(true);
+      
+      await apiClient.completeLecture(lectureId, { courseId });
+      
+      // Atualiza o estado local
       setLecture({ ...lecture, completed: true });
     } catch (err) {
       console.error("Erro ao marcar aula como concluída:", err);
+      setError("Erro ao completar a aula. Tente novamente.");
+    } finally {
+      setCompleting(false);
     }
   };
 
@@ -168,15 +177,22 @@ export default function LectureView() {
           {!lecture.completed && (
             <Pressable
               onPress={handleMarkComplete}
-              className="bg-secondary px-6 py-4 rounded-lg flex-row items-center justify-center"
+              disabled={completing}
+              className={`px-6 py-4 rounded-lg flex-row items-center justify-center ${
+                completing ? "bg-secondary/50" : "bg-secondary"
+              }`}
             >
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={20}
-                color="white"
-              />
+              {completing ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color="white"
+                />
+              )}
               <Text className="text-white font-semibold ml-2">
-                Marcar como Concluída
+                {completing ? "Completando..." : "Marcar como Concluída"}
               </Text>
             </Pressable>
           )}
