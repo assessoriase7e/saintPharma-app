@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import Card from "../../components/Card";
 import { useApiClient } from "../../services/api";
+import { Question } from "../../types/api";
 
 // Interface local para dados completos do exame
 interface ExamData {
@@ -18,16 +19,7 @@ interface ExamData {
   description?: string;
   timeLimit?: number; // em minutos
   passingScore?: number;
-  questions: {
-    id: string;
-    question: string;
-    points: number;
-    options: {
-      id: string;
-      text: string;
-      isCorrect: boolean;
-    }[];
-  }[];
+  questions: Question[];
 }
 
 interface QuizResults {

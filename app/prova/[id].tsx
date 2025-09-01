@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,6 +12,7 @@ import {
 import Card from "../../components/Card";
 import { useLives } from "../../contexts/LivesContext";
 import { useApiClient } from "../../services/api";
+import { Question } from "../../types/api";
 
 // Interface local para dados completos do exame
 interface ExamData {
@@ -26,20 +27,11 @@ interface ExamData {
   description?: string;
   timeLimit?: number; // em minutos
   passingScore?: number;
-  questions?: {
-    id: string;
-    question: string;
-    points: number;
-    options: {
-      id: string;
-      text: string;
-      isCorrect: boolean;
-    }[];
-  }[];
+  questions?: Question[];
 }
 
 interface QuestionCardProps {
-  question: any;
+  question: Question;
   selectedAnswer: string | null;
   onAnswerSelect: (optionId: string) => void;
   questionNumber: number;
@@ -68,16 +60,16 @@ function QuestionCard({
         </View>
 
         <Text className="text-text-primary text-lg font-medium mb-6 leading-6">
-          {question.question}
+          {question.text}
         </Text>
 
         <View className="space-y-3">
-          {question.options?.map((option: any, index: number) => (
+          {question.options?.map((option) => (
             <Pressable
-              key={index}
-              onPress={() => onAnswerSelect(index.toString())}
+              key={option.id}
+              onPress={() => onAnswerSelect(option.id)}
               className={`p-4 rounded-lg border-2 ${
-                selectedAnswer === index.toString()
+                selectedAnswer === option.id
                   ? "border-primary bg-primary/10"
                   : "border-border bg-card"
               }`}
@@ -85,23 +77,23 @@ function QuestionCard({
               <View className="flex-row items-center">
                 <View
                   className={`w-6 h-6 rounded-full border-2 mr-3 items-center justify-center ${
-                    selectedAnswer === index.toString()
+                    selectedAnswer === option.id
                       ? "border-primary bg-primary"
                       : "border-border"
                   }`}
                 >
-                  {selectedAnswer === index.toString() && (
+                  {selectedAnswer === option.id && (
                     <View className="w-2 h-2 bg-white rounded-full" />
                   )}
                 </View>
                 <Text
                   className={`flex-1 ${
-                    selectedAnswer === index.toString()
+                    selectedAnswer === option.id
                       ? "text-primary font-medium"
                       : "text-text-primary"
                   }`}
                 >
-                  {option}
+                  {option.text}
                 </Text>
               </View>
             </Pressable>
@@ -185,14 +177,17 @@ export default function ExamScreen() {
         const examData = response.exam;
         
         if (examData) {
+          // Buscar questões da aula relacionada ao exame
+          const questionsData = await apiClient.getLectureQuestions(examData.lectureCMSid);
+          
           // Criar objeto compatível com ExamData
           const fullExamData: ExamData = {
             ...examData,
-            title: 'Exame da Aula', // Título padrão
+            title: 'Exame da Aula',
             description: 'Teste seus conhecimentos sobre esta aula',
-            timeLimit: 30, // 30 minutos padrão
-            passingScore: 70, // 70% para aprovação
-            questions: [], // Será preenchido com dados reais quando disponível
+            timeLimit: questionsData.timeLimit || 30,
+            passingScore: questionsData.passingScore || 70,
+            questions: questionsData.questions || [],
           };
           
           setExam(fullExamData);

@@ -236,3 +236,25 @@ export interface UpdateExamRequest {
   reproved?: boolean;
   courseId?: string;
 }
+
+// Tipos para questões do quiz
+export interface QuestionOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface Question {
+  id: string;
+  text: string;
+  options: QuestionOption[];
+  explanation?: string;
+  points: number;
+}
+
+export interface QuestionResponse {
+  questions: Question[];
+  totalQuestions: number;
+  timeLimit?: number; // em minutos
+  passingScore: number; // porcentagem mínima para aprovação
+}

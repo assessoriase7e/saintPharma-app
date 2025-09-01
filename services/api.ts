@@ -12,6 +12,7 @@ import {
   Lecture,
   LecturesResponse,
   Lives,
+  QuestionResponse,
   RankingResponse,
   UpdateExamRequest,
   UserCoursesResponse,
@@ -138,6 +139,11 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify(data),
     });
+  }
+
+  // Método para buscar questões de uma aula
+  async getLectureQuestions(lectureId: string): Promise<QuestionResponse> {
+    return this.request<QuestionResponse>(`/lectures/${lectureId}/questions`);
   }
 
   // Métodos de Certificados

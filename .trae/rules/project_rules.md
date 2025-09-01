@@ -99,3 +99,50 @@ grep -r "bg-gray-\|text-gray-\|border-gray-\|bg-white\|text-white" app/ --exclud
 - Use Zustand para estado global (como tema)
 - Context API para providers específicos
 - Estado local com useState quando apropriado
+
+## 5. Integração com API
+
+### Uso Exclusivo de Dados Reais
+
+**REGRA FUNDAMENTAL**: O aplicativo deve usar APENAS dados reais provenientes da API. Dados mockados ou fallbacks não são permitidos.
+
+#### Diretrizes:
+
+✅ **FAÇA:**
+- Sempre busque dados da API real
+- Trate erros de API adequadamente com mensagens de erro
+- Solicite novos endpoints quando necessário
+- Use loading states enquanto aguarda a resposta da API
+
+❌ **NÃO FAÇA:**
+- Usar dados mockados como fallback
+- Implementar dados hardcoded no código
+- Criar arrays de dados fictícios
+- Usar dados de exemplo em produção
+
+#### Tratamento de Erros:
+
+```tsx
+// ✅ CORRETO - Apenas dados reais
+try {
+  const data = await apiClient.getData();
+  setData(data);
+} catch (error) {
+  setError('Erro ao carregar dados. Tente novamente.');
+}
+
+// ❌ ERRADO - Fallback com dados mockados
+try {
+  const data = await apiClient.getData();
+  setData(data);
+} catch (error) {
+  setData(mockData); // NÃO FAZER ISSO
+}
+```
+
+#### Quando um Endpoint Não Existe:
+
+1. **Identifique a necessidade**: Documente qual endpoint é necessário
+2. **Solicite ao backend**: Comunique a necessidade do novo endpoint
+3. **Aguarde implementação**: Não implemente workarounds com dados fictícios
+4. **Trate a ausência**: Exiba mensagem apropriada até o endpoint estar disponível
