@@ -34,18 +34,18 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
 
     try {
       setCreatingExam(true);
-      // Criar exame via API
+      
       const examResponse = await apiClient.createExam({
         lectureCMSid: lecture._id,
       });
 
-      // Navegar para a tela de prova com o ID do exame criado
       router.push(
         `/prova/${examResponse.exam.id}?lectureId=${lecture._id}&courseId=${courseId}` as any
       );
     } catch (error) {
       console.error("Erro ao criar exame:", error);
-      alert("Erro ao criar exame. Tente novamente.");
+      const errorMessage = error instanceof Error ? error.message : "Erro inesperado ao criar exame. Tente novamente.";
+      alert(errorMessage);
     } finally {
       setCreatingExam(false);
     }

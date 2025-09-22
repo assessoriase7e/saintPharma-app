@@ -1,4 +1,4 @@
-import { useSignUp, useSSO } from "@clerk/clerk-expo";
+import { useSignUp } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -13,10 +13,37 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSSOAuth } from "../../hooks/useSSOAuth";
+
+// Função para traduzir mensagens de erro do Clerk
+function translateClerkError(error: any): string {
+  const errorMessage = error.errors?.[0]?.message || error.message || "";
+
+  if (errorMessage.includes("email_address_not_verified")) {
+    return "Email não verificado. Verifique sua caixa de entrada.";
+  }
+  if (errorMessage.includes("form_password_pwned")) {
+    return "Esta senha foi comprometida em vazamentos de dados. Escolha uma senha mais segura.";
+  }
+  if (errorMessage.includes("form_password_length_too_short")) {
+    return "A senha deve ter pelo menos 8 caracteres.";
+  }
+  if (errorMessage.includes("form_identifier_exists")) {
+    return "Este email já está cadastrado. Tente fazer login.";
+  }
+  if (errorMessage.includes("form_code_incorrect")) {
+    return "Código de verificação incorreto. Tente novamente.";
+  }
+  if (errorMessage.includes("verification_expired")) {
+    return "Código de verificação expirado. Solicite um novo código.";
+  }
+
+  return errorMessage || "Erro inesperado. Tente novamente.";
+}
 
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
-  const { startSSOFlow } = useSSO();
+  const { handleGoogleSSO, isLoading: ssoLoading } = useSSOAuth();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -39,7 +66,7 @@ export default function SignUpScreen() {
       setPendingVerification(true);
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
-      Alert.alert("Erro", err.errors?.[0]?.message || "Erro ao criar conta");
+      Alert.alert("Erro", translateClerkError(err));
     } finally {
       setLoading(false);
     }
@@ -56,34 +83,22 @@ export default function SignUpScreen() {
 
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
-        router.replace("/");
+        // Redirecionar para onboarding após criação bem-sucedida
+        router.replace("/onboarding");
       } else {
         console.error(JSON.stringify(completeSignUp, null, 2));
         Alert.alert("Erro", "Não foi possível verificar o código.");
       }
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
-      Alert.alert("Erro", err.errors?.[0]?.message || "Erro na verificação");
+      Alert.alert("Erro", translateClerkError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const onGoogleSignUp = async () => {
-    setLoading(true);
-    try {
-      const { createdSessionId, setActive } = await startSSOFlow({ strategy: "oauth_google" });
-      
-      if (createdSessionId) {
-        await setActive!({ session: createdSessionId });
-        router.replace("/");
-      }
-    } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert("Erro", "Erro ao fazer login com Google");
-    } finally {
-      setLoading(false);
-    }
+    await handleGoogleSSO();
   };
 
   return (
@@ -164,10 +179,10 @@ export default function SignUpScreen() {
                   {/* Google Sign Up Button */}
                   <TouchableOpacity
                     className={`bg-card border border-border rounded-lg py-4 flex-row items-center justify-center ${
-                      loading ? "opacity-50" : ""
+                      loading || ssoLoading ? "opacity-50" : ""
                     }`}
                     onPress={onGoogleSignUp}
-                    disabled={loading}
+                    disabled={loading || ssoLoading}
                   >
                     <Ionicons
                       name="logo-google"

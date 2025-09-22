@@ -157,22 +157,10 @@ export default function Home() {
         );
 
         if (err instanceof Error) {
-          if (
-            err.message.includes("Network request failed") ||
-            err.message.includes("fetch")
-          ) {
-            setError(
-              "Erro de conexão: Verifique se o servidor da API está rodando em http://localhost:3000"
-            );
-          } else if (err.message.includes("404")) {
-            setError(
-              "Endpoint não encontrado: Verifique se a API está configurada corretamente"
-            );
-          } else {
-            setError(`Erro na API: ${err.message}`);
-          }
+          // As mensagens de erro já vêm traduzidas do ApiClient
+          setError(err.message);
         } else {
-          setError("Erro desconhecido ao carregar os cursos");
+          setError("Erro inesperado ao carregar os cursos. Tente novamente.");
         }
 
         // Garantir que os arrays de cursos sejam sempre válidos

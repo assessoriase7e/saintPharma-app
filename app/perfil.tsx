@@ -31,7 +31,8 @@ export default function Perfil() {
         setUserInfo(response);
       } catch (err) {
         console.error("Erro ao carregar perfil do usuário:", err);
-        setError("Erro ao carregar dados do perfil.");
+        const errorMessage = err instanceof Error ? err.message : "Erro inesperado ao carregar dados do perfil. Tente novamente.";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

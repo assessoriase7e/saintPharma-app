@@ -1,4 +1,4 @@
-import { useSignIn, useSSO } from "@clerk/clerk-expo";
+import { useSignIn } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -13,10 +13,31 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useSSOAuth } from "../../hooks/useSSOAuth";
+
+// Função para traduzir mensagens de erro do Clerk
+function translateClerkError(error: any): string {
+  const errorMessage = error.errors?.[0]?.message || error.message || "";
+
+  if (errorMessage.includes("form_identifier_not_found")) {
+    return "Email não encontrado. Verifique o email ou crie uma conta.";
+  }
+  if (errorMessage.includes("form_password_incorrect")) {
+    return "Senha incorreta. Tente novamente.";
+  }
+  if (errorMessage.includes("too_many_requests")) {
+    return "Muitas tentativas de login. Aguarde alguns minutos.";
+  }
+  if (errorMessage.includes("session_exists")) {
+    return "Você já está logado.";
+  }
+
+  return errorMessage || "Erro inesperado ao fazer login. Tente novamente.";
+}
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
-  const { startSSOFlow } = useSSO();
+  const { handleGoogleSSO, isLoading: ssoLoading } = useSSOAuth();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -35,6 +56,7 @@ export default function SignInScreen() {
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
+        // O guard de onboarding irá verificar se precisa completar o perfil
         router.replace("/");
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));
@@ -42,27 +64,14 @@ export default function SignInScreen() {
       }
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
-      Alert.alert("Erro", err.errors?.[0]?.message || "Erro ao fazer login");
+      Alert.alert("Erro", translateClerkError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const onGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      const { createdSessionId, setActive } = await startSSOFlow({ strategy: "oauth_google" });
-      
-      if (createdSessionId) {
-        await setActive!({ session: createdSessionId });
-        router.replace("/");
-      }
-    } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      Alert.alert("Erro", "Erro ao fazer login com Google");
-    } finally {
-      setLoading(false);
-    }
+    await handleGoogleSSO();
   };
 
   return (
@@ -141,15 +150,15 @@ export default function SignInScreen() {
               {/* Google Sign In Button */}
               <TouchableOpacity
                 className={`bg-card border border-border rounded-lg py-4 flex-row items-center justify-center ${
-                  loading ? "opacity-50" : ""
+                  loading || ssoLoading ? "opacity-50" : ""
                 }`}
                 onPress={onGoogleSignIn}
-                disabled={loading}
+                disabled={loading || ssoLoading}
               >
-                <Ionicons 
-                  name="logo-google" 
-                  size={20} 
-                  color="#4285F4" 
+                <Ionicons
+                  name="logo-google"
+                  size={20}
+                  color="#4285F4"
                   style={{ marginRight: 12 }}
                 />
                 <Text className="text-text-primary font-semibold text-base">
