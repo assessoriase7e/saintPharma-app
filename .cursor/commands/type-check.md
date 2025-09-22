@@ -1,0 +1,1 @@
+- faça uma verificação global de tipos
