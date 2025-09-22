@@ -2,6 +2,8 @@ import { useAuth } from "@clerk/clerk-expo";
 import {
   ApiConfig,
   ApiError,
+  CertificateCreateRequest,
+  CertificateCreateResponse,
   CertificatesResponse,
   CompleteLectureRequest,
   CourseCompleteResponse,
@@ -9,11 +11,13 @@ import {
   CoursesResponse,
   CreateExamRequest,
   ExamResponse,
-  Lecture,
+  LectureDetailResponse,
   LecturesResponse,
   Lives,
   QuestionResponse,
   RankingResponse,
+  SanityRevalidateRequest,
+  SanityRevalidateResponse,
   UpdateExamRequest,
   UserCoursesResponse,
   UserInfoResponse,
@@ -35,6 +39,54 @@ class ApiClient {
 
   setUserId(userId: string) {
     this.config.userId = userId;
+  }
+
+  private translateErrorMessage(errorMessage: string): string {
+    const errorTranslations: Record<string, string> = {
+      "Header X-User-Id é obrigatório":
+        "Erro de autenticação. Faça login novamente.",
+      "lectureCMSid é obrigatório":
+        "Dados da aula não encontrados. Tente novamente.",
+      "Usuário não encontrado": "Usuário não encontrado. Verifique sua conta.",
+      "Lecture não encontrada":
+        "Aula não encontrada. Verifique se ela ainda está disponível.",
+      "Quiz não encontrado para esta lecture":
+        "Esta aula não possui questionário disponível.",
+      "Network error occurred":
+        "Erro de conexão. Verifique sua internet e tente novamente.",
+    };
+
+    // Verifica se existe uma tradução específica
+    if (errorTranslations[errorMessage]) {
+      return errorTranslations[errorMessage];
+    }
+
+    // Verifica se a mensagem contém alguma das chaves conhecidas
+    for (const [key, translation] of Object.entries(errorTranslations)) {
+      if (errorMessage.includes(key)) {
+        return translation;
+      }
+    }
+
+    // Traduz erros HTTP genéricos
+    if (errorMessage.includes("HTTP 400")) {
+      return "Dados inválidos. Verifique as informações e tente novamente.";
+    }
+    if (errorMessage.includes("HTTP 401")) {
+      return "Acesso negado. Faça login novamente.";
+    }
+    if (errorMessage.includes("HTTP 403")) {
+      return "Você não tem permissão para realizar esta ação.";
+    }
+    if (errorMessage.includes("HTTP 404")) {
+      return "Conteúdo não encontrado.";
+    }
+    if (errorMessage.includes("HTTP 500")) {
+      return "Erro interno do servidor. Tente novamente mais tarde.";
+    }
+
+    // Retorna a mensagem original se não houver tradução
+    return errorMessage;
   }
 
   private async request<T>(
@@ -66,17 +118,22 @@ class ApiClient {
         const errorData: ApiError = await response.json().catch(() => ({
           error: `HTTP ${response.status}: ${response.statusText}`,
         }));
-        throw new Error(
-          errorData.error || `Request failed with status ${response.status}`
-        );
+
+        const originalError =
+          errorData.error || `Request failed with status ${response.status}`;
+        const translatedError = this.translateErrorMessage(originalError);
+
+        throw new Error(translatedError);
       }
 
       return await response.json();
     } catch (error) {
       if (error instanceof Error) {
-        throw error;
+        // Traduz a mensagem de erro antes de relançar
+        const translatedMessage = this.translateErrorMessage(error.message);
+        throw new Error(translatedMessage);
       }
-      throw new Error("Network error occurred");
+      throw new Error(this.translateErrorMessage("Network error occurred"));
     }
   }
 
@@ -108,8 +165,8 @@ class ApiClient {
     return this.request<LecturesResponse>(`/lectures?courseId=${courseId}`);
   }
 
-  async getLecture(id: string): Promise<Lecture> {
-    return this.request<Lecture>(`/lectures/${id}`);
+  async getLecture(id: string): Promise<LectureDetailResponse> {
+    return this.request<LectureDetailResponse>(`/lectures/${id}`);
   }
 
   async completeLecture(
@@ -141,16 +198,29 @@ class ApiClient {
     });
   }
 
+  async deleteExam(id: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/exams/${id}`, {
+      method: "DELETE",
+    });
+  }
+
   // Método para buscar questões de uma aula
   async getLectureQuestions(lectureId: string): Promise<QuestionResponse> {
     return this.request<QuestionResponse>(`/lectures/${lectureId}/questions`);
   }
 
   // Métodos de Certificados
-  async getCertificates(page = 0, limit = 10): Promise<CertificatesResponse> {
-    return this.request<CertificatesResponse>(
-      `/certificates?page=${page}&limit=${limit}`
-    );
+  async getCertificates(): Promise<CertificatesResponse> {
+    return this.request<CertificatesResponse>("/certificates");
+  }
+
+  async createCertificate(
+    data: CertificateCreateRequest
+  ): Promise<CertificateCreateResponse> {
+    return this.request<CertificateCreateResponse>("/certificate/create", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 
   // Métodos de Ranking
@@ -227,10 +297,24 @@ class ApiClient {
     });
   }
 
-  async getUserCourses(page = 1, limit = 10): Promise<UserCoursesResponse> {
+  async getUserCourses(status?: string): Promise<UserCoursesResponse> {
+    const params = new URLSearchParams();
+    if (status) params.append("status", status);
+
+    const queryString = params.toString();
     return this.request<UserCoursesResponse>(
-      `/user/courses?page=${page}&limit=${limit}`
+      `/user/courses${queryString ? `?${queryString}` : ""}`
     );
+  }
+
+  // Métodos de Sanity
+  async revalidateSanity(
+    data: SanityRevalidateRequest
+  ): Promise<SanityRevalidateResponse> {
+    return this.request<SanityRevalidateResponse>("/sanity/revalidate", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 }
 

@@ -117,8 +117,21 @@ export interface CourseCompleteResponse {
 
 export interface LecturesResponse {
   lectures: Lecture[];
-  totalLectures: number;
-  completedLectures: number;
+  course: {
+    _id: string;
+    name: string;
+  };
+  progress: {
+    completed: number;
+    total: number;
+    percentage: number;
+  };
+}
+
+export interface LectureDetailResponse {
+  lecture: Lecture;
+  isCompleted: boolean;
+  completedAt: string | null;
 }
 
 export interface UserLectureResponse {
@@ -140,11 +153,6 @@ export interface ExamResponse {
 
 export interface CertificatesResponse {
   certificates: Certificate[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-  };
 }
 
 export interface RankingResponse {
@@ -230,9 +238,9 @@ export interface UserCourse {
 
 export interface UserCoursesResponse {
   courses: UserCourse[];
-  pagination: {
-    page: number;
-    limit: number;
+  summary: {
+    completed: number;
+    inProgress: number;
     total: number;
   };
 }
@@ -272,4 +280,40 @@ export interface QuestionResponse {
   totalQuestions: number;
   timeLimit?: number; // em minutos
   passingScore: number; // porcentagem mínima para aprovação
+}
+
+// Tipos para rotas faltantes
+export interface CertificateCreateRequest {
+  userId: string;
+  course: {
+    _id: string;
+    name: string;
+    points: number;
+  };
+}
+
+export interface CertificateCreateResponse {
+  message: string;
+  certificate: {
+    id: string;
+    userId: string;
+    courseCmsId: string;
+    courseTitle: string;
+    description: string;
+    points: number;
+    workload: number;
+    createdAt: string;
+  };
+  pointsAwarded: number;
+}
+
+export interface SanityRevalidateRequest {
+  secret: string;
+  type?: string;
+  slug?: string;
+}
+
+export interface SanityRevalidateResponse {
+  message: string;
+  revalidated: boolean;
 }

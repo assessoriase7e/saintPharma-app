@@ -76,11 +76,11 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
       }
     } catch (error) {
       console.error("Erro ao baixar imagem:", error);
-      Alert.alert(
-        "Erro",
-        "Não foi possível baixar a imagem. Tente novamente.",
-        [{ text: "OK" }]
-      );
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível baixar a imagem. Tente novamente.";
+      Alert.alert("Erro", errorMessage, [{ text: "OK" }]);
     } finally {
       setDownloading((prev) => ({ ...prev, [blockKey]: false }));
     }
@@ -98,6 +98,11 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
       }
     } catch (error) {
       console.error("Erro ao abrir URL:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível abrir o link. Tente novamente.";
+      Alert.alert("Erro", errorMessage, [{ text: "OK" }]);
     }
   };
 
@@ -350,7 +355,7 @@ export default function LectureView() {
         setError(null);
 
         const lectureData = await apiClient.getLecture(lectureId);
-        setLecture(lectureData);
+        setLecture(lectureData.lecture);
 
         console.log(lectureData);
       } catch (err) {
