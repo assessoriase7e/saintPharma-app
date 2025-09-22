@@ -548,9 +548,38 @@
       }
     },
     "/exams": {
+      "get": {
+        "summary": "Listar exames do usuário",
+        "description": "Lista todos os exames do usuário",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de exames",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exams": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Exam"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "Criar exame",
-        "description": "Cria um novo exame para uma aula",
+        "description": "Cria um novo exame para uma aula. Aceita lectureCMSid (recomendado) ou lectureId (compatibilidade)",
         "parameters": [
           {
             "$ref": "#/components/parameters/UserIdHeader"
@@ -564,10 +593,18 @@
                 "type": "object",
                 "properties": {
                   "lectureCMSid": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "ID da aula no CMS (recomendado)"
+                  },
+                  "lectureId": {
+                    "type": "string",
+                    "description": "ID da aula (compatibilidade)"
                   }
                 },
-                "required": ["lectureCMSid"]
+                "anyOf": [
+                  {"required": ["lectureCMSid"]},
+                  {"required": ["lectureId"]}
+                ]
               }
             }
           }
@@ -681,6 +718,40 @@
                     },
                     "lifeLost": {
                       "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar exame",
+        "description": "Deleta um exame específico do usuário",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/UserIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exame deletado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
                     }
                   }
                 }
