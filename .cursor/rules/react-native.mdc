@@ -1,0 +1,48 @@
+---
+description: "Regras específicas para desenvolvimento React Native"
+globs: ["**/*.tsx", "**/*.jsx", "**/app/**", "**/components/**"]
+---
+
+# Regras React Native
+
+## Componentes
+
+- Usar `React.FC` ou tipagem explícita para componentes
+- Preferir `useState` e `useEffect` para gerenciamento de estado local
+- Usar Context API para estado global quando necessário
+- Implementar `useMemo` e `useCallback` para otimização quando apropriado
+
+## Navegação
+
+- Usar Expo Router para navegação
+- Seguir a estrutura de arquivos para rotas
+- Implementar navegação tipada quando possível
+- Usar `useRouter` e `useLocalSearchParams` para navegação
+
+## Performance
+
+- Evitar re-renders desnecessários
+- Usar `FlatList` para listas grandes
+- Implementar lazy loading quando apropriado
+- Otimizar imagens com `expo-image`
+
+## Plataforma
+
+- Considerar diferenças entre iOS e Android
+- Usar `Platform.select()` quando necessário
+- Testar em ambas as plataformas
+- Usar componentes nativos quando apropriado
+
+## Expo
+
+- Usar APIs do Expo quando disponíveis
+- Seguir as melhores práticas do Expo
+- Manter dependências atualizadas
+- Usar Expo CLI para desenvolvimento
+
+## Estilização
+
+- Usar NativeWind (Tailwind CSS) para estilos
+- Evitar estilos inline quando possível
+- Manter consistência visual
+- Usar variáveis de tema quando disponíveis

@@ -1,0 +1,39 @@
+---
+description: "Regras gerais do projeto SaintPharma App"
+alwaysApply: true
+---
+
+# Regras Gerais do Projeto SaintPharma
+
+## Idioma e Comunicação
+
+- Sempre responder em português brasileiro
+- Usar terminologia técnica em português quando apropriado
+- Manter consistência na nomenclatura em português
+
+## Estrutura do Projeto
+
+- Este é um aplicativo React Native com Expo
+- Usar TypeScript para tipagem
+- Seguir a estrutura de pastas existente
+- Manter consistência com os padrões já estabelecidos
+
+## Padrões de Código
+
+- Usar componentes funcionais com hooks
+- Preferir arrow functions para componentes
+- Manter imports organizados (bibliotecas externas primeiro, depois internas)
+- Usar nomes descritivos para variáveis e funções
+
+## API e Serviços
+
+- Usar os serviços já criados em `services/`
+- Manter consistência com os tipos definidos em `types/`
+- Seguir os padrões de error handling já estabelecidos
+
+## UI/UX
+
+- Usar NativeWind (Tailwind CSS) para estilização
+- Manter consistência com o design system existente
+- Usar os componentes já criados em `components/`
+- Seguir os padrões de acessibilidade

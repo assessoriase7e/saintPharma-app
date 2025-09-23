@@ -1,0 +1,58 @@
+---
+description: "Regras específicas para TypeScript"
+globs: ["**/*.ts", "**/*.tsx", "**/types/**", "**/services/**"]
+---
+
+# Regras TypeScript
+
+## Tipagem
+
+- Sempre usar tipagem explícita para funções e variáveis
+- Evitar `any` - usar `unknown` quando necessário
+- Usar interfaces para objetos complexos
+- Usar types para unions e primitives
+- Implementar tipagem estrita
+
+## Interfaces e Types
+
+- Usar interfaces para objetos que podem ser estendidos
+- Usar types para unions, primitives e computed types
+- Manter interfaces em arquivos separados em `types/`
+- Usar nomes descritivos e em PascalCase
+- Documentar interfaces complexas com comentários
+
+## Funções
+
+- Tipar parâmetros e retorno explicitamente
+- Usar generics quando apropriado
+- Implementar overloads quando necessário
+- Usar arrow functions para funções simples
+- Preferir const assertions quando apropriado
+
+## Imports e Exports
+
+- Usar imports nomeados quando possível
+- Organizar imports: bibliotecas externas, internas, relativos
+- Usar barrel exports em `index.ts` quando apropriado
+- Evitar imports desnecessários
+
+## Error Handling
+
+- Usar Result types ou try/catch apropriadamente
+- Tipar erros explicitamente
+- Implementar error boundaries em React
+- Usar discriminated unions para estados de erro
+
+## API e Serviços
+
+- Tipar responses da API
+- Usar tipos compartilhados entre frontend e backend
+- Implementar validação de tipos em runtime quando necessário
+- Usar tipos opcionais para campos que podem ser undefined
+
+## Configuração
+
+- Manter `strict: true` no tsconfig.json
+- Usar `noImplicitAny: true`
+- Implementar `noUnusedLocals` e `noUnusedParameters`
+- Usar path mapping para imports limpos
