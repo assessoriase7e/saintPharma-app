@@ -23,7 +23,15 @@ module.exports = {
           secondary: "var(--color-text-secondary)",
         },
       },
+      // Desabilitar classes de sombra que podem causar avisos
+      boxShadow: {
+        none: "none",
+      },
     },
   },
   plugins: [],
+  // Configuração específica para evitar propriedades shadow* depreciadas
+  corePlugins: {
+    boxShadow: false,
+  },
 };

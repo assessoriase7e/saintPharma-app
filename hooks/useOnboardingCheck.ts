@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
+import { useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { onboardingService } from "../services/onboarding";
 import { OnboardingCheckResult, OnboardingStatus } from "../types/onboarding";
@@ -7,12 +7,24 @@ import { OnboardingCheckResult, OnboardingStatus } from "../types/onboarding";
 export function useOnboardingCheck(): OnboardingCheckResult {
   const { userId, isLoaded } = useAuth();
   const router = useRouter();
+  const segments = useSegments();
   const [isLoading, setIsLoading] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
+  // Verificar se estamos em uma rota que não precisa de verificação de onboarding
+  const currentRoute = segments[0];
+  const isOnboardingRoute = currentRoute === "onboarding";
+  const isAuthRoute = currentRoute === "(auth)";
+  const isSSOCallbackRoute = currentRoute === "sso-callback";
+
   useEffect(() => {
     if (!isLoaded || !userId) return;
+
+    // Não verificar onboarding se estiver em rotas específicas
+    if (isOnboardingRoute || isAuthRoute || isSSOCallbackRoute) {
+      return;
+    }
 
     const checkOnboarding = async () => {
       try {
@@ -53,7 +65,14 @@ export function useOnboardingCheck(): OnboardingCheckResult {
     };
 
     checkOnboarding();
-  }, [isLoaded, userId, router]);
+  }, [
+    isLoaded,
+    userId,
+    isOnboardingRoute,
+    isAuthRoute,
+    isSSOCallbackRoute,
+    router,
+  ]);
 
   return {
     isLoading,

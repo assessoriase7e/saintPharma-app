@@ -1,17 +1,61 @@
-import { useSSO } from "@clerk/clerk-expo";
+import { useSSO, useUser } from "@clerk/clerk-expo";
 import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
+import { userService } from "../services/userService";
 
 // Pré-aquece o navegador para reduzir o tempo de carregamento da autenticação
-WebBrowser.warmUpAsync();
+// Apenas em plataformas nativas (iOS/Android), não na web
+if (Platform.OS !== "web") {
+  WebBrowser.warmUpAsync().catch((error) => {
+    console.warn("WebBrowser.warmUpAsync falhou:", error);
+  });
+}
 
 export function useSSOAuth() {
   const { startSSOFlow } = useSSO();
+  const { user } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
+  /**
+   * Cria ou atualiza o usuário no banco de dados após login bem-sucedido
+   */
+  const ensureUserInDatabase = async () => {
+    if (!user) {
+      console.warn("⚠️ [useSSOAuth] Nenhum usuário autenticado encontrado");
+      return;
+    }
+
+    try {
+      console.log(
+        "👤 [useSSOAuth] Garantindo que usuário existe no banco de dados:",
+        user.id
+      );
+
+      const userData = await userService.ensureUserExists(
+        user.id,
+        user.primaryEmailAddress?.emailAddress || "",
+        user.fullName || undefined,
+        user.imageUrl || undefined
+      );
+
+      console.log(
+        "✅ [useSSOAuth] Usuário garantido no banco de dados:",
+        userData
+      );
+      return userData;
+    } catch (error) {
+      console.error(
+        "❌ [useSSOAuth] Erro ao garantir usuário no banco:",
+        error
+      );
+      // Não falha o login se não conseguir criar no banco
+      // O usuário ainda pode usar o app
+    }
+  };
 
   const handleSSOLogin = async (
     strategy: "oauth_google" | "oauth_github" | "enterprise_sso",
@@ -44,6 +88,19 @@ export function useSSOAuth() {
       if (createdSessionId) {
         console.log("✅ [useSSOAuth] SSO bem-sucedido, estabelecendo sessão");
         await setActive!({ session: createdSessionId });
+
+        // Aguardar um pouco para o usuário estar disponível
+        setTimeout(async () => {
+          try {
+            // Garantir que o usuário existe no banco de dados
+            await ensureUserInDatabase();
+          } catch (error) {
+            console.error(
+              "❌ [useSSOAuth] Erro ao criar usuário no banco:",
+              error
+            );
+          }
+        }, 1000);
 
         // Redirecionar para onboarding para verificar se precisa completar perfil
         router.replace("/onboarding");
@@ -89,6 +146,7 @@ export function useSSOAuth() {
     handleGoogleSSO,
     handleGitHubSSO,
     handleEnterpriseSSO,
+    ensureUserInDatabase,
     isLoading,
   };
 }
