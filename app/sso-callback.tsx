@@ -1,14 +1,19 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Platform, Text, View } from "react-native";
+import { userService } from "../services/userService";
 
 // Completa qualquer sessão de autenticação pendente
-WebBrowser.maybeCompleteAuthSession();
+// Apenas em plataformas nativas (iOS/Android), não na web
+if (Platform.OS !== "web") {
+  WebBrowser.maybeCompleteAuthSession();
+}
 
 export default function SSOCallbackScreen() {
-  const { handleRedirectCallback, isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,17 +23,38 @@ export default function SSOCallbackScreen() {
       try {
         console.log("🔄 [SSOCallback] Processando callback do SSO...");
 
-        // Processar o callback do Clerk
-        await handleRedirectCallback();
+        // O callback é processado automaticamente pelo Clerk
+        // Aguardar um pouco para garantir que a sessão foi estabelecida
+        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         console.log("✅ [SSOCallback] Callback processado com sucesso");
 
         // Aguardar um momento para garantir que a sessão foi estabelecida
-        setTimeout(() => {
-          if (isSignedIn) {
+        setTimeout(async () => {
+          if (isSignedIn && user) {
             console.log(
-              "🚀 [SSOCallback] Usuário autenticado, redirecionando para onboarding"
+              "🚀 [SSOCallback] Usuário autenticado, garantindo existência no banco de dados"
             );
+
+            try {
+              // Garantir que o usuário existe no banco de dados
+              await userService.ensureUserExists(
+                user.id,
+                user.primaryEmailAddress?.emailAddress || "",
+                user.fullName || undefined,
+                user.imageUrl || undefined
+              );
+              console.log(
+                "✅ [SSOCallback] Usuário garantido no banco de dados"
+              );
+            } catch (error) {
+              console.error(
+                "❌ [SSOCallback] Erro ao criar usuário no banco:",
+                error
+              );
+              // Não falha o fluxo se não conseguir criar no banco
+            }
+
             // Redirecionar para onboarding para verificar se precisa completar perfil
             router.replace("/onboarding");
           } else {
@@ -54,7 +80,7 @@ export default function SSOCallbackScreen() {
     if (isLoaded) {
       processCallback();
     }
-  }, [isLoaded, handleRedirectCallback, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, router]);
 
   // Mostrar loading enquanto processa
   if (isProcessing || !isLoaded) {

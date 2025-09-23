@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View, ActivityIndicator } from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import RankingUserCard from "../components/RankingUserCard";
 import StatCard from "../components/StatCard";
 import TopUserCard from "../components/TopUserCard";
 import UserPositionCard from "../components/UserPositionCard";
-import { useApiClient } from "../services/api";
+import { rankingService } from "../services";
 import { RankingUser, UserPointsResponse } from "../types/api";
 
 export default function Ranking() {
-  const apiClient = useApiClient();
   const [ranking, setRanking] = useState<RankingUser[]>([]);
   const [userPoints, setUserPoints] = useState<UserPointsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +24,7 @@ export default function Ranking() {
   // Função para gerar avatar baseado no nome
   const getAvatar = (name: string): string => {
     const avatars = ["👩‍⚕️", "👨‍⚕️", "👩‍🔬", "👨‍🔬", "👩‍💼", "👨‍💼"];
-    const index = name.length % avatars.length;
+    const index = (name?.length || 0) % avatars.length;
     return avatars[index];
   };
 
@@ -34,17 +33,14 @@ export default function Ranking() {
       try {
         setLoading(true);
         setError(null);
-        
-        const [rankingResponse, userPointsResponse] = await Promise.all([
-          apiClient.getRanking(),
-          apiClient.getUserPoints()
-        ]);
-        
-        setRanking(rankingResponse.ranking);
-        setUserPoints(userPointsResponse);
+
+        const rankingData = await rankingService.getRankingData();
+
+        setRanking(rankingData?.ranking?.ranking || []);
+        setUserPoints(rankingData?.userPoints || null);
       } catch (err) {
-        console.error('Erro ao carregar dados do ranking:', err);
-        setError('Erro ao carregar dados do ranking');
+        console.error("Erro ao carregar dados do ranking:", err);
+        setError("Erro ao carregar dados do ranking");
       } finally {
         setLoading(false);
       }
@@ -86,10 +82,10 @@ export default function Ranking() {
 
         {/* Sua Posição */}
         {userPoints && (
-          <UserPositionCard 
-            position={userPoints.position} 
-            points={userPoints.totalPoints} 
-            badge={getBadge(userPoints.totalPoints)} 
+          <UserPositionCard
+            position={userPoints.position}
+            points={userPoints.totalPoints}
+            badge={getBadge(userPoints.totalPoints)}
           />
         )}
 
@@ -99,7 +95,7 @@ export default function Ranking() {
             icon="people"
             iconColor="#10B981"
             label="Participantes"
-            value={ranking.length.toString()}
+            value={(ranking?.length || 0).toString()}
             subtitle="Ativos"
             subtitleColor="text-green-600 dark:text-green-400"
           />
@@ -108,7 +104,16 @@ export default function Ranking() {
             icon="trending-up"
             iconColor="#3B82F6"
             label="Média"
-            value={ranking.length > 0 ? Math.round(ranking.reduce((acc, user) => acc + user.points, 0) / ranking.length).toString() : "0"}
+            value={
+              (ranking?.length || 0) > 0
+                ? Math.round(
+                    (ranking || []).reduce(
+                      (acc, user) => acc + (user?.points || 0),
+                      0
+                    ) / (ranking?.length || 1)
+                  ).toString()
+                : "0"
+            }
             subtitle="Pontos"
             subtitleColor="text-blue-600 dark:text-blue-400"
           />
@@ -117,28 +122,35 @@ export default function Ranking() {
             icon="star"
             iconColor="#F59E0B"
             label="Top 10%"
-            value={ranking.length > 0 ? `${Math.round(ranking[Math.floor(ranking.length * 0.1)]?.points || 0)}+` : "0"}
+            value={
+              (ranking?.length || 0) > 0
+                ? `${Math.round(
+                    (ranking || [])[Math.floor((ranking?.length || 0) * 0.1)]
+                      ?.points || 0
+                  )}+`
+                : "0"
+            }
             subtitle="Pontos"
             subtitleColor="text-yellow-600 dark:text-yellow-400"
           />
         </View>
 
         {/* Top 3 Destaque */}
-        {ranking.length > 0 && (
+        {(ranking?.length || 0) > 0 && (
           <View className="mb-6">
             <Text className="text-lg font-semibold text-text-primary mb-4">
               Top 3
             </Text>
             <View className="grid grid-cols-3 gap-1">
-              {ranking.slice(0, 3).map((usuario, index) => (
+              {(ranking || []).slice(0, 3).map((usuario, index) => (
                 <TopUserCard
-                  key={`${usuario.user.name}-${index}`}
+                  key={`${usuario?.user?.name || "usuario"}-${index}`}
                   position={index + 1}
-                  name={usuario.user.name}
-                  points={usuario.points}
-                  completedCourses={usuario.certificatesCount}
-                  avatar={getAvatar(usuario.user.name)}
-                  badge={getBadge(usuario.points)}
+                  name={usuario?.user?.name || "Usuário"}
+                  points={usuario?.points || 0}
+                  completedCourses={usuario?.certificatesCount || 0}
+                  avatar={getAvatar(usuario?.user?.name || "Usuário")}
+                  badge={getBadge(usuario?.points || 0)}
                 />
               ))}
             </View>
@@ -151,16 +163,16 @@ export default function Ranking() {
             Ranking Completo
           </Text>
 
-          {ranking.length > 0 ? (
-            ranking.map((usuario, index) => (
+          {(ranking?.length || 0) > 0 ? (
+            (ranking || []).map((usuario, index) => (
               <RankingUserCard
-                key={`${usuario.user.name}-${index}`}
+                key={`${usuario?.user?.name || "usuario"}-${index}`}
                 position={index + 1}
-                name={usuario.user.name}
-                points={usuario.points}
-                completedCourses={usuario.certificatesCount}
-                badge={getBadge(usuario.points)}
-                avatar={getAvatar(usuario.user.name)}
+                name={usuario?.user?.name || "Usuário"}
+                points={usuario?.points || 0}
+                completedCourses={usuario?.certificatesCount || 0}
+                badge={getBadge(usuario?.points || 0)}
+                avatar={getAvatar(usuario?.user?.name || "Usuário")}
               />
             ))
           ) : (

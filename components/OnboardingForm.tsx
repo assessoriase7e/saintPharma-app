@@ -22,6 +22,11 @@ export function OnboardingForm() {
 
   const [loading, setLoading] = useState(false);
 
+  console.log("🔄 [OnboardingForm] Renderizando formulário de onboarding", {
+    userId,
+    user: user ? { id: user.id, name: user.fullName } : null,
+  });
+
   // Dados do usuário
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
@@ -29,42 +34,31 @@ export function OnboardingForm() {
     user?.emailAddresses?.[0]?.emailAddress || ""
   );
 
-  // Dados do endereço
-  const [addressName, setAddressName] = useState("");
-  const [street, setStreet] = useState("");
-  const [number, setNumber] = useState("");
-  const [complement, setComplement] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [country, setCountry] = useState("Brasil");
-
-  // CPF (opcional)
-  const [cpf, setCpf] = useState("");
+  // Endereço e CPF removidos - não são mais necessários
 
   const handleSubmit = async () => {
+    console.log("🔄 [OnboardingForm] handleSubmit chamado", {
+      userId,
+      user: user ? { id: user.id, name: user.fullName } : null,
+      firstName,
+      lastName,
+      email,
+    });
+
     if (!userId || !user) {
+      console.log("❌ [OnboardingForm] Usuário não autenticado");
       Alert.alert("Erro", "Usuário não autenticado");
       return;
     }
 
     // Validações básicas
     if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      console.log("❌ [OnboardingForm] Campos obrigatórios não preenchidos", {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+      });
       Alert.alert("Erro", "Preencha todos os campos obrigatórios");
-      return;
-    }
-
-    if (
-      !addressName.trim() ||
-      !street.trim() ||
-      !number.trim() ||
-      !neighborhood.trim() ||
-      !city.trim() ||
-      !state.trim() ||
-      !zipCode.trim()
-    ) {
-      Alert.alert("Erro", "Preencha todos os campos de endereço");
       return;
     }
 
@@ -79,18 +73,7 @@ export function OnboardingForm() {
           email: email.trim(),
           imgUrl: user.imageUrl || undefined,
         },
-        storeCustomer: cpf.trim() ? { cpf: cpf.trim() } : undefined,
-        address: {
-          name: addressName.trim(),
-          street: street.trim(),
-          number: number.trim(),
-          complement: complement.trim() || undefined,
-          neighborhood: neighborhood.trim(),
-          city: city.trim(),
-          state: state.trim(),
-          zipCode: zipCode.trim(),
-          country: country.trim(),
-        },
+        // CPF e endereço removidos - não são mais necessários
       };
 
       console.log("🔄 [OnboardingForm] Enviando dados de onboarding...");
@@ -99,16 +82,16 @@ export function OnboardingForm() {
 
       if (result.success) {
         console.log("✅ [OnboardingForm] Onboarding concluído com sucesso");
-        Alert.alert(
-          "Sucesso!",
-          "Seu perfil foi criado com sucesso. Bem-vindo!",
-          [
-            {
-              text: "Continuar",
-              onPress: () => router.replace("/"),
-            },
-          ]
+
+        // Redirecionar diretamente para a página inicial
+        console.log(
+          "🔄 [OnboardingForm] Redirecionando para página inicial..."
         );
+
+        // Usar setTimeout para garantir que o estado seja atualizado antes do redirecionamento
+        setTimeout(() => {
+          router.replace("/");
+        }, 100);
       } else {
         console.error("❌ [OnboardingForm] Erro no onboarding:", result.error);
         Alert.alert(
@@ -131,11 +114,12 @@ export function OnboardingForm() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           className="flex-1"
         >
-          <View className="flex-1 px-6 py-4">
+          <View className="px-6 py-4">
             {/* Header */}
             <View className="mb-6">
               <Text className="text-3xl font-bold text-text-primary text-center mb-2">
@@ -196,153 +180,6 @@ export function OnboardingForm() {
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoComplete="email"
-                    />
-                  </View>
-
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      CPF (opcional)
-                    </Text>
-                    <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="Digite seu CPF"
-                      placeholderTextColor="#9ca3af"
-                      value={cpf}
-                      onChangeText={setCpf}
-                      keyboardType="numeric"
-                      maxLength={11}
-                    />
-                  </View>
-                </View>
-              </View>
-
-              {/* Endereço */}
-              <View>
-                <Text className="text-lg font-semibold text-text-primary mb-4">
-                  Endereço
-                </Text>
-
-                <View className="space-y-4">
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      Nome do endereço *
-                    </Text>
-                    <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="Ex: Casa, Trabalho, etc."
-                      placeholderTextColor="#9ca3af"
-                      value={addressName}
-                      onChangeText={setAddressName}
-                    />
-                  </View>
-
-                  <View className="flex-row space-x-3">
-                    <View className="flex-1">
-                      <Text className="text-text-primary font-medium mb-2">
-                        Rua *
-                      </Text>
-                      <TextInput
-                        className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                        placeholder="Nome da rua"
-                        placeholderTextColor="#9ca3af"
-                        value={street}
-                        onChangeText={setStreet}
-                      />
-                    </View>
-                    <View className="w-20">
-                      <Text className="text-text-primary font-medium mb-2">
-                        Nº *
-                      </Text>
-                      <TextInput
-                        className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                        placeholder="123"
-                        placeholderTextColor="#9ca3af"
-                        value={number}
-                        onChangeText={setNumber}
-                      />
-                    </View>
-                  </View>
-
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      Complemento
-                    </Text>
-                    <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="Apartamento, bloco, etc."
-                      placeholderTextColor="#9ca3af"
-                      value={complement}
-                      onChangeText={setComplement}
-                    />
-                  </View>
-
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      Bairro *
-                    </Text>
-                    <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="Nome do bairro"
-                      placeholderTextColor="#9ca3af"
-                      value={neighborhood}
-                      onChangeText={setNeighborhood}
-                    />
-                  </View>
-
-                  <View className="flex-row space-x-3">
-                    <View className="flex-1">
-                      <Text className="text-text-primary font-medium mb-2">
-                        Cidade *
-                      </Text>
-                      <TextInput
-                        className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                        placeholder="Nome da cidade"
-                        placeholderTextColor="#9ca3af"
-                        value={city}
-                        onChangeText={setCity}
-                      />
-                    </View>
-                    <View className="w-20">
-                      <Text className="text-text-primary font-medium mb-2">
-                        UF *
-                      </Text>
-                      <TextInput
-                        className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                        placeholder="SP"
-                        placeholderTextColor="#9ca3af"
-                        value={state}
-                        onChangeText={setState}
-                        maxLength={2}
-                        autoCapitalize="characters"
-                      />
-                    </View>
-                  </View>
-
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      CEP *
-                    </Text>
-                    <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="00000-000"
-                      placeholderTextColor="#9ca3af"
-                      value={zipCode}
-                      onChangeText={setZipCode}
-                      keyboardType="numeric"
-                      maxLength={9}
-                    />
-                  </View>
-
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      País *
-                    </Text>
-                    <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="Brasil"
-                      placeholderTextColor="#9ca3af"
-                      value={country}
-                      onChangeText={setCountry}
                     />
                   </View>
                 </View>

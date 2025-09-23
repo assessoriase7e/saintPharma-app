@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Badge from './Badge';
-import Card from './Card';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Text, View } from "react-native";
+import Badge from "./Badge";
+import Card from "./Card";
 
 interface RankingUserCardProps {
   position: number;
@@ -19,7 +19,7 @@ export default function RankingUserCard({
   points,
   completedCourses,
   badge,
-  avatar
+  avatar,
 }: RankingUserCardProps) {
   const getPosicaoIcon = (posicao: number) => {
     switch (posicao) {
@@ -37,7 +37,7 @@ export default function RankingUserCard({
   const posicaoIcon = getPosicaoIcon(position);
 
   return (
-    <Card 
+    <Card
       content={
         <View className="flex-row items-center">
           {/* Posição à esquerda */}
@@ -57,23 +57,21 @@ export default function RankingUserCard({
           {/* Informações à direita, uma abaixo da outra */}
           <View className="flex-1">
             <Text className="text-lg font-semibold text-text-primary mb-1">
-              {name}
+              {name || "Usuário"}
             </Text>
             <Text className="text-sm text-text-secondary mb-2">
-              {completedCourses} cursos completos
+              {completedCourses || 0} cursos completos
             </Text>
             <View className="flex-row items-center">
               <Text className="text-xl font-bold text-primary mr-1">
-                {points.toLocaleString()}
+                {(points || 0).toLocaleString()}
               </Text>
               <Text className="text-xs text-text-secondary">pontos</Text>
             </View>
           </View>
         </View>
       }
-      footer={
-         <Badge badge={badge} size="small" />
-       }
+      footer={<Badge badge={badge} size="small" />}
     />
   );
 }

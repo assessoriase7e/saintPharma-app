@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Text, View, Pressable, Modal } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useLives } from '../contexts/LivesContext';
-import Card from '../components/Card';
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Modal, Pressable, Text, View } from "react-native";
+import Card from "../components/Card";
+import { useLives } from "../stores";
 
 interface LivesBlockedModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) {
+export function LivesBlockedModal({
+  visible,
+  onClose,
+}: LivesBlockedModalProps) {
   const { userLives, getTimeUntilNextRegeneration } = useLives();
   const [timeLeft, setTimeLeft] = useState(getTimeUntilNextRegeneration());
 
@@ -20,7 +23,7 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
     const interval = setInterval(() => {
       const newTimeLeft = getTimeUntilNextRegeneration();
       setTimeLeft(newTimeLeft);
-      
+
       // Se as vidas foram regeneradas, fechar o modal
       if (userLives.currentLives > 0) {
         onClose();
@@ -34,8 +37,10 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
     const hours = Math.floor(milliseconds / (1000 * 60 * 60));
     const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
-    
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -60,7 +65,8 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
 
             {/* Descrição */}
             <Text className="text-text-secondary text-center mb-6 leading-6">
-              Você não possui mais vidas para acessar os cursos. As vidas são perdidas quando você erra questões nos quizzes.
+              Você não possui mais vidas para acessar os cursos. As vidas são
+              perdidas quando você erra questões nos quizzes.
             </Text>
 
             {/* Contador de vidas atual */}
@@ -94,24 +100,39 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
               <Text className="text-text-primary font-semibold mb-3 text-center">
                 Como Funciona o Sistema de Vidas:
               </Text>
-              
+
               <View className="space-y-2">
                 <View className="flex-row items-start">
-                  <Ionicons name="checkmark-circle" size={16} color="#10b981" className="mt-1" />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={16}
+                    color="#10b981"
+                    className="mt-1"
+                  />
                   <Text className="text-text-secondary text-sm ml-2 flex-1">
                     Você ganha 10 vidas a cada 24 horas automaticamente
                   </Text>
                 </View>
-                
+
                 <View className="flex-row items-start">
-                  <Ionicons name="close-circle" size={16} color="#ef4444" className="mt-1" />
+                  <Ionicons
+                    name="close-circle"
+                    size={16}
+                    color="#ef4444"
+                    className="mt-1"
+                  />
                   <Text className="text-text-secondary text-sm ml-2 flex-1">
                     Perde 1 vida a cada erro em quiz
                   </Text>
                 </View>
-                
+
                 <View className="flex-row items-start">
-                  <Ionicons name="lock-closed" size={16} color="#f59e0b" className="mt-1" />
+                  <Ionicons
+                    name="lock-closed"
+                    size={16}
+                    color="#f59e0b"
+                    className="mt-1"
+                  />
                   <Text className="text-text-secondary text-sm ml-2 flex-1">
                     Sem vidas = sem acesso aos cursos
                   </Text>
@@ -121,7 +142,7 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
 
             {/* Botões */}
             <View className="w-full space-y-3">
-              <Pressable 
+              <Pressable
                 onPress={onClose}
                 className="bg-primary px-6 py-4 rounded-lg"
               >
@@ -129,11 +150,11 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
                   Entendi
                 </Text>
               </Pressable>
-              
-              <Pressable 
+
+              <Pressable
                 onPress={() => {
                   onClose();
-                  router.push('/ranking');
+                  router.push("/ranking");
                 }}
                 className="bg-background border border-border px-6 py-3 rounded-lg"
               >
@@ -153,10 +174,7 @@ export function LivesBlockedModal({ visible, onClose }: LivesBlockedModalProps) 
 export default function LivesBlockedScreen() {
   return (
     <View className="flex-1 bg-background">
-      <LivesBlockedModal 
-        visible={true} 
-        onClose={() => router.back()} 
-      />
+      <LivesBlockedModal visible={true} onClose={() => router.back()} />
     </View>
   );
 }

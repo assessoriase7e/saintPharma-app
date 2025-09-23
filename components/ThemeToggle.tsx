@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, Text } from "react-native";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../stores";
 
 export function ThemeToggle() {
   const { theme, themeMode, setTheme } = useTheme();

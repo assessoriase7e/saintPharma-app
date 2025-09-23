@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { useApiClient } from "../services/api";
+import { userService } from "../services";
 import { UserInfoResponse } from "../types/api";
 
 export default function Perfil() {
@@ -11,7 +11,6 @@ export default function Perfil() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userId } = useAuth();
-  const apiClient = useApiClient();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -19,19 +18,25 @@ export default function Perfil() {
         setLoading(true);
         setError(null);
 
-        // Definir o userId do usuário logado
-        if (userId) {
-          apiClient.setUserId(userId);
-        } else {
+        if (!userId) {
           throw new Error("Usuário não autenticado");
         }
 
-        const response = await apiClient.getUserInfo();
+        const response = await userService.getUser(userId);
         console.log(response);
-        setUserInfo(response);
+        setUserInfo({
+          ...response.user,
+          lives: 0, // Valor padrão, será atualizado pelo LivesContext
+          points: response.user.points || 0,
+          createdAt: response.user.createdAt || new Date().toISOString(),
+          updatedAt: response.user.updatedAt || new Date().toISOString(),
+        });
       } catch (err) {
         console.error("Erro ao carregar perfil do usuário:", err);
-        const errorMessage = err instanceof Error ? err.message : "Erro inesperado ao carregar dados do perfil. Tente novamente.";
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao carregar dados do perfil. Tente novamente.";
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -125,9 +130,7 @@ export default function Perfil() {
               />
               <View>
                 <Text className="text-text-secondary text-sm">Email</Text>
-                <Text className="text-text-primary">
-                  {userInfo?.email}
-                </Text>
+                <Text className="text-text-primary">{userInfo?.email}</Text>
               </View>
             </View>
           </View>

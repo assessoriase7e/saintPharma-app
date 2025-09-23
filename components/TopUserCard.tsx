@@ -56,13 +56,13 @@ export default function TopUserCard({
             </View>
           </View>
           <Text className="text-sm font-semibold text-text-primary text-center mb-1">
-            {name}
+            {name || "Usuário"}
           </Text>
           <Text className="text-lg font-bold text-primary mb-1">
-            {points.toLocaleString()}
+            {(points || 0).toLocaleString()}
           </Text>
           <Text className="text-xs text-text-secondary">
-            {completedCourses} cursos
+            {completedCourses || 0} cursos
           </Text>
         </View>
       }

@@ -14,7 +14,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useApiClient } from "../../services/api";
+import { lecturesService } from "../../services";
 import { Lecture } from "../../types/api";
 
 function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
@@ -107,6 +107,12 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
   };
 
   // Se há conteúdo estruturado, renderizar os blocos
+  console.log("🔍 [LectureContentRenderer] Checking content:", {
+    hasContent: !!lecture.content,
+    contentLength: lecture.content?.length,
+    content: lecture.content,
+  });
+
   if (lecture.content && lecture.content.length > 0) {
     return (
       <View>
@@ -346,7 +352,6 @@ export default function LectureView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
-  const apiClient = useApiClient();
 
   useEffect(() => {
     const fetchLecture = async () => {
@@ -354,10 +359,15 @@ export default function LectureView() {
         setLoading(true);
         setError(null);
 
-        const lectureData = await apiClient.getLecture(lectureId);
-        setLecture(lectureData.lecture);
+        const lectureData = await lecturesService.getLecture(lectureId);
+        console.log("🔍 [Lecture] Lecture Data:", lectureData);
+        console.log("🔍 [Lecture] Content:", lectureData.lecture?.content);
+        console.log(
+          "🔍 [Lecture] Content Length:",
+          lectureData.lecture?.content?.length
+        );
 
-        console.log(lectureData);
+        setLecture(lectureData.lecture);
       } catch (err) {
         console.error("Erro ao buscar dados da aula:", err);
         setError("Erro ao carregar a aula. Verifique sua conexão.");
@@ -410,7 +420,7 @@ export default function LectureView() {
     try {
       setCompleting(true);
 
-      await apiClient.completeLecture(lectureId, { courseId });
+      await lecturesService.completeLecture(lectureId, { courseId });
 
       // Atualiza o estado local
       setLecture({ ...lecture, completed: true });
@@ -432,7 +442,16 @@ export default function LectureView() {
       {/* Header */}
       <View className="bg-card border-b border-border px-5 py-2">
         <View className="flex-row items-center">
-          <Pressable onPress={() => router.back()} className="mr-4">
+          <Pressable
+            onPress={() => {
+              if (courseId) {
+                router.push(`/curso/${courseId}` as any);
+              } else {
+                router.back();
+              }
+            }}
+            className="mr-4"
+          >
             <Ionicons name="arrow-back" size={24} color="#3b82f6" />
           </Pressable>
           <View className="flex-1">

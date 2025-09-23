@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import Avatar from "../components/Avatar";
 import { ThemeToggle } from "../components/ThemeToggle";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../stores";
 
 export default function OpcoesScreen() {
   const { theme } = useTheme();

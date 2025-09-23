@@ -10,8 +10,8 @@ import {
   View,
 } from "react-native";
 import Card from "../../components/Card";
-import { useLives } from "../../contexts/LivesContext";
-import { useApiClient } from "../../services/api";
+import { examsService, lecturesService } from "../../services";
+import { useLives } from "../../stores";
 import { Question } from "../../types/api";
 
 // Interface local para dados completos do exame
@@ -146,17 +146,16 @@ function Timer({ timeLeft, totalTime }: TimerProps) {
 }
 
 export default function ExamScreen() {
-  const { id } = useLocalSearchParams<{ 
-    id: string; 
-    lectureId?: string; 
-    courseId?: string; 
+  const { id } = useLocalSearchParams<{
+    id: string;
+    lectureId?: string;
+    courseId?: string;
   }>();
   const examId = id || "";
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { loseLives } = useLives();
-  const apiClient = useApiClient();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [questionIndex: number]: string }>(
@@ -173,25 +172,27 @@ export default function ExamScreen() {
         setError(null);
 
         // Buscar dados do exame via API
-        const response = await apiClient.getExam(examId);
-        const examData = response.exam;
-        
+        const response = await examsService.getExam(examId);
+        const examData = response.data.exam;
+
         if (examData) {
           // Buscar questões da aula relacionada ao exame
-          const questionsData = await apiClient.getLectureQuestions(examData.lectureCMSid);
-          
+          const questionsData = await lecturesService.getLectureQuestions(
+            examData.lectureCMSid
+          );
+
           // Criar objeto compatível com ExamData
           const fullExamData: ExamData = {
             ...examData,
-            title: 'Exame da Aula',
-            description: 'Teste seus conhecimentos sobre esta aula',
-            timeLimit: questionsData.timeLimit || 30,
-            passingScore: questionsData.passingScore || 70,
-            questions: questionsData.questions || [],
+            title: "Exame da Aula",
+            description: "Teste seus conhecimentos sobre esta aula",
+            timeLimit: (questionsData as any).timeLimit || 30,
+            passingScore: (questionsData as any).passingScore || 70,
+            questions: (questionsData as any).questions || [],
           };
-          
+
           setExam(fullExamData);
-          
+
           if (fullExamData.timeLimit) {
             setTimeLeft(fullExamData.timeLimit * 60);
           }
@@ -207,7 +208,7 @@ export default function ExamScreen() {
     if (examId) {
       fetchExam();
     }
-  }, [examId, apiClient]);
+  }, [examId]);
 
   const handleSubmitQuiz = () => {
     if (answeredQuestions < totalQuestions) {
@@ -233,7 +234,7 @@ export default function ExamScreen() {
 
     try {
       // Submeter resultados via API
-      await apiClient.updateExam(examId, {
+      await examsService.updateExam(examId, {
         complete: results.passed,
         reproved: !results.passed,
       });
@@ -243,8 +244,8 @@ export default function ExamScreen() {
       if (wrongAnswers > 0) {
         loseLives(
           wrongAnswers,
-          `Erros no exame: ${exam?.title || 'Exame'}`,
-          parseInt(exam?.id || '') || undefined
+          `Erros no exame: ${exam?.title || "Exame"}`,
+          parseInt(exam?.id || "") || undefined
         );
       }
 
@@ -261,11 +262,9 @@ export default function ExamScreen() {
       );
     } catch (err) {
       console.error("Erro ao submeter exame:", err);
-      Alert.alert(
-        "Erro",
-        "Erro ao submeter exame. Tente novamente.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Erro", "Erro ao submeter exame. Tente novamente.", [
+        { text: "OK" },
+      ]);
     }
   };
 
@@ -372,10 +371,8 @@ export default function ExamScreen() {
       });
     });
 
-    const maxPoints = exam?.questions?.reduce(
-      (sum, q) => sum + (q.points || 1),
-      0
-    ) || 0;
+    const maxPoints =
+      exam?.questions?.reduce((sum, q) => sum + (q.points || 1), 0) || 0;
     const percentage = (totalPoints / maxPoints) * 100;
     const passed = percentage >= (exam?.passingScore || 70);
 
@@ -388,8 +385,6 @@ export default function ExamScreen() {
       userAnswers,
     };
   };
-
-
 
   // Quiz start screen
   if (!quizStarted) {

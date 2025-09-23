@@ -3,8 +3,7 @@ import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs, useSegments } from "expo-router";
 import { OnboardingGuardWrapper } from "../components/OnboardingGuardWrapper";
-import { LivesProvider } from "../contexts/LivesContext";
-import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { LivesProvider, ThemeProvider, useTheme } from "../stores";
 
 function TabsLayout() {
   const { theme } = useTheme();

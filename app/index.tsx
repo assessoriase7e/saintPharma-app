@@ -9,8 +9,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useLives } from "../contexts/LivesContext";
-import { useApiClient } from "../services/api";
+import { apiClient, coursesService, statsService } from "../services";
+import { useLives } from "../stores";
 import { UserCourse } from "../types/api";
 import "./global.css";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
@@ -47,7 +47,6 @@ export default function Home() {
   const [statistics, setStatistics] = useState(defaultStats);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const apiClient = useApiClient();
 
   // Buscar cursos e estatísticas da API
   useEffect(() => {
@@ -74,79 +73,27 @@ export default function Home() {
         }
         console.log("👤 Usuário logado:", isSignedIn);
 
-        // Sempre buscar todos os cursos disponíveis
+        // Buscar todos os cursos disponíveis usando o service
         console.log("📚 Buscando todos os cursos disponíveis...");
-        const allCoursesResponse = await apiClient.getCourses();
-        console.log("✅ Todos os cursos carregados:", allCoursesResponse);
-
-        // Converter Course[] para UserCourse[] para compatibilidade
-        const allCoursesFormatted = allCoursesResponse.courses.map(
-          (course) => ({
-            id: course._id,
-            courseId: course._id,
-            course: course,
-            enrolledAt: new Date().toISOString(),
-            progress: {
-              completedLectures: 0,
-              totalLectures: 0,
-              percentage: 0,
-            },
-          })
-        );
-        setAllCourses(allCoursesFormatted);
+        const allCoursesData = await coursesService.getAllCourses();
+        setAllCourses(allCoursesData);
 
         if (isSignedIn) {
-          // Usuário logado: também buscar cursos do usuário para mostrar progresso
+          // Buscar cursos do usuário usando o service
           console.log("📚 Buscando cursos do usuário...");
-          try {
-            const userCoursesResponse = await apiClient.getUserCourses();
-            console.log(
-              "✅ Cursos do usuário carregados:",
-              userCoursesResponse
-            );
-            setUserCourses(userCoursesResponse.courses);
-          } catch (userCoursesError) {
-            console.warn("Erro ao buscar cursos do usuário:", userCoursesError);
-            setUserCourses([]);
-          }
+          const userCoursesData = await coursesService.getUserCourses();
+          setUserCourses(userCoursesData);
         } else {
           setUserCourses([]);
         }
 
         // Buscar estatísticas do usuário (apenas se logado)
         if (isSignedIn) {
-          try {
-            const summaryResponse = await apiClient.getUserSummary();
-            const newStats = [
-              {
-                titulo: "Concluídos",
-                valor: summaryResponse.completedCourses.toString(),
-                icone: "checkmark-circle" as const,
-                cor: "#10b981",
-              },
-              {
-                titulo: "Em Progresso",
-                valor: (
-                  (userCourses?.length || 0) - summaryResponse.completedCourses
-                ).toString(),
-                icone: "play-circle" as const,
-                cor: "#3b82f6",
-              },
-              {
-                titulo: "Horas Estudadas",
-                valor: `${Math.floor(summaryResponse.totalTimeSpent / 60)}h`,
-                icone: "time" as const,
-                cor: "#f59e0b",
-              },
-            ];
-            setStatistics(newStats);
-          } catch (statsError) {
-            console.warn("Erro ao buscar estatísticas:", statsError);
-            // Manter estatísticas padrão se houver erro
-          }
+          const userStats = await statsService.getUserStats(userCourses);
+          setStatistics(userStats);
         } else {
-          // Usuário não logado: manter estatísticas padrão
-          setStatistics(defaultStats);
+          // Usuário não logado: usar estatísticas padrão
+          setStatistics(statsService.getDefaultStats());
         }
       } catch (err) {
         console.error("❌ Erro ao buscar dados:", err);
@@ -176,15 +123,7 @@ export default function Home() {
 
   // Função para obter cursos para a seção "Explore Mais Cursos"
   const getExploreCourses = () => {
-    if (!isSignedIn || !allCourses) {
-      return allCourses || [];
-    }
-
-    // Para usuários logados, mostrar apenas cursos que não estão matriculados
-    const userCourseIds = userCourses?.map((uc) => uc.courseId) || [];
-    return allCourses.filter(
-      (course) => !userCourseIds.includes(course.courseId)
-    );
+    return coursesService.getExploreCourses(allCourses, userCourses);
   };
 
   const handleSignIn = () => {

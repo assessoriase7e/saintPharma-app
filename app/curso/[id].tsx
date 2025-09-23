@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import Card from "../../components/Card";
-import { useApiClient } from "../../services/api";
+import { coursesService, examsService, lecturesService } from "../../services";
 import { Lecture } from "../../types/api";
 
 interface LectureCardProps {
@@ -20,7 +20,6 @@ interface LectureCardProps {
 
 function LectureCard({ lecture, courseId, index }: LectureCardProps) {
   const [creatingExam, setCreatingExam] = useState(false);
-  const apiClient = useApiClient();
 
   const handleLecturePress = () => {
     router.push(`/aula/${lecture._id}?courseId=${courseId}` as any);
@@ -34,17 +33,31 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
 
     try {
       setCreatingExam(true);
-      
-      const examResponse = await apiClient.createExam({
+
+      // Verificar elegibilidade antes de criar o exame
+      const eligibilityResponse = await examsService.checkExamEligibility();
+
+      if (!eligibilityResponse.data.canTakeExam) {
+        alert(
+          eligibilityResponse.data.message ||
+            "Você não possui vidas suficientes para iniciar o exame."
+        );
+        return;
+      }
+
+      const examResponse = await examsService.createExam({
         lectureCMSid: lecture._id,
       });
 
       router.push(
-        `/prova/${examResponse.exam.id}?lectureId=${lecture._id}&courseId=${courseId}` as any
+        `/prova/${examResponse.data.exam.id}?lectureId=${lecture._id}&courseId=${courseId}` as any
       );
     } catch (error) {
       console.error("Erro ao criar exame:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro inesperado ao criar exame. Tente novamente.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro inesperado ao criar exame. Tente novamente.";
       alert(errorMessage);
     } finally {
       setCreatingExam(false);
@@ -130,7 +143,6 @@ export default function CourseLessons() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const apiClient = useApiClient();
 
   const fetchCourseData = useCallback(async () => {
     try {
@@ -139,19 +151,23 @@ export default function CourseLessons() {
 
       // Buscar detalhes do curso e aulas
       const [courseResponse, lecturesResponse] = await Promise.all([
-        apiClient.getCourseById(courseId),
-        apiClient.getLectures(courseId),
+        coursesService.getCourseById(courseId),
+        lecturesService.getLectures(courseId),
       ]);
 
-      setCourse(courseResponse.course);
-      setLectures(lecturesResponse.lectures);
+      console.log("🔍 [Course] Course Response:", courseResponse);
+      console.log("🔍 [Course] Lectures Response:", lecturesResponse);
+      console.log("🔍 [Course] Lectures Array:", lecturesResponse.lectures);
+
+      setCourse(courseResponse);
+      setLectures(lecturesResponse.lectures || []);
     } catch (err) {
       console.error("Erro ao buscar dados do curso:", err);
       setError("Erro ao carregar o curso. Verifique sua conexão.");
     } finally {
       setLoading(false);
     }
-  }, [courseId, apiClient]);
+  }, [courseId]);
 
   useEffect(() => {
     if (courseId) {
@@ -334,7 +350,9 @@ export default function CourseLessons() {
               const firstIncompleteLecture =
                 lectures.find((lecture) => !lecture.completed) || lectures[0];
               if (firstIncompleteLecture) {
-                router.push(`/aula/${firstIncompleteLecture._id}` as any);
+                router.push(
+                  `/aula/${firstIncompleteLecture._id}?courseId=${courseId}` as any
+                );
               }
             }}
           >
