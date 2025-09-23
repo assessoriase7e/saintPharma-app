@@ -83,3 +83,4 @@ class StatsService {
 
 // Instância singleton do serviço
 export const statsService = new StatsService();
+
