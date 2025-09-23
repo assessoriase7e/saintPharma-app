@@ -19,6 +19,189 @@ export interface User {
   name: string;
   email: string;
   profileImage?: string;
+  points?: number;
+  quizzes?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Tipos para criação de usuário
+export interface CreateUserRequest {
+  clerkId: string;
+  email: string;
+  name?: string;
+  profileImage?: string;
+}
+
+export interface CreateUserResponse {
+  success: boolean;
+  message: string;
+  user: User;
+}
+
+export interface BulkCreateUserRequest {
+  users: CreateUserRequest[];
+}
+
+export interface BulkCreateUserResponse {
+  success: boolean;
+  message: string;
+  results: {
+    created: Array<{
+      index: number;
+      user: User;
+    }>;
+    errors: Array<{
+      index: number;
+      error: string;
+    }>;
+  };
+}
+
+// Tipos para busca de usuário
+export interface GetUserResponse {
+  success: boolean;
+  message: string;
+  user: User;
+}
+
+export interface GetUserProfileResponse {
+  success: boolean;
+  message: string;
+  profile: User;
+}
+
+// Tipos para resumo do usuário
+export interface UserSummaryResponse {
+  success: boolean;
+  data: {
+    user: User;
+    studyHours: {
+      total: number;
+      thisWeek: number;
+      thisMonth: number;
+    };
+    courses: {
+      completed: number;
+      inProgress: number;
+      total: number;
+    };
+    certificates: {
+      total: number;
+      recent: any[];
+    };
+    ranking: {
+      position: number;
+      totalUsers: number;
+    };
+    activities: {
+      recentLectures: any[];
+      recentExams: any[];
+    };
+  };
+}
+
+// Tipos para estatísticas do usuário
+export interface UserStatsResponse {
+  success: boolean;
+  message: string;
+  stats: {
+    period: string;
+    user: User;
+    achievements: {
+      certificates: {
+        total: number;
+        points: number;
+        workload: number;
+      };
+      lectures: {
+        completed: number;
+        estimatedHours: number;
+      };
+      exams: {
+        total: number;
+        completed: number;
+        passed: number;
+        failed: number;
+        averageScore: number;
+      };
+      damages: {
+        total: number;
+      };
+    };
+    ranking: {
+      position: number;
+      totalUsers: number;
+      percentile: number;
+    };
+    activity: {
+      totalActivities: number;
+      lastActivity: number;
+    };
+  };
+}
+
+// Tipos para atividades do usuário
+export interface UserActivity {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  points: number;
+  createdAt: string;
+  metadata: any;
+}
+
+export interface UserActivitiesResponse {
+  success: boolean;
+  message: string;
+  activities: UserActivity[];
+  stats: {
+    total: number;
+    byType: {
+      certificate: number;
+      lecture: number;
+      exam: number;
+      damage: number;
+    };
+    period: string;
+    type: string;
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+// Tipos para atualização de usuário
+export interface UpdateUserRequest {
+  name?: string;
+  email?: string;
+  profileImage?: string;
+  points?: number;
+  quizzes?: string[];
+}
+
+export interface UpdateUserResponse {
+  success: boolean;
+  message: string;
+  user: User;
+}
+
+// Tipos para completar dados do usuário
+export interface CompleteUserRequest {
+  lastName?: string;
+  firstName?: string;
+}
+
+export interface CompleteUserResponse {
+  success: boolean;
+  message: string;
+  user: User;
 }
 
 // Tipos de curso baseados na resposta real da API
@@ -145,10 +328,27 @@ export interface UserLectureResponse {
 }
 
 export interface ExamResponse {
-  message?: string;
-  exam: Exam;
-  lectureCompleted?: boolean;
-  lifeLost?: boolean;
+  success: boolean;
+  data: {
+    exam: {
+      id: string;
+      lectureCMSid: string;
+      userId: string;
+      complete: boolean;
+      reproved: boolean;
+      createdAt: string;
+      updatedAt?: string;
+    };
+    quiz?: {
+      _id: string;
+      questions: any[];
+    };
+    lecture?: {
+      id: string;
+      title: string;
+    };
+  };
+  timestamp: string;
 }
 
 export interface CertificatesResponse {
@@ -252,12 +452,119 @@ export interface CompleteLectureRequest {
 
 export interface CreateExamRequest {
   lectureCMSid: string;
+  timeLimit?: number; // opcional, em minutos
+  passingScore?: number; // opcional, porcentagem mínima para aprovação
 }
 
 export interface UpdateExamRequest {
   complete?: boolean;
   reproved?: boolean;
   courseId?: string;
+}
+
+export interface ExamEligibilityResponse {
+  success: boolean;
+  data: {
+    canTakeExam: boolean;
+    remainingLives: number;
+    totalLives: number;
+    nextResetTime: string | null;
+    message?: string;
+  };
+  timestamp: string;
+}
+
+export interface ExamQuestionsResponse {
+  success: boolean;
+  data: {
+    exam: {
+      id: string;
+      lectureCMSid: string;
+      userId: string;
+      complete: boolean;
+      reproved: boolean;
+      questions: Array<{
+        id: string;
+        title: string;
+        question: string;
+        cover?: {
+          asset: {
+            url: string;
+          };
+        };
+        answers: Array<{
+          answer: string;
+          isCorrect: boolean;
+        }>;
+        order: number;
+      }>;
+      totalQuestions: number;
+      timeLimit?: number;
+      passingScore?: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
+  timestamp: string;
+}
+
+export interface ExamSubmitRequest {
+  answers: Array<{
+    questionId: string;
+    selectedAnswer: string;
+  }>;
+  timeSpent: number; // em segundos
+}
+
+export interface ExamSubmitResponse {
+  success: boolean;
+  data: {
+    message: string;
+    result: {
+      examId: string;
+      score: number;
+      totalQuestions: number;
+      correctAnswers: number;
+      passed: boolean;
+      timeSpent: number;
+      answers: Array<{
+        questionId: string;
+        selectedAnswer: string;
+        isCorrect: boolean;
+        timeSpent: number;
+      }>;
+      completedAt: string;
+    };
+  };
+  timestamp: string;
+}
+
+export interface ExamAttemptsResponse {
+  success: boolean;
+  data: {
+    attempts: Array<{
+      id: string;
+      examId: string;
+      userId: string;
+      answers: any[];
+      score: number;
+      totalQuestions: number;
+      correctAnswers: number;
+      timeSpent: number;
+      completedAt: string;
+      createdAt: string;
+      updatedAt: string;
+    }>;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  };
+  timestamp: string;
 }
 
 // Tipos para questões do quiz

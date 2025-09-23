@@ -7,20 +7,7 @@ export interface OnboardingData {
     email: string;
     imgUrl?: string;
   };
-  storeCustomer?: {
-    cpf?: string;
-  };
-  address: {
-    name: string;
-    street: string;
-    number: string;
-    complement?: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
+  // storeCustomer e address removidos - não são mais necessários
 }
 
 export interface OnboardingResult {
