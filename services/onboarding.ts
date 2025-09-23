@@ -4,51 +4,63 @@ import {
   OnboardingResult,
   OnboardingStatus,
 } from "../types/onboarding";
+import { httpClient } from "./httpClient";
 
 class OnboardingService {
   /**
-   * Completa o processo de onboarding criando o usuário na API externa
+   * Completa o processo de onboarding usando a API /user/complete
    */
   async completeOnboarding(data: OnboardingData): Promise<OnboardingResult> {
     try {
-      console.log("🔄 [OnboardingService] Iniciando processo de onboarding...");
-
-      // Fazer requisição para a rota unificada da API externa
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/onboarding`,
+      console.log(
+        "🔄 [OnboardingService] Iniciando processo de onboarding...",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.EXPO_PUBLIC_API_TOKEN}`,
-          },
-          body: JSON.stringify(data),
+          userId: data.user.id,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          apiUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
+          hasApiToken: !!process.env.EXPO_PUBLIC_API_TOKEN,
         }
       );
 
-      if (response.status === 201) {
-        const responseData = await response.json();
-        console.log("✅ [OnboardingService] Onboarding concluído com sucesso");
-
-        return {
-          success: true,
-          data: responseData.data,
-          message: "Onboarding concluído com sucesso",
-        };
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `Erro HTTP ${response.status}`;
-
+      // Verificar se as variáveis de ambiente estão configuradas
+      if (
+        !process.env.EXPO_PUBLIC_API_BASE_URL ||
+        !process.env.EXPO_PUBLIC_API_TOKEN
+      ) {
         console.error(
-          "❌ [OnboardingService] Erro no onboarding:",
-          errorMessage
+          "❌ [OnboardingService] Variáveis de ambiente não configuradas"
+        );
+        console.error("❌ [OnboardingService] Crie um arquivo .env com:");
+        console.error(
+          "❌ [OnboardingService] EXPO_PUBLIC_API_BASE_URL=https://your-api-url.com"
+        );
+        console.error(
+          "❌ [OnboardingService] EXPO_PUBLIC_API_TOKEN=your-api-token"
         );
 
         return {
           success: false,
-          error: errorMessage,
+          error:
+            "Configuração da API não encontrada. Verifique as variáveis de ambiente no arquivo .env",
         };
       }
+
+      // Usar o endpoint /api/user/complete conforme documentação
+      httpClient.setUserId(data.user.id); // ID do Clerk
+
+      const responseData = await httpClient.put("/api/user/complete", {
+        firstName: data.user.firstName,
+        lastName: data.user.lastName,
+      });
+
+      console.log("✅ [OnboardingService] Onboarding concluído com sucesso");
+
+      return {
+        success: true,
+        data: responseData.data,
+        message: "Onboarding concluído com sucesso",
+      };
     } catch (error: any) {
       console.error("❌ [OnboardingService] Erro inesperado:", error);
 
@@ -60,7 +72,7 @@ class OnboardingService {
   }
 
   /**
-   * Verifica o status do onboarding do usuário
+   * Verifica o status do onboarding do usuário usando /auth/user
    */
   async checkOnboardingStatus(userId: string): Promise<OnboardingStatus> {
     try {
@@ -69,48 +81,24 @@ class OnboardingService {
         userId
       );
 
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/onboarding/${userId}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.EXPO_PUBLIC_API_TOKEN}`,
-          },
-        }
-      );
+      httpClient.setUserId(userId);
 
-      if (response.status === 200) {
-        const responseData = await response.json();
-        const data = responseData.data;
-        const meta = data.meta;
+      const responseData = await httpClient.get("/api/auth/user");
+      const user = responseData.data;
 
-        const status: OnboardingStatus = {
-          needsOnboarding:
-            !meta.userExists || !meta.storeCustomerExists || !meta.hasAddress,
-          userExists: meta.userExists,
-          storeCustomerExists: meta.storeCustomerExists,
-          hasAddress: meta.hasAddress,
-          user: data.user,
-          storeCustomer: data.storeCustomer,
-          address: data.addresses?.[0] || null,
-        };
+      // Verificar se o usuário tem nome completo (indica que completou onboarding)
+      const hasCompleteName = user.name && user.name.trim().length > 0;
 
-        console.log("✅ [OnboardingService] Status verificado:", status);
-        return status;
-      } else {
-        // Se não conseguir verificar, assumir que precisa de onboarding
-        console.warn(
-          "⚠️ [OnboardingService] Não foi possível verificar status, assumindo que precisa de onboarding"
-        );
+      const status: OnboardingStatus = {
+        needsOnboarding: !hasCompleteName,
+        userExists: true,
+        storeCustomerExists: true, // Assumir que existe se o usuário existe
+        hasAddress: true, // Não precisamos mais de endereço
+        user: user,
+      };
 
-        return {
-          needsOnboarding: true,
-          userExists: false,
-          storeCustomerExists: false,
-          hasAddress: false,
-        };
-      }
+      console.log("✅ [OnboardingService] Status verificado:", status);
+      return status;
     } catch (error: any) {
       console.error("❌ [OnboardingService] Erro ao verificar status:", error);
 
