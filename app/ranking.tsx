@@ -5,11 +5,10 @@ import StatCard from "../components/StatCard";
 import TopUserCard from "../components/TopUserCard";
 import UserPositionCard from "../components/UserPositionCard";
 import { rankingService } from "../services";
-import { RankingUser, UserPointsResponse } from "../types/api";
-import { getUserFullName } from "../utils/userName";
+import { RankingResponse, RankingUser, UserPointsResponse } from "../types/api";
 
 export default function Ranking() {
-  const [ranking, setRanking] = useState<RankingUser[]>([]);
+  const [rankingData, setRankingData] = useState<RankingResponse | null>(null);
   const [userPoints, setUserPoints] = useState<UserPointsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +34,10 @@ export default function Ranking() {
         setLoading(true);
         setError(null);
 
-        const rankingData = await rankingService.getRankingData();
+        const data = await rankingService.getRankingData();
 
-        setRanking(rankingData?.ranking?.ranking || []);
-        setUserPoints(rankingData?.userPoints || null);
+        setRankingData(data?.ranking || null);
+        setUserPoints(data?.userPoints || null);
       } catch (err) {
         console.error("Erro ao carregar dados do ranking:", err);
         setError("Erro ao carregar dados do ranking");
@@ -49,6 +48,8 @@ export default function Ranking() {
 
     fetchRankingData();
   }, []);
+
+  const ranking = rankingData?.ranking || [];
 
   if (loading) {
     return (
@@ -90,14 +91,34 @@ export default function Ranking() {
           />
         )}
 
+        {/* Informações da Semana */}
+        {rankingData?.week && (
+          <View className="mb-4 p-4 bg-card border border-border rounded-lg">
+            <Text className="text-sm text-text-secondary mb-1">
+              Semana do Ranking
+            </Text>
+            <Text className="text-base font-semibold text-text-primary">
+              {new Date(rankingData.week.start).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              })}{" "}
+              -{" "}
+              {new Date(rankingData.week.end).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              })}
+            </Text>
+          </View>
+        )}
+
         {/* Estatísticas do Ranking */}
         <View className="grid grid-cols-1 gap-5 justify-between mb-6">
           <StatCard
             icon="people"
             iconColor="#10B981"
             label="Participantes"
-            value={(ranking?.length || 0).toString()}
-            subtitle="Ativos"
+            value={(rankingData?.pagination?.total || ranking?.length || 0).toString()}
+            subtitle="Total"
             subtitleColor="text-green-600 dark:text-green-400"
           />
 
@@ -106,12 +127,12 @@ export default function Ranking() {
             iconColor="#3B82F6"
             label="Média"
             value={
-              (ranking?.length || 0) > 0
+              ranking?.length > 0
                 ? Math.round(
-                    (ranking || []).reduce(
+                    ranking.reduce(
                       (acc, user) => acc + (user?.points || 0),
                       0
-                    ) / (ranking?.length || 1)
+                    ) / ranking.length
                   ).toString()
                 : "0"
             }
@@ -124,10 +145,9 @@ export default function Ranking() {
             iconColor="#F59E0B"
             label="Top 10%"
             value={
-              (ranking?.length || 0) > 0
+              ranking?.length > 0
                 ? `${Math.round(
-                    (ranking || [])[Math.floor((ranking?.length || 0) * 0.1)]
-                      ?.points || 0
+                    ranking[Math.floor(ranking.length * 0.1)]?.points || 0
                   )}+`
                 : "0"
             }
@@ -137,23 +157,22 @@ export default function Ranking() {
         </View>
 
         {/* Top 3 Destaque */}
-        {(ranking?.length || 0) > 0 && (
+        {ranking.length > 0 && (
           <View className="mb-6">
             <Text className="text-lg font-semibold text-text-primary mb-4">
               Top 3
             </Text>
             <View className="grid grid-cols-3 gap-1">
-              {(ranking || []).slice(0, 3).map((usuario, index) => {
-                const userName = getUserFullName(usuario?.user);
+              {ranking.slice(0, 3).map((usuario) => {
                 return (
                   <TopUserCard
-                    key={`${userName}-${index}`}
-                    position={index + 1}
-                    name={userName}
-                    points={usuario?.points || 0}
-                    completedCourses={usuario?.certificatesCount || 0}
-                    avatar={getAvatar(userName)}
-                    badge={getBadge(usuario?.points || 0)}
+                    key={usuario.id}
+                    position={usuario.position}
+                    name={usuario.name || "Usuário"}
+                    points={usuario.points || 0}
+                    completedCourses={0}
+                    avatar={getAvatar(usuario.name || "Usuário")}
+                    badge={getBadge(usuario.points || 0)}
                   />
                 );
               })}
@@ -163,22 +182,28 @@ export default function Ranking() {
 
         {/* Ranking Completo */}
         <View className="space-y-3">
-          <Text className="text-lg font-semibold text-text-primary mb-4">
-            Ranking Completo
-          </Text>
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-semibold text-text-primary">
+              Ranking Completo
+            </Text>
+            {rankingData?.pagination && (
+              <Text className="text-sm text-text-secondary">
+                Página {rankingData.pagination.page} de {rankingData.pagination.pages}
+              </Text>
+            )}
+          </View>
 
-          {(ranking?.length || 0) > 0 ? (
-            (ranking || []).map((usuario, index) => {
-              const userName = getUserFullName(usuario?.user);
+          {ranking.length > 0 ? (
+            ranking.map((usuario) => {
               return (
                 <RankingUserCard
-                  key={`${userName}-${index}`}
-                  position={index + 1}
-                  name={userName}
-                  points={usuario?.points || 0}
-                  completedCourses={usuario?.certificatesCount || 0}
-                  badge={getBadge(usuario?.points || 0)}
-                  avatar={getAvatar(userName)}
+                  key={usuario.id}
+                  position={usuario.position}
+                  name={usuario.name || "Usuário"}
+                  points={usuario.points || 0}
+                  completedCourses={0}
+                  badge={getBadge(usuario.points || 0)}
+                  avatar={getAvatar(usuario.name || "Usuário")}
                 />
               );
             })

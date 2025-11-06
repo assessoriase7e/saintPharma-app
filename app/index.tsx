@@ -273,26 +273,28 @@ export default function Home() {
                         </View>
                       </View>
                       {/* Barra de progresso */}
-                      <View className="mt-2">
-                        <View className="flex-row items-center justify-between mb-1">
-                          <Text className="text-text-secondary text-xs">
-                            Progresso
-                          </Text>
-                          <Text className="text-text-secondary text-xs">
-                            {course.progress.percentage.toFixed(0)}%
+                      {course.progress && (
+                        <View className="mt-2">
+                          <View className="flex-row items-center justify-between mb-1">
+                            <Text className="text-text-secondary text-xs">
+                              Progresso
+                            </Text>
+                            <Text className="text-text-secondary text-xs">
+                              {course.progress.percentage?.toFixed(0) ?? 0}%
+                            </Text>
+                          </View>
+                          <View className="bg-border h-2 rounded-full">
+                            <View
+                              className="bg-primary h-2 rounded-full"
+                              style={{ width: `${course.progress.percentage ?? 0}%` }}
+                            />
+                          </View>
+                          <Text className="text-text-secondary text-xs mt-1">
+                            {course.progress.completedLectures ?? 0} de{" "}
+                            {course.progress.totalLectures ?? 0} aulas
                           </Text>
                         </View>
-                        <View className="bg-border h-2 rounded-full">
-                          <View
-                            className="bg-primary h-2 rounded-full"
-                            style={{ width: `${course.progress.percentage}%` }}
-                          />
-                        </View>
-                        <Text className="text-text-secondary text-xs mt-1">
-                          {course.progress.completedLectures} de{" "}
-                          {course.progress.totalLectures} aulas
-                        </Text>
-                      </View>
+                      )}
                     </View>
                   </Pressable>
                 ))}
@@ -360,28 +362,30 @@ export default function Home() {
                             </View>
                           </View>
                           {/* Barra de progresso */}
-                          <View className="mt-2">
-                            <View className="flex-row items-center justify-between mb-1">
-                              <Text className="text-text-secondary text-xs">
-                                Progresso
-                              </Text>
-                              <Text className="text-text-secondary text-xs">
-                                {course.progress.percentage.toFixed(0)}%
+                          {course.progress && (
+                            <View className="mt-2">
+                              <View className="flex-row items-center justify-between mb-1">
+                                <Text className="text-text-secondary text-xs">
+                                  Progresso
+                                </Text>
+                                <Text className="text-text-secondary text-xs">
+                                  {course.progress.percentage?.toFixed(0) ?? 0}%
+                                </Text>
+                              </View>
+                              <View className="bg-border h-2 rounded-full">
+                                <View
+                                  className="bg-primary h-2 rounded-full"
+                                  style={{
+                                    width: `${course.progress.percentage ?? 0}%`,
+                                  }}
+                                />
+                              </View>
+                              <Text className="text-text-secondary text-xs mt-1">
+                                {course.progress.completedLectures ?? 0} de{" "}
+                                {course.progress.totalLectures ?? 0} aulas
                               </Text>
                             </View>
-                            <View className="bg-border h-2 rounded-full">
-                              <View
-                                className="bg-primary h-2 rounded-full"
-                                style={{
-                                  width: `${course.progress.percentage}%`,
-                                }}
-                              />
-                            </View>
-                            <Text className="text-text-secondary text-xs mt-1">
-                              {course.progress.completedLectures} de{" "}
-                              {course.progress.totalLectures} aulas
-                            </Text>
-                          </View>
+                          )}
                         </View>
                       </Pressable>
                     ))

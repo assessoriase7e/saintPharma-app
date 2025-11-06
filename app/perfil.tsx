@@ -26,7 +26,7 @@ export default function Perfil() {
         console.log(response);
         setUserInfo({
           ...response.user,
-          lives: 0, // Valor padrão, será atualizado pelo LivesContext
+          lives: response.user.lives || 0,
           points: response.user.points || 0,
           createdAt: response.user.createdAt || new Date().toISOString(),
           updatedAt: response.user.updatedAt || new Date().toISOString(),
