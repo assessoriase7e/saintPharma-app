@@ -62,7 +62,16 @@ class RankingService {
         "✅ [RankingService] Pontos do usuário carregados:",
         response
       );
-      return response;
+      
+      // Normalizar resposta: a API pode retornar weekPoints ou weeklyPoints
+      const normalizedResponse: UserPointsResponse = {
+        totalPoints: response.totalPoints || (response as any).totalPoints || 0,
+        weeklyPoints: (response as any).weekPoints || response.weeklyPoints || 0,
+        position: response.position || (response as any).position || 0,
+      };
+      
+      console.log("🏆 [RankingService] Resposta normalizada:", normalizedResponse);
+      return normalizedResponse;
     } catch (error) {
       console.error(
         "❌ [RankingService] Erro ao buscar pontos do usuário:",
