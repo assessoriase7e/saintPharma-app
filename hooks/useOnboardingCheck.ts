@@ -23,6 +23,24 @@ export function useOnboardingCheck(): OnboardingCheckResult {
 
     // Não verificar onboarding se estiver em rotas específicas
     if (isOnboardingRoute || isAuthRoute || isSSOCallbackRoute) {
+      // Mas ainda verificar se estiver na rota de onboarding para redirecionar se já completo
+      if (isOnboardingRoute) {
+        const checkOnboarding = async () => {
+          try {
+            setIsLoading(true);
+            const status = await onboardingService.checkOnboardingStatus(userId);
+            if (!status.needsOnboarding) {
+              console.log("✅ [useOnboardingCheck] Onboarding já completo, redirecionando da rota de onboarding");
+              router.replace("/");
+            }
+          } catch (err: any) {
+            console.error("❌ [useOnboardingCheck] Erro ao verificar onboarding na rota:", err);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        checkOnboarding();
+      }
       return;
     }
 
@@ -39,15 +57,30 @@ export function useOnboardingCheck(): OnboardingCheckResult {
         const status: OnboardingStatus =
           await onboardingService.checkOnboardingStatus(userId);
 
-        console.log("📊 [useOnboardingCheck] Status do onboarding:", status);
+        console.log("📊 [useOnboardingCheck] Status do onboarding:", {
+          needsOnboarding: status.needsOnboarding,
+          userExists: status.userExists,
+          user: status.user ? {
+            id: status.user.id,
+            firstName: status.user.firstName,
+            lastName: status.user.lastName,
+          } : null,
+        });
 
         if (status.needsOnboarding) {
-          console.log("🚀 [useOnboardingCheck] Redirecionando para onboarding");
+          console.log("🚀 [useOnboardingCheck] Usuário precisa completar onboarding");
           setNeedsOnboarding(true);
-          router.push("/onboarding");
+          // Só redirecionar se não estiver já na rota de onboarding
+          if (!isOnboardingRoute) {
+            router.replace("/onboarding");
+          }
         } else {
           console.log("✅ [useOnboardingCheck] Onboarding já completo");
           setNeedsOnboarding(false);
+          // Se estiver na rota de onboarding mas não precisa, redirecionar para home
+          if (isOnboardingRoute) {
+            router.replace("/");
+          }
         }
       } catch (err: any) {
         console.error(
