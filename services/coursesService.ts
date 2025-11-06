@@ -61,6 +61,10 @@ class CoursesService {
             totalLectures: 0,
             percentage: 0,
           },
+          // Preservar campos de acesso premium vindos da API
+          canAccess: course.canAccess,
+          weekPointsRequired: course.weekPointsRequired,
+          userWeekPoints: course.userWeekPoints,
         }));
 
         console.log(
@@ -171,6 +175,9 @@ class CoursesService {
           workload: courseData.workload || 0,
           points: courseData.points || 0,
           premiumPoints: courseData.premiumPoints || null,
+          canAccess: courseData.canAccess,
+          weekPointsRequired: courseData.weekPointsRequired || null,
+          userWeekPoints: courseData.userWeekPoints || null,
           slug: courseData.slug || null,
           banner: courseData.imageUrl ? {
             asset: {
@@ -191,6 +198,10 @@ class CoursesService {
             percentage: finalProgressPercentage,
           },
           lastAccessedAt: courseData.lastActivity || undefined,
+          // Preservar campos de acesso premium vindos da API
+          canAccess: courseData.canAccess,
+          weekPointsRequired: courseData.weekPointsRequired || null,
+          userWeekPoints: courseData.userWeekPoints || null,
         };
       });
 

@@ -216,6 +216,9 @@ export interface Course {
   workload: number;
   points: number;
   premiumPoints?: number | null;
+  canAccess?: boolean; // Indica se o usuário pode acessar o curso premium
+  weekPointsRequired?: number | null; // Pontos semanais necessários (null se não for premium)
+  userWeekPoints?: number | null; // Pontos semanais do usuário (null se X-User-Id não foi fornecido)
   slug?: string | null;
   banner?: {
     asset: {
@@ -479,6 +482,10 @@ export interface CourseProgressResponse {
     description: string;
     points: number;
     workload: number;
+    premiumPoints?: number | null;
+    canAccess?: boolean;
+    weekPointsRequired?: number | null;
+    userWeekPoints?: number | null;
     imageUrl?: string;
   };
   progress: CourseProgress;
@@ -524,6 +531,10 @@ export interface MultipleCourseProgressResponse {
       description: string;
       points: number;
       workload: number;
+      premiumPoints?: number | null;
+      canAccess?: boolean;
+      weekPointsRequired?: number | null;
+      userWeekPoints?: number | null;
       imageUrl?: string;
     };
     progress: CourseProgress;
@@ -551,6 +562,10 @@ export interface UserCourse {
     percentage: number;
   };
   lastAccessedAt?: string;
+  // Campos de acesso premium (vindos da API)
+  canAccess?: boolean;
+  weekPointsRequired?: number | null;
+  userWeekPoints?: number | null;
 }
 
 export interface UserCoursesResponse {
