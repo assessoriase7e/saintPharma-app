@@ -181,25 +181,23 @@ export default function Home() {
               </View>
 
               {/* Indicador de Vidas - apenas para usuários logados */}
-              {isSignedIn && userLives && (
-                <View className="bg-card border border-border rounded-lg px-3 py-2">
-                  <View className="flex-row items-center">
-                    <Ionicons
-                      name="heart"
-                      size={20}
-                      color={userLives.currentLives > 0 ? "#ef4444" : "#9ca3af"}
-                    />
-                    <Text
-                      className={`ml-1 font-semibold ${
-                        userLives.currentLives > 0
-                          ? "text-red-500"
-                          : "text-text-secondary"
-                      }`}
-                    >
-                      {userLives.currentLives}
-                    </Text>
-                  </View>
-                  <Text className="text-text-secondary text-xs text-center mt-1">
+              {isSignedIn && livesLoaded && userLives && (
+                <View className="bg-card border border-border rounded-lg px-4 py-2 items-center ml-3">
+                  <Ionicons
+                    name="heart"
+                    size={20}
+                    color={userLives.currentLives > 0 ? "#ef4444" : "#9ca3af"}
+                  />
+                  <Text
+                    className={`mt-1 font-semibold text-text-primary ${
+                      userLives.currentLives > 0
+                        ? "text-red-500"
+                        : "text-text-secondary"
+                    }`}
+                  >
+                    {userLives.currentLives}
+                  </Text>
+                  <Text className="text-text-secondary text-xs text-center">
                     Vidas
                   </Text>
                 </View>
