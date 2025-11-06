@@ -43,6 +43,7 @@ Authorization: Bearer <API_TOKEN>
 - [GET /api/user/lives](user/lives/GET.md) - Buscar vidas
 - [DELETE /api/user/lives](user/lives/DELETE.md) - Remover vida
 - [GET /api/user/courses](user/courses/GET.md) - Cursos do usuário
+- [POST /api/user/courses](user/courses/POST.md) - Marcar curso como concluído
 
 ### Cursos (/api/courses)
 
@@ -68,12 +69,14 @@ Authorization: Bearer <API_TOKEN>
 - [GET /api/lectures](lectures/GET.md) - Listar aulas
 - [GET /api/lectures/[id]](lectures/[id]/GET.md) - Detalhes da aula
 - [POST /api/lectures/[id]/complete](lectures/[id]/complete/POST.md) - Completar aula
+- [GET /api/lectures/[id]/questions](lectures/[id]/questions/GET.md) - Questões da aula
 
 ### Certificados (/api/certificate)
 
 - [GET /api/certificate](certificate/GET.md) - Listar certificados
 - [POST /api/certificate/create](certificate/create/POST.md) - Criar certificado
 - [GET /api/certificate/[id]](certificate/[id]/GET.md) - Detalhes do certificado
+- [POST /api/certificate/for-user](certificate/for-user/POST.md) - Criar ou retornar certificado para usuário autenticado
 
 ### Ranking (/api/ranking)
 
