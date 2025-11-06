@@ -21,6 +21,7 @@ export interface User {
   email: string;
   profileImage?: string;
   points?: number;
+  lives?: number;
   quizzes?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -277,13 +278,27 @@ export interface Lives {
 
 // Tipos de ranking
 export interface RankingUser {
-  user: {
-    firstName?: string;
-    lastName?: string;
-    profileImage?: string;
-  };
+  id: string;
+  clerkId: string;
+  name: string;
+  email: string;
+  profileImage?: string;
   points: number;
-  certificatesCount: number;
+  position: number;
+}
+
+export interface RankingPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface RankingWeek {
+  start: string;
+  end: string;
 }
 
 // Tipos de resposta da API
@@ -360,7 +375,10 @@ export interface CertificatesResponse {
 }
 
 export interface RankingResponse {
+  success: boolean;
   ranking: RankingUser[];
+  pagination: RankingPagination;
+  week: RankingWeek;
 }
 
 export interface UserPointsResponse {
