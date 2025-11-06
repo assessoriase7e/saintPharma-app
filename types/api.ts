@@ -16,7 +16,8 @@ export interface ApiError {
 export interface User {
   id: string;
   clerkId: string;
-  name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   profileImage?: string;
   points?: number;
@@ -29,7 +30,8 @@ export interface User {
 export interface CreateUserRequest {
   clerkId: string;
   email: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   profileImage?: string;
 }
 
@@ -179,7 +181,8 @@ export interface UserActivitiesResponse {
 
 // Tipos para atualização de usuário
 export interface UpdateUserRequest {
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   profileImage?: string;
   points?: number;
@@ -275,7 +278,8 @@ export interface Lives {
 // Tipos de ranking
 export interface RankingUser {
   user: {
-    name: string;
+    firstName?: string;
+    lastName?: string;
     profileImage?: string;
   };
   points: number;
@@ -368,7 +372,8 @@ export interface UserPointsResponse {
 export interface UserInfoResponse {
   id: string;
   clerkId: string;
-  name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   profileImage?: string;
   points: number;
@@ -422,6 +427,85 @@ export interface UserProgressResponse {
 }
 
 // Tipos para cursos do usuário
+export interface CourseProgress {
+  status: "not_started" | "in_progress" | "completed";
+  percentage: number;
+  completedLectures: number;
+  totalLectures: number;
+  remainingLectures: number;
+  isCompleted: boolean;
+  isReadyForCertificate: boolean;
+}
+
+export interface CourseProgressResponse {
+  success: true;
+  course: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    points: number;
+    workload: number;
+    imageUrl?: string;
+  };
+  progress: CourseProgress;
+  certificate?: {
+    id: string;
+    courseTitle: string;
+    points: number;
+    workload: number;
+    createdAt: string;
+  } | null;
+  lectures?: Array<{
+    id: string;
+    title: string;
+    completed: boolean;
+    completedAt?: string | null;
+  }>;
+  exams?: Array<{
+    id: string;
+    lectureId: string;
+    complete: boolean;
+    reproved: boolean;
+    timeLimit?: number;
+    passingScore?: number;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  examStats?: {
+    total: number;
+    completed: number;
+    reproved: number;
+    pending: number;
+  };
+  lastActivity: string;
+}
+
+export interface MultipleCourseProgressResponse {
+  success: true;
+  courses: Array<{
+    course: {
+      id: string;
+      name: string;
+      slug: string;
+      description: string;
+      points: number;
+      workload: number;
+      imageUrl?: string;
+    };
+    progress: CourseProgress;
+    certificate?: {
+      id: string;
+      courseTitle: string;
+      points: number;
+      workload: number;
+      createdAt: string;
+    } | null;
+    lastActivity: string;
+  }>;
+  total: number;
+}
+
 export interface UserCourse {
   id: string;
   courseId: string;
