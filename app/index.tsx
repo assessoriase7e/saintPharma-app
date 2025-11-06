@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import { coursesService, rankingService, statsService, userService } from "../services";
+import { httpClient } from "../services/httpClient";
 import { UserCourse, UserInfoResponse } from "../types/api";
 import "../utils/suppressWarnings";
 import "./global.css";
@@ -57,6 +58,13 @@ export default function Home() {
       try {
         setLoading(true);
         setError(null);
+
+        // Configurar userId no httpClient antes de fazer requisições
+        if (isSignedIn && userId) {
+          httpClient.setUserId(userId);
+        } else {
+          httpClient.clearUserId();
+        }
 
         // Buscar todos os cursos disponíveis usando o service
         console.log("📚 Buscando todos os cursos disponíveis...");
@@ -177,14 +185,28 @@ export default function Home() {
   };
 
   // Função para verificar se o usuário pode acessar curso premium
-  const canAccessPremiumCourse = (premiumPoints: number | null | undefined): boolean => {
-    if (!premiumPoints || premiumPoints === 0) {
-      return true; // Curso não é premium
+  // Agora usa os campos vindos da API (canAccess, weekPointsRequired, userWeekPoints)
+  const canAccessPremiumCourse = (course: UserCourse): boolean => {
+    // Se o curso não é premium, sempre pode acessar
+    if (!course.course.premiumPoints || course.course.premiumPoints === 0) {
+      return true;
     }
+    
+    // Se não estiver logado, não pode acessar premium
     if (!isSignedIn) {
-      return false; // Usuário não logado não pode acessar premium
+      return false;
     }
-    return weeklyPoints >= premiumPoints;
+    
+    // Usar o campo canAccess da API (já calculado pelo backend)
+    // Se não estiver disponível, usar fallback para compatibilidade
+    if (course.canAccess !== undefined) {
+      return course.canAccess;
+    }
+    
+    // Fallback: usar cálculo local se canAccess não estiver disponível
+    const userWeekPoints = course.userWeekPoints ?? course.course.userWeekPoints ?? weeklyPoints;
+    const weekPointsRequired = course.weekPointsRequired ?? course.course.weekPointsRequired ?? course.course.premiumPoints;
+    return userWeekPoints >= weekPointsRequired;
   };
 
   const handleCoursePress = (course: UserCourse) => {
@@ -193,12 +215,15 @@ export default function Home() {
       return;
     }
 
-    // Verificar se é curso premium e se o usuário tem acesso
+    // Verificar se é curso premium e se o usuário tem acesso usando campos da API
     if (course.course.premiumPoints && course.course.premiumPoints > 0) {
-      if (!canAccessPremiumCourse(course.course.premiumPoints)) {
+      if (!canAccessPremiumCourse(course)) {
+        const weekPointsRequired = course.weekPointsRequired ?? course.course.weekPointsRequired ?? course.course.premiumPoints;
+        const userWeekPoints = course.userWeekPoints ?? course.course.userWeekPoints ?? weeklyPoints;
+        
         Alert.alert(
           "Curso Premium",
-          `Este curso requer ${course.course.premiumPoints} pontos semanais para acesso.\n\nVocê possui ${weeklyPoints} pontos esta semana.\n\nContinue estudando para desbloquear este curso!`,
+          `Este curso requer ${weekPointsRequired} pontos semanais para acesso.\n\nVocê possui ${userWeekPoints} pontos esta semana.\n\nContinue estudando para desbloquear este curso!`,
           [{ text: "Entendi", style: "default" }]
         );
         return;
@@ -300,7 +325,7 @@ export default function Home() {
               <View className="space-y-3">
                 {userCourses.map((course) => {
                   const isPremium = course.course.premiumPoints && course.course.premiumPoints > 0;
-                  const canAccess = canAccessPremiumCourse(course.course.premiumPoints);
+                  const canAccess = canAccessPremiumCourse(course);
                   
                   return (
                   <Pressable
@@ -385,7 +410,7 @@ export default function Home() {
                       {isPremium && !canAccess && (
                         <View className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
                           <Text className="text-yellow-800 text-xs text-center">
-                            Requer {course.course.premiumPoints} pontos semanais (você tem {weeklyPoints})
+                            Requer {course.weekPointsRequired ?? course.course.weekPointsRequired ?? course.course.premiumPoints} pontos semanais (você tem {course.userWeekPoints ?? course.course.userWeekPoints ?? weeklyPoints})
                           </Text>
                         </View>
                       )}
@@ -426,7 +451,7 @@ export default function Home() {
                   return exploreCourses && exploreCourses.length > 0 ? (
                     exploreCourses.map((course) => {
                       const isPremium = course.course.premiumPoints && course.course.premiumPoints > 0;
-                      const canAccess = canAccessPremiumCourse(course.course.premiumPoints);
+                      const canAccess = canAccessPremiumCourse(course);
                       
                       return (
                       <Pressable
@@ -513,7 +538,7 @@ export default function Home() {
                           {isPremium && !canAccess && (
                             <View className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
                               <Text className="text-yellow-800 text-xs text-center">
-                                Requer {course.course.premiumPoints} pontos semanais (você tem {weeklyPoints})
+                                Requer {course.weekPointsRequired ?? course.course.weekPointsRequired ?? course.course.premiumPoints} pontos semanais (você tem {course.userWeekPoints ?? course.course.userWeekPoints ?? weeklyPoints})
                               </Text>
                             </View>
                           )}

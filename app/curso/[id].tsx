@@ -163,35 +163,45 @@ export default function CourseLessons() {
       setLoading(true);
       setError(null);
 
+      // Configurar userId no httpClient antes de fazer requisições
+      if (userId) {
+        httpClient.setUserId(userId);
+      } else {
+        httpClient.clearUserId();
+      }
+
       console.log("📊 [Course] ==========================================");
       console.log(`📊 [Course] Iniciando busca de dados do curso ${courseId}`);
       
       // Buscar detalhes do curso, aulas e progresso atualizado
       console.log("📊 [Course] Buscando dados em paralelo...");
-      const [courseResponse, lecturesResponse, progressResponse, userPointsResponse] = await Promise.all([
+      const [courseResponse, lecturesResponse, progressResponse] = await Promise.all([
         coursesService.getCourseById(courseId),
         lecturesService.getLectures(courseId),
         coursesService.getCourseProgress(courseId, { includeLectures: true }).catch((error) => {
           console.warn("⚠️ [Course] Erro ao buscar progresso (continuando com dados padrão):", error);
           return null;
         }),
-        rankingService.getUserPoints().catch((error) => {
-          console.warn("⚠️ [Course] Erro ao buscar pontos semanais:", error);
-          return { weeklyPoints: 0, totalPoints: 0, position: 0 } as any;
-        }),
       ]);
 
-      // Verificar acesso premium antes de continuar
+      // Verificar acesso premium usando campos da API
+      // A API já calcula canAccess baseado nos pontos semanais do usuário
       if (courseResponse?.premiumPoints && courseResponse.premiumPoints > 0) {
-        // Normalizar pontos semanais (API pode retornar weekPoints ou weeklyPoints)
-        const userWeeklyPoints = (userPointsResponse as any)?.weekPoints || userPointsResponse?.weeklyPoints || 0;
-        setWeeklyPoints(userWeeklyPoints);
-        console.log(`🏆 [Course] Pontos semanais: ${userWeeklyPoints}, Requeridos: ${courseResponse.premiumPoints}`);
+        // Usar campos vindos da API (canAccess, userWeekPoints, weekPointsRequired)
+        const canAccess = courseResponse.canAccess ?? false;
+        const userWeekPoints = courseResponse.userWeekPoints ?? 0;
+        const weekPointsRequired = courseResponse.weekPointsRequired ?? courseResponse.premiumPoints;
         
-        if (userWeeklyPoints < courseResponse.premiumPoints) {
+        setWeeklyPoints(userWeekPoints);
+        console.log(`🏆 [Course] Verificação de acesso premium:`);
+        console.log(`  - Pontos semanais do usuário: ${userWeekPoints}`);
+        console.log(`  - Pontos necessários: ${weekPointsRequired}`);
+        console.log(`  - Pode acessar: ${canAccess}`);
+        
+        if (!canAccess) {
           Alert.alert(
             "Curso Premium",
-            `Este curso requer ${courseResponse.premiumPoints} pontos semanais para acesso.\n\nVocê possui ${userWeeklyPoints} pontos esta semana.\n\nContinue estudando para desbloquear este curso!`,
+            `Este curso requer ${weekPointsRequired} pontos semanais para acesso.\n\nVocê possui ${userWeekPoints} pontos esta semana.\n\nContinue estudando para desbloquear este curso!`,
             [
               {
                 text: "Voltar",
@@ -205,7 +215,9 @@ export default function CourseLessons() {
           return;
         }
       } else {
-        setWeeklyPoints(userPointsResponse?.weeklyPoints || 0);
+        // Curso não premium - usar pontos do progresso se disponível
+        const userWeekPoints = courseResponse?.userWeekPoints ?? progressResponse?.course?.userWeekPoints ?? 0;
+        setWeeklyPoints(userWeekPoints);
       }
 
       console.log("✅ [Course] Dados recebidos:");
