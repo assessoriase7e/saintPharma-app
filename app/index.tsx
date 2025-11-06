@@ -4,12 +4,14 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Image,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import { coursesService, statsService, userService } from "../services";
+import { coursesService, rankingService, statsService, userService } from "../services";
 import { UserCourse, UserInfoResponse } from "../types/api";
 import "../utils/suppressWarnings";
 import "./global.css";
@@ -47,6 +49,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfoResponse | null>(null);
+  const [weeklyPoints, setWeeklyPoints] = useState<number>(0);
   const isFirstMount = useRef(true);
 
   // Função para buscar dados (reutilizável)
@@ -87,6 +90,19 @@ export default function Home() {
           console.log("📊 Buscando estatísticas do usuário...");
           const userStats = await statsService.getUserStats();
           setStatistics(userStats);
+
+          // Buscar pontos semanais do usuário
+          console.log("🏆 Buscando pontos semanais do usuário...");
+          try {
+            const userPoints = await rankingService.getUserPoints();
+            // A API pode retornar weekPoints ou weeklyPoints
+            const points = (userPoints as any).weekPoints || userPoints.weeklyPoints || 0;
+            console.log("🏆 Pontos semanais recebidos:", points);
+            setWeeklyPoints(points);
+          } catch (err) {
+            console.error("❌ Erro ao buscar pontos semanais:", err);
+            setWeeklyPoints(0);
+          }
         } else {
           setUserInfo(null);
           setUserCourses([]);
@@ -131,9 +147,25 @@ export default function Home() {
       }
       
       console.log("🔄 [Home] Tela em foco, recarregando dados...");
+      // Recarregar dados, incluindo pontos semanais
       fetchData();
     }, [fetchData])
   );
+
+  // Função para recarregar apenas os pontos semanais (útil após concluir curso)
+  const refreshWeeklyPoints = useCallback(async () => {
+    if (isSignedIn && userId) {
+      try {
+        console.log("🔄 Recarregando pontos semanais...");
+        const userPoints = await rankingService.getUserPoints();
+        const points = (userPoints as any).weekPoints || userPoints.weeklyPoints || 0;
+        console.log("🔄 Novos pontos semanais:", points);
+        setWeeklyPoints(points);
+      } catch (err) {
+        console.error("❌ Erro ao recarregar pontos semanais:", err);
+      }
+    }
+  }, [isSignedIn, userId]);
 
   // Função para obter cursos para a seção "Explore Mais Cursos"
   const getExploreCourses = () => {
@@ -144,13 +176,36 @@ export default function Home() {
     router.replace("/(auth)/sign-in" as any);
   };
 
-  const handleCoursePress = (courseId: string | number) => {
+  // Função para verificar se o usuário pode acessar curso premium
+  const canAccessPremiumCourse = (premiumPoints: number | null | undefined): boolean => {
+    if (!premiumPoints || premiumPoints === 0) {
+      return true; // Curso não é premium
+    }
+    if (!isSignedIn) {
+      return false; // Usuário não logado não pode acessar premium
+    }
+    return weeklyPoints >= premiumPoints;
+  };
+
+  const handleCoursePress = (course: UserCourse) => {
     if (!isSignedIn) {
       handleSignIn();
       return;
     }
 
-    router.push(`/curso/${courseId}` as any);
+    // Verificar se é curso premium e se o usuário tem acesso
+    if (course.course.premiumPoints && course.course.premiumPoints > 0) {
+      if (!canAccessPremiumCourse(course.course.premiumPoints)) {
+        Alert.alert(
+          "Curso Premium",
+          `Este curso requer ${course.course.premiumPoints} pontos semanais para acesso.\n\nVocê possui ${weeklyPoints} pontos esta semana.\n\nContinue estudando para desbloquear este curso!`,
+          [{ text: "Entendi", style: "default" }]
+        );
+        return;
+      }
+    }
+
+    router.push(`/curso/${course.course._id}` as any);
   };
 
   const handleStartCourse = (courseId: string | number) => {
@@ -243,21 +298,49 @@ export default function Home() {
                 Seus Cursos
               </Text>
               <View className="space-y-3">
-                {userCourses.map((course) => (
+                {userCourses.map((course) => {
+                  const isPremium = course.course.premiumPoints && course.course.premiumPoints > 0;
+                  const canAccess = canAccessPremiumCourse(course.course.premiumPoints);
+                  
+                  return (
                   <Pressable
                     key={course.course._id}
-                    onPress={() =>
-                      router.push(`/curso/${course.course._id}` as any)
-                    }
+                    onPress={() => handleCoursePress(course)}
                     className="mb-4"
                   >
-                    <View className="bg-card p-4 rounded-lg border border-border">
-                      <Text className="text-text-primary text-lg font-semibold mb-2">
-                        {course.course.name}
-                      </Text>
-                      <Text className="text-text-secondary text-sm mb-3">
-                        {course.course.description}
-                      </Text>
+                    <View className="bg-card rounded-lg border border-border overflow-hidden">
+                      {course.course.banner?.asset?.url && (
+                        <Image
+                          source={{ uri: course.course.banner.asset.url }}
+                          className="w-full h-40"
+                          resizeMode="cover"
+                        />
+                      )}
+                      <View className="p-4">
+                        <View className="flex-row items-center justify-between mb-2">
+                          <Text className="text-text-primary text-lg font-semibold flex-1">
+                            {course.course.name}
+                          </Text>
+                          {isPremium && (
+                            <View className="flex-row items-center ml-2">
+                              <View className="bg-yellow-500 px-2 py-1 rounded-full mr-2">
+                                <Text className="text-white text-xs font-semibold">PREMIUM</Text>
+                              </View>
+                              <Pressable
+                                onPress={(e) => {
+                                  e.stopPropagation();
+                                  router.push("/curso-premium-info" as any);
+                                }}
+                                className="ml-1"
+                              >
+                                <Ionicons name="help-circle-outline" size={20} color="#6b7280" />
+                              </Pressable>
+                            </View>
+                          )}
+                        </View>
+                        <Text className="text-text-secondary text-sm mb-3">
+                          {course.course.description}
+                        </Text>
                       <View className="flex-row items-center justify-between mb-2">
                         <View className="flex-row items-center">
                           <Ionicons
@@ -299,9 +382,18 @@ export default function Home() {
                           </Text>
                         </View>
                       )}
+                      {isPremium && !canAccess && (
+                        <View className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                          <Text className="text-yellow-800 text-xs text-center">
+                            Requer {course.course.premiumPoints} pontos semanais (você tem {weeklyPoints})
+                          </Text>
+                        </View>
+                      )}
+                      </View>
                     </View>
                   </Pressable>
-                ))}
+                  );
+                })}
               </View>
             </View>
           )}
@@ -332,21 +424,49 @@ export default function Home() {
                 {(() => {
                   const exploreCourses = getExploreCourses();
                   return exploreCourses && exploreCourses.length > 0 ? (
-                    exploreCourses.map((course) => (
+                    exploreCourses.map((course) => {
+                      const isPremium = course.course.premiumPoints && course.course.premiumPoints > 0;
+                      const canAccess = canAccessPremiumCourse(course.course.premiumPoints);
+                      
+                      return (
                       <Pressable
                         key={course.course._id}
-                        onPress={() =>
-                          router.push(`/curso/${course.course._id}` as any)
-                        }
+                        onPress={() => handleCoursePress(course)}
                         className="mb-4"
                       >
-                        <View className="bg-card p-4 rounded-lg border border-border">
-                          <Text className="text-text-primary text-lg font-semibold mb-2">
-                            {course.course.name}
-                          </Text>
-                          <Text className="text-text-secondary text-sm mb-3">
-                            {course.course.description}
-                          </Text>
+                        <View className="bg-card rounded-lg border border-border overflow-hidden">
+                          {course.course.banner?.asset?.url && (
+                            <Image
+                              source={{ uri: course.course.banner.asset.url }}
+                              className="w-full h-40"
+                              resizeMode="cover"
+                            />
+                          )}
+                          <View className="p-4">
+                            <View className="flex-row items-center justify-between mb-2">
+                              <Text className="text-text-primary text-lg font-semibold flex-1">
+                                {course.course.name}
+                              </Text>
+                              {isPremium && (
+                                <View className="flex-row items-center ml-2">
+                                  <View className="bg-yellow-500 px-2 py-1 rounded-full mr-2">
+                                    <Text className="text-white text-xs font-semibold">PREMIUM</Text>
+                                  </View>
+                                  <Pressable
+                                    onPress={(e) => {
+                                      e.stopPropagation();
+                                      router.push("/curso-premium-info" as any);
+                                    }}
+                                    className="ml-1"
+                                  >
+                                    <Ionicons name="help-circle-outline" size={20} color="#6b7280" />
+                                  </Pressable>
+                                </View>
+                              )}
+                            </View>
+                            <Text className="text-text-secondary text-sm mb-3">
+                              {course.course.description}
+                            </Text>
                           <View className="flex-row items-center justify-between mb-2">
                             <View className="flex-row items-center">
                               <Ionicons
@@ -390,9 +510,18 @@ export default function Home() {
                               </Text>
                             </View>
                           )}
+                          {isPremium && !canAccess && (
+                            <View className="mt-3 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
+                              <Text className="text-yellow-800 text-xs text-center">
+                                Requer {course.course.premiumPoints} pontos semanais (você tem {weeklyPoints})
+                              </Text>
+                            </View>
+                          )}
+                          </View>
                         </View>
                       </Pressable>
-                    ))
+                      );
+                    })
                   ) : (
                     <View className="flex-1 justify-center items-center py-8">
                       <Text className="text-text-secondary text-center">
