@@ -149,20 +149,70 @@ export default function CourseLessons() {
       setLoading(true);
       setError(null);
 
-      // Buscar detalhes do curso e aulas
-      const [courseResponse, lecturesResponse] = await Promise.all([
+      console.log("📊 [Course] ==========================================");
+      console.log(`📊 [Course] Iniciando busca de dados do curso ${courseId}`);
+      
+      // Buscar detalhes do curso, aulas e progresso atualizado
+      console.log("📊 [Course] Buscando dados em paralelo...");
+      const [courseResponse, lecturesResponse, progressResponse] = await Promise.all([
         coursesService.getCourseById(courseId),
         lecturesService.getLectures(courseId),
+        coursesService.getCourseProgress(courseId, { includeLectures: true }).catch((error) => {
+          console.warn("⚠️ [Course] Erro ao buscar progresso (continuando com dados padrão):", error);
+          return null;
+        }),
       ]);
 
-      console.log("🔍 [Course] Course Response:", courseResponse);
-      console.log("🔍 [Course] Lectures Response:", lecturesResponse);
-      console.log("🔍 [Course] Lectures Array:", lecturesResponse.lectures);
+      console.log("✅ [Course] Dados recebidos:");
+      console.log("  - Curso:", courseResponse?.title || courseResponse?.name);
+      console.log("  - Aulas:", lecturesResponse.lectures?.length ?? 0);
+      console.log("  - Progresso:", progressResponse ? "Sim" : "Não");
+
+      if (progressResponse) {
+        console.log("📊 [Course] Detalhes do progresso:");
+        console.log(`  - Porcentagem: ${progressResponse.progress.percentage}%`);
+        console.log(`  - Aulas concluídas: ${progressResponse.progress.completedLectures}/${progressResponse.progress.totalLectures}`);
+        console.log(`  - Status: ${progressResponse.progress.status}`);
+        console.log(`  - Lectures no progresso: ${progressResponse.lectures?.length ?? 0}`);
+      }
 
       setCourse(courseResponse);
-      setLectures(lecturesResponse.lectures || []);
+      
+      // Se tiver progresso com lectures, usar essas lectures (elas têm o status completed)
+      if (progressResponse?.lectures && progressResponse.lectures.length > 0) {
+        console.log("📊 [Course] Mesclando lectures com progresso...");
+        // Mesclar lectures do progresso com as lectures retornadas
+        const lecturesWithProgress = (lecturesResponse.lectures || []).map((lecture) => {
+          const progressLecture = progressResponse.lectures?.find(
+            (pl) => pl.id === lecture._id
+          );
+          const isCompleted = progressLecture?.completed || lecture.completed || false;
+          if (isCompleted) {
+            console.log(`  ✅ Aula "${lecture.title}" está concluída`);
+          }
+          return {
+            ...lecture,
+            completed: isCompleted,
+            completedAt: progressLecture?.completedAt || lecture.completedAt,
+          };
+        });
+        console.log(`✅ [Course] ${lecturesWithProgress.filter(l => l.completed).length} aulas marcadas como concluídas`);
+        setLectures(lecturesWithProgress);
+      } else {
+        console.log("⚠️ [Course] Sem progresso ou lectures, usando dados padrão");
+        setLectures(lecturesResponse.lectures || []);
+      }
+      
+      console.log("✅ [Course] Dados do curso carregados com sucesso");
+      console.log("📊 [Course] ==========================================");
     } catch (err) {
-      console.error("Erro ao buscar dados do curso:", err);
+      console.error("❌ [Course] ==========================================");
+      console.error("❌ [Course] Erro ao buscar dados do curso:", err);
+      if (err instanceof Error) {
+        console.error(`❌ [Course] Mensagem: ${err.message}`);
+        console.error(`❌ [Course] Stack: ${err.stack}`);
+      }
+      console.error("❌ [Course] ==========================================");
       setError("Erro ao carregar o curso. Verifique sua conexão.");
     } finally {
       setLoading(false);
@@ -214,6 +264,7 @@ export default function CourseLessons() {
     );
   }
 
+  // Calcular progresso baseado nas lectures (com fallback para cálculo client-side)
   const completedLectures = lectures.filter(
     (lecture) => lecture.completed
   ).length;

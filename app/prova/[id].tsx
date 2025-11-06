@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import Card from "../../components/Card";
-import { examsService, lecturesService } from "../../services";
+import { examsService } from "../../services";
 import { useLives } from "../../stores";
 import { Question } from "../../types/api";
 
@@ -171,14 +171,27 @@ export default function ExamScreen() {
         setLoading(true);
         setError(null);
 
-        // Buscar dados do exame via API
-        const response = await examsService.getExam(examId);
-        const examData = response.data.exam;
+        // Buscar dados do exame e questões via API
+        const examResponse = await examsService.getExam(examId);
+        const examData = examResponse.data.exam;
 
-        if (examData) {
-          // Buscar questões da aula relacionada ao exame
-          const questionsData = await lecturesService.getLectureQuestions(
-            examData.lectureCMSid
+        // Buscar questões do exame via API
+        const questionsResponse = await examsService.getExamQuestions(examId);
+        const examWithQuestions = questionsResponse.data.exam;
+
+        if (examData && examWithQuestions) {
+          // Transformar questões da API para o formato usado no frontend
+          const transformedQuestions: Question[] = examWithQuestions.questions.map(
+            (q: any, index: number) => ({
+              id: q.id || String(index),
+              text: q.question || q.title || "",
+              options: q.answers.map((answer: any, optIndex: number) => ({
+                id: answer.id || String(optIndex),
+                text: answer.answer || "",
+                isCorrect: answer.isCorrect || false,
+              })),
+              points: 1, // Valor padrão, pode ser ajustado
+            })
           );
 
           // Criar objeto compatível com ExamData
@@ -186,9 +199,9 @@ export default function ExamScreen() {
             ...examData,
             title: "Exame da Aula",
             description: "Teste seus conhecimentos sobre esta aula",
-            timeLimit: (questionsData as any).timeLimit || 30,
-            passingScore: (questionsData as any).passingScore || 70,
-            questions: (questionsData as any).questions || [],
+            timeLimit: examWithQuestions.timeLimit || examData.timeLimit || 30,
+            passingScore: examWithQuestions.passingScore || examData.passingScore || 70,
+            questions: transformedQuestions,
           };
 
           setExam(fullExamData);
@@ -233,10 +246,19 @@ export default function ExamScreen() {
       : 0;
 
     try {
+      // Preparar respostas no formato esperado pela API
+      const submitAnswers = exam?.questions?.map((question, index) => {
+        const selectedOptionId = answers[index];
+        return {
+          questionId: question.id,
+          selectedAnswer: selectedOptionId || "",
+        };
+      }) || [];
+
       // Submeter resultados via API
-      await examsService.updateExam(examId, {
-        complete: results.passed,
-        reproved: !results.passed,
+      const submitResponse = await examsService.submitExam(examId, {
+        answers: submitAnswers,
+        timeSpent: timeSpent,
       });
 
       // Calcular quantas vidas perder baseado nos erros

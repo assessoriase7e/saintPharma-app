@@ -6,6 +6,7 @@ import TopUserCard from "../components/TopUserCard";
 import UserPositionCard from "../components/UserPositionCard";
 import { rankingService } from "../services";
 import { RankingUser, UserPointsResponse } from "../types/api";
+import { getUserFullName } from "../utils/userName";
 
 export default function Ranking() {
   const [ranking, setRanking] = useState<RankingUser[]>([]);
@@ -142,17 +143,20 @@ export default function Ranking() {
               Top 3
             </Text>
             <View className="grid grid-cols-3 gap-1">
-              {(ranking || []).slice(0, 3).map((usuario, index) => (
-                <TopUserCard
-                  key={`${usuario?.user?.name || "usuario"}-${index}`}
-                  position={index + 1}
-                  name={usuario?.user?.name || "Usuário"}
-                  points={usuario?.points || 0}
-                  completedCourses={usuario?.certificatesCount || 0}
-                  avatar={getAvatar(usuario?.user?.name || "Usuário")}
-                  badge={getBadge(usuario?.points || 0)}
-                />
-              ))}
+              {(ranking || []).slice(0, 3).map((usuario, index) => {
+                const userName = getUserFullName(usuario?.user);
+                return (
+                  <TopUserCard
+                    key={`${userName}-${index}`}
+                    position={index + 1}
+                    name={userName}
+                    points={usuario?.points || 0}
+                    completedCourses={usuario?.certificatesCount || 0}
+                    avatar={getAvatar(userName)}
+                    badge={getBadge(usuario?.points || 0)}
+                  />
+                );
+              })}
             </View>
           </View>
         )}
@@ -164,17 +168,20 @@ export default function Ranking() {
           </Text>
 
           {(ranking?.length || 0) > 0 ? (
-            (ranking || []).map((usuario, index) => (
-              <RankingUserCard
-                key={`${usuario?.user?.name || "usuario"}-${index}`}
-                position={index + 1}
-                name={usuario?.user?.name || "Usuário"}
-                points={usuario?.points || 0}
-                completedCourses={usuario?.certificatesCount || 0}
-                badge={getBadge(usuario?.points || 0)}
-                avatar={getAvatar(usuario?.user?.name || "Usuário")}
-              />
-            ))
+            (ranking || []).map((usuario, index) => {
+              const userName = getUserFullName(usuario?.user);
+              return (
+                <RankingUserCard
+                  key={`${userName}-${index}`}
+                  position={index + 1}
+                  name={userName}
+                  points={usuario?.points || 0}
+                  completedCourses={usuario?.certificatesCount || 0}
+                  badge={getBadge(usuario?.points || 0)}
+                  avatar={getAvatar(userName)}
+                />
+              );
+            })
           ) : (
             <View className="bg-card border border-border rounded-lg p-6 items-center">
               <Text className="text-text-secondary text-center">

@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import Card from "../../components/Card";
-import { useApiClient } from "../../services/api";
+import { examsService } from "../../services";
 import { Question } from "../../types/api";
 
 // Interface local para dados completos do exame
@@ -246,7 +246,6 @@ export default function ExamResult() {
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const apiClient = useApiClient();
   const results: QuizResults = resultsParam ? JSON.parse(resultsParam) : null;
 
   useEffect(() => {
@@ -257,11 +256,43 @@ export default function ExamResult() {
         setLoading(true);
         setError(null);
 
-        // TODO: Implementar busca de dados do exame via API
-        // const examData = await apiClient.getExam(quizId);
-        // setExam(examData);
-        
-        setError("Funcionalidade de resultados ainda não implementada.");
+        // Buscar dados do exame e questões via API
+        const examResponse = await examsService.getExam(quizId);
+        const examData = examResponse.data.exam;
+
+        // Buscar questões do exame para obter título e outras informações
+        const questionsResponse = await examsService.getExamQuestions(quizId);
+        const examWithQuestions = questionsResponse.data.exam;
+
+        if (examData && examWithQuestions) {
+          // Transformar questões da API para o formato usado no frontend
+          const transformedQuestions: Question[] = examWithQuestions.questions.map(
+            (q: any, index: number) => ({
+              id: q.id || String(index),
+              text: q.question || q.title || "",
+              options: q.answers.map((answer: any, optIndex: number) => ({
+                id: answer.id || String(optIndex),
+                text: answer.answer || "",
+                isCorrect: answer.isCorrect || false,
+              })),
+              points: 1,
+            })
+          );
+
+          // Criar objeto compatível com ExamData
+          const fullExamData: ExamData = {
+            id: examData.id,
+            title: "Exame da Aula",
+            description: "Resultado do exame",
+            timeLimit: examWithQuestions.timeLimit || examData.timeLimit,
+            passingScore: examWithQuestions.passingScore || examData.passingScore || 70,
+            questions: transformedQuestions,
+          };
+
+          setExam(fullExamData);
+        } else {
+          setError("Exame não encontrado");
+        }
       } catch (err) {
         console.error("Erro ao buscar dados do exame:", err);
         setError("Erro ao carregar o exame. Verifique sua conexão.");

@@ -41,7 +41,8 @@ export default function SSOCallbackScreen() {
               await userService.ensureUserExists(
                 user.id,
                 user.primaryEmailAddress?.emailAddress || "",
-                user.fullName || undefined,
+                user.firstName || undefined,
+                user.lastName || undefined,
                 user.imageUrl || undefined
               );
               console.log(

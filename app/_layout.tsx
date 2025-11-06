@@ -1,3 +1,4 @@
+import "../utils/suppressWarnings";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Ionicons } from "@expo/vector-icons";

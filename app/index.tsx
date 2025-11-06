@@ -1,7 +1,7 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,9 +9,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { apiClient, coursesService, statsService } from "../services";
+import { coursesService, statsService } from "../services";
 import { useLives } from "../stores";
 import { UserCourse } from "../types/api";
+import "../utils/suppressWarnings";
 import "./global.css";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
 
@@ -47,31 +48,13 @@ export default function Home() {
   const [statistics, setStatistics] = useState(defaultStats);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFirstMount = useRef(true);
 
-  // Buscar cursos e estatísticas da API
-  useEffect(() => {
-    const fetchData = async () => {
+  // Função para buscar dados (reutilizável)
+  const fetchData = useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Debug temporário para web
-        if (typeof window !== "undefined") {
-          const debugInfo = {
-            apiUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
-            apiToken: process.env.EXPO_PUBLIC_API_TOKEN
-              ? "Configurado"
-              : "Não configurado",
-            hasApiClient: !!apiClient,
-            isSignedIn: isSignedIn,
-            allEnvVars: Object.keys(process.env).filter((key) =>
-              key.startsWith("EXPO_PUBLIC")
-            ),
-          };
-          console.log("🔍 Debug Info:", debugInfo);
-          // Removendo alert para não interromper o fluxo
-        }
-        console.log("👤 Usuário logado:", isSignedIn);
 
         // Buscar todos os cursos disponíveis usando o service
         console.log("📚 Buscando todos os cursos disponíveis...");
@@ -80,18 +63,17 @@ export default function Home() {
 
         if (isSignedIn) {
           // Buscar cursos do usuário usando o service
+          // A resposta já inclui informações de progresso, então não é necessário buscar separadamente
           console.log("📚 Buscando cursos do usuário...");
           const userCoursesData = await coursesService.getUserCourses();
           setUserCourses(userCoursesData);
-        } else {
-          setUserCourses([]);
-        }
-
-        // Buscar estatísticas do usuário (apenas se logado)
-        if (isSignedIn) {
-          const userStats = await statsService.getUserStats(userCourses);
+          
+          // Buscar estatísticas do usuário (dados vêm diretamente da API)
+          console.log("📊 Buscando estatísticas do usuário...");
+          const userStats = await statsService.getUserStats();
           setStatistics(userStats);
         } else {
+          setUserCourses([]);
           // Usuário não logado: usar estatísticas padrão
           setStatistics(statsService.getDefaultStats());
         }
@@ -116,10 +98,26 @@ export default function Home() {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchData();
   }, [isSignedIn]);
+
+  // Buscar dados quando o componente montar ou isSignedIn mudar
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Recarregar dados quando a tela entrar em foco (ex: voltando de uma aula ou curso)
+  useFocusEffect(
+    useCallback(() => {
+      // Não recarregar no primeiro mount (já é feito pelo useEffect)
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+        return;
+      }
+      
+      console.log("🔄 [Home] Tela em foco, recarregando dados...");
+      fetchData();
+    }, [fetchData])
+  );
 
   // Função para obter cursos para a seção "Explore Mais Cursos"
   const getExploreCourses = () => {
@@ -162,6 +160,7 @@ export default function Home() {
       </View>
     );
   }
+
 
   return (
     <>

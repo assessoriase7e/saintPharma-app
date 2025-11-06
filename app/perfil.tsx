@@ -91,7 +91,9 @@ export default function Perfil() {
             <Ionicons name="person" size={48} color="white" />
           </View>
           <Text className="text-2xl font-bold text-text-primary">
-            {userInfo?.name}
+            {userInfo?.firstName && userInfo?.lastName
+              ? `${userInfo.firstName} ${userInfo.lastName}`
+              : userInfo?.firstName || userInfo?.lastName || "Usuário"}
           </Text>
           <Text className="text-text-secondary">{userInfo?.email}</Text>
 
