@@ -54,11 +54,19 @@ class OnboardingService {
         lastName: data.user.lastName,
       });
 
-      console.log("✅ [OnboardingService] Onboarding concluído com sucesso");
+      console.log("✅ [OnboardingService] Onboarding concluído com sucesso:", responseData);
+
+      // A resposta pode vir diretamente ou dentro de um objeto data
+      let resultData = responseData;
+      if (responseData && responseData.data) {
+        resultData = responseData.data;
+      } else if (responseData && responseData.user) {
+        resultData = responseData.user;
+      }
 
       return {
         success: true,
-        data: responseData.data,
+        data: resultData,
         message: "Onboarding concluído com sucesso",
       };
     } catch (error: any) {
@@ -72,7 +80,7 @@ class OnboardingService {
   }
 
   /**
-   * Verifica o status do onboarding do usuário usando /auth/user
+   * Verifica o status do onboarding do usuário usando /api/user
    */
   async checkOnboardingStatus(userId: string): Promise<OnboardingStatus> {
     try {
@@ -83,11 +91,55 @@ class OnboardingService {
 
       httpClient.setUserId(userId);
 
-      const responseData = await httpClient.get("/api/auth/user");
-      const user = responseData.data;
+      // Usar /api/user (retorna firstName e lastName)
+      const responseData = await httpClient.get("/api/user");
+      
+      console.log("📊 [OnboardingService] Resposta completa da API:", JSON.stringify(responseData, null, 2));
+      
+      // A resposta pode vir em diferentes estruturas
+      // Estrutura esperada: { success: true, message: "...", user: {...} }
+      let user = null;
+      
+      if (responseData && responseData.user) {
+        // Estrutura: { user: {...} }
+        user = responseData.user;
+      } else if (responseData && responseData.data && responseData.data.user) {
+        // Estrutura aninhada: { data: { user: {...} } }
+        user = responseData.data.user;
+      } else if (responseData && responseData.data) {
+        // Estrutura: { data: {...} }
+        user = responseData.data;
+      } else if (responseData && responseData.profile) {
+        // Estrutura: { profile: {...} }
+        user = responseData.profile;
+      } else if (responseData && (responseData.firstName || responseData.lastName || responseData.id)) {
+        // Estrutura: objeto user direto
+        user = responseData;
+      }
+
+      if (!user) {
+        console.error("❌ [OnboardingService] Não foi possível extrair dados do usuário da resposta");
+        throw new Error("Estrutura de resposta inválida da API");
+      }
+
+      console.log("📊 [OnboardingService] Objeto user extraído:", {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        name: user.name,
+        email: user.email,
+      });
 
       // Verificar se o usuário tem nome completo (indica que completou onboarding)
-      const hasCompleteName = user.name && user.name.trim().length > 0;
+      // Primeiro tentar firstName e lastName separados
+      const hasFirstName = user.firstName && typeof user.firstName === 'string' && user.firstName.trim().length > 0;
+      const hasLastName = user.lastName && typeof user.lastName === 'string' && user.lastName.trim().length > 0;
+      
+      // Fallback: verificar se tem "name" completo (caso a API retorne name ao invés de firstName/lastName)
+      const hasFullName = user.name && typeof user.name === 'string' && user.name.trim().length > 0 && user.name.trim().includes(" ");
+      
+      // Se tiver firstName E lastName, ou se tiver name completo, considera onboarding completo
+      const hasCompleteName = (hasFirstName && hasLastName) || hasFullName;
 
       const status: OnboardingStatus = {
         needsOnboarding: !hasCompleteName,
@@ -97,7 +149,19 @@ class OnboardingService {
         user: user,
       };
 
-      console.log("✅ [OnboardingService] Status verificado:", status);
+      console.log("✅ [OnboardingService] Status verificado:", {
+        needsOnboarding: status.needsOnboarding,
+        hasFirstName: hasFirstName ? user.firstName : false,
+        hasLastName: hasLastName ? user.lastName : false,
+        hasFullName: hasFullName ? user.name : false,
+        hasCompleteName,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          name: user.name,
+        },
+      });
       return status;
     } catch (error: any) {
       console.error("❌ [OnboardingService] Erro ao verificar status:", error);

@@ -12,6 +12,58 @@ import { httpClient } from "./httpClient";
 
 class ExamsService {
   /**
+   * Lista todos os exames do usuário
+   */
+  async getExams(): Promise<{ exams: ExamResponse['data']['exam'][] }> {
+    try {
+      console.log("📝 [ExamsService] Buscando exames do usuário...");
+      const response = await httpClient.get("/api/exams");
+      console.log("✅ [ExamsService] Exames carregados:", response);
+
+      // Verificar se a resposta tem a estrutura esperada da documentação
+      let examsArray = [];
+
+      if (
+        response &&
+        response.success &&
+        response.data &&
+        Array.isArray(response.data.exams)
+      ) {
+        // Estrutura da documentação: { success: true, data: { exams: Exam[] }, timestamp: "..." }
+        examsArray = response.data.exams;
+      } else if (
+        response &&
+        response.exams &&
+        Array.isArray(response.exams)
+      ) {
+        // Estrutura alternativa: { exams: Exam[] }
+        examsArray = response.exams;
+      } else if (Array.isArray(response)) {
+        // Estrutura alternativa: Exam[] diretamente
+        examsArray = response;
+      } else if (
+        response &&
+        response.data &&
+        Array.isArray(response.data)
+      ) {
+        // Estrutura alternativa: { data: Exam[] }
+        examsArray = response.data;
+      } else {
+        console.warn(
+          "⚠️ [ExamsService] Resposta dos exames não tem a estrutura esperada:",
+          response
+        );
+        return { exams: [] };
+      }
+
+      return { exams: examsArray };
+    } catch (error) {
+      console.error("❌ [ExamsService] Erro ao buscar exames:", error);
+      throw error;
+    }
+  }
+
+  /**
    * Verifica se o usuário pode iniciar um exame (tem vidas disponíveis)
    */
   async checkExamEligibility(): Promise<ExamEligibilityResponse> {
@@ -67,11 +119,26 @@ class ExamsService {
         // Estrutura da documentação: { success: true, data: { exam: {...}, quiz: {...}, lecture: {...} }, timestamp: "..." }
         examData = response;
       } else if (response && response.exam) {
-        // Estrutura alternativa: { exam: {...}, quiz: {...}, lecture: {...} }
+        // Estrutura da documentação direta: { success: true, exam: {...}, quiz: {...}, lecture: {...} }
         examData = {
           success: true,
-          data: response,
+          data: {
+            exam: response.exam,
+            quiz: response.quiz,
+            lecture: response.lecture,
+          },
           timestamp: new Date().toISOString(),
+        };
+      } else if (response && response.success && response.exam) {
+        // Estrutura alternativa com success: { success: true, exam: {...}, quiz: {...}, lecture: {...} }
+        examData = {
+          success: true,
+          data: {
+            exam: response.exam,
+            quiz: response.quiz,
+            lecture: response.lecture,
+          },
+          timestamp: response.timestamp || new Date().toISOString(),
         };
       } else {
         console.warn(

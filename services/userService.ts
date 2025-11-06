@@ -173,33 +173,37 @@ class UserService {
       console.log("✅ [UserService] Resumo encontrado:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.data) {
-        // Estrutura da documentação: { success: true, data: {...} }
-        return response;
-      } else if (response && response.data) {
-        // Estrutura alternativa: { data: {...} }
+      // A API pode retornar: { success: true, data: { success: true, data: {...} } }
+      // ou: { success: true, data: {...} }
+      if (response && response.success) {
+        // Se houver data.data, usar essa estrutura (estrutura aninhada)
+        if (response.data && response.data.data) {
+          return {
+            success: true,
+            data: response.data.data,
+          };
+        } else if (response.data) {
+          // Estrutura direta: { success: true, data: {...} }
+          return {
+            success: true,
+            data: response.data,
+          };
+        }
+      }
+      
+      // Fallback: tentar retornar a resposta original se tiver data
+      if (response && response.data) {
         return {
           success: true,
           data: response.data,
-          totalPoints: 0,
-          weeklyPoints: 0,
-          monthlyPoints: 0,
-          completedCourses: 0,
-          completedLectures: 0,
-          certificates: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-          averageScore: 0,
-          totalTimeSpent: 0,
-          lastActivity: new Date().toISOString(),
         };
-      } else {
-        console.warn(
-          "⚠️ [UserService] Resposta do resumo não tem a estrutura esperada:",
-          response
-        );
-        throw new Error("Erro ao buscar resumo do usuário");
       }
+      
+      console.warn(
+        "⚠️ [UserService] Resposta do resumo não tem a estrutura esperada:",
+        response
+      );
+      throw new Error("Erro ao buscar resumo do usuário");
     } catch (error) {
       console.error("❌ [UserService] Erro ao buscar resumo:", error);
       throw error;
@@ -384,7 +388,8 @@ class UserService {
   async ensureUserExists(
     clerkId: string,
     email: string,
-    name?: string,
+    firstName?: string,
+    lastName?: string,
     profileImage?: string
   ): Promise<User> {
     try {
@@ -401,7 +406,8 @@ class UserService {
         const createResponse = await this.createUser({
           clerkId,
           email,
-          name,
+          firstName,
+          lastName,
           profileImage,
         });
         console.log("✅ [UserService] Usuário criado:", createResponse.user);

@@ -31,9 +31,37 @@ class ApiClient {
   private config: ApiConfig;
 
   constructor() {
+    const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+    const apiToken = process.env.EXPO_PUBLIC_API_TOKEN;
+
+    // Log de configuração para debug
+    console.log("🔧 [ApiClient] Inicializando com configuração:", {
+      baseUrl: baseUrl || "❌ NÃO CONFIGURADO",
+      hasToken: !!apiToken,
+      tokenLength: apiToken?.length || 0,
+      allEnvVars: Object.keys(process.env)
+        .filter((key) => key.startsWith("EXPO_PUBLIC"))
+        .map((key) => `${key}=${process.env[key]?.substring(0, 20)}...`),
+    });
+
+    // Validar se as variáveis de ambiente estão configuradas
+    if (!baseUrl) {
+      const errorMessage = 
+        "❌ [ApiClient] EXPO_PUBLIC_API_BASE_URL não está configurada!\n" +
+        "Crie um arquivo .env na raiz do projeto com:\n" +
+        "EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api\n" +
+        "EXPO_PUBLIC_API_TOKEN=seu-token-aqui";
+      
+      console.error(errorMessage);
+    }
+
+    if (!apiToken) {
+      console.warn("⚠️ [ApiClient] EXPO_PUBLIC_API_TOKEN não está configurado!");
+    }
+
     this.config = {
-      baseUrl: process.env.EXPO_PUBLIC_API_BASE_URL as string,
-      apiToken: process.env.EXPO_PUBLIC_API_TOKEN || "",
+      baseUrl: baseUrl || "",
+      apiToken: apiToken || "",
     };
   }
 
@@ -93,6 +121,14 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    // Validar se baseUrl está configurada antes de fazer a requisição
+    if (!this.config.baseUrl) {
+      const errorMessage = 
+        "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env";
+      console.error(`❌ [ApiClient] ${errorMessage}`);
+      throw new Error(errorMessage);
+    }
+
     const url = `${this.config.baseUrl}${endpoint}`;
 
     const headers: Record<string, string> = {
@@ -112,7 +148,20 @@ class ApiClient {
     };
 
     try {
+      console.log(`🌐 [ApiClient.request] Iniciando requisição para: ${url}`);
+      console.log(`🌐 [ApiClient.request] BaseURL: ${this.config.baseUrl}`);
+      console.log(`🌐 [ApiClient.request] URL completa: ${url}`);
+      console.log(`🌐 [ApiClient.request] Método: ${options.method || "GET"}`);
+      console.log(`🌐 [ApiClient.request] Headers:`, headers);
+      
       const response = await fetch(url, config);
+      
+      console.log(`📡 [ApiClient.request] Resposta recebida:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url,
+      });
 
       if (!response.ok) {
         const errorData: ApiError = await response.json().catch(() => ({
@@ -138,8 +187,9 @@ class ApiClient {
   }
 
   // Métodos de Autenticação
+  // Nota: Usa /api/user pois a autenticação é gerenciada pelo Clerk
   async getUserInfo(): Promise<UserInfoResponse> {
-    return this.request<UserInfoResponse>("/api/auth/user");
+    return this.request<UserInfoResponse>("/api/user");
   }
 
   // Nota: Login e logout são gerenciados pelo Clerk
@@ -180,6 +230,10 @@ class ApiClient {
   }
 
   // Métodos de Exames
+  async getExams(): Promise<{ exams: ExamResponse['data']['exam'][] }> {
+    return this.request<{ exams: ExamResponse['data']['exam'][] }>("/api/exams");
+  }
+
   async checkExamEligibility() {
     return this.request("/api/exams/eligibility");
   }
@@ -322,8 +376,49 @@ class ApiClient {
   }
 
   // Métodos de Ranking
-  async getRanking(): Promise<RankingResponse> {
-    return this.request<RankingResponse>("/api/ranking");
+  async getRanking(page: number = 1, limit: number = 20): Promise<RankingResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    const response = await this.request<any>(`/api/ranking?${params.toString()}`);
+    
+    // Transformar resposta para garantir formato correto com firstName e lastName
+    if (response && response.success && response.ranking) {
+      return {
+        ranking: response.ranking.map((item: any) => {
+          if (item.user && (item.user.firstName || item.user.lastName)) {
+            return item;
+          }
+          if (item.firstName || item.lastName) {
+            return {
+              user: {
+                firstName: item.firstName,
+                lastName: item.lastName,
+                profileImage: item.profileImage,
+              },
+              points: item.points || 0,
+              certificatesCount: item.certificatesCount || 0,
+            };
+          }
+          if (item.name) {
+            const nameParts = item.name.trim().split(/\s+/);
+            return {
+              user: {
+                firstName: nameParts[0] || undefined,
+                lastName: nameParts.slice(1).join(" ") || undefined,
+                profileImage: item.profileImage,
+              },
+              points: item.points || 0,
+              certificatesCount: item.certificatesCount || 0,
+            };
+          }
+          return item;
+        }),
+      };
+    }
+    
+    return response;
   }
 
   async getUserPoints(): Promise<UserPointsResponse> {

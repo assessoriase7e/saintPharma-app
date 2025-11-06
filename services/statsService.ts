@@ -32,31 +32,45 @@ class StatsService {
 
   /**
    * Busca estatísticas do usuário
+   * Os dados são obtidos diretamente da API /api/user/summary
    */
-  async getUserStats(userCourses: any[] = []): Promise<StatItem[]> {
+  async getUserStats(): Promise<StatItem[]> {
     try {
       console.log("📊 [StatsService] Buscando estatísticas do usuário...");
 
       const summaryResponse = await userService.getUserSummary();
+      
+      // Extrair dados da estrutura normalizada: { success: true, data: { courses: {...}, studyHours: {...} } }
+      const coursesData = summaryResponse?.data?.courses;
+      const studyHoursData = summaryResponse?.data?.studyHours;
+      
+      console.log("📊 [StatsService] Dados extraídos:", {
+        courses: coursesData,
+        studyHours: studyHoursData,
+        fullResponse: summaryResponse,
+      });
+
+      // Usar dados da API se disponíveis, senão usar valores padrão
+      const completed = coursesData?.completed ?? 0;
+      const inProgress = coursesData?.inProgress ?? 0;
+      const totalHours = studyHoursData?.total ?? 0;
 
       const stats: StatItem[] = [
         {
           titulo: "Concluídos",
-          valor: summaryResponse.completedCourses.toString(),
+          valor: completed.toString(),
           icone: "checkmark-circle",
           cor: "#10b981",
         },
         {
           titulo: "Em Progresso",
-          valor: (
-            (userCourses?.length || 0) - summaryResponse.completedCourses
-          ).toString(),
+          valor: inProgress.toString(),
           icone: "play-circle",
           cor: "#3b82f6",
         },
         {
           titulo: "Horas Estudadas",
-          valor: `${Math.floor(summaryResponse.totalTimeSpent / 60)}h`,
+          valor: `${Math.floor(totalHours)}h`,
           icone: "time",
           cor: "#f59e0b",
         },

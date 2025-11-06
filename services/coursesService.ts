@@ -1,4 +1,9 @@
-import { Course, UserCourse } from "../types/api";
+import {
+  Course,
+  CourseProgressResponse,
+  MultipleCourseProgressResponse,
+  UserCourse,
+} from "../types/api";
 import { httpClient } from "./httpClient";
 
 class CoursesService {
@@ -74,6 +79,7 @@ class CoursesService {
 
   /**
    * Busca cursos do usuário logado
+   * A resposta já inclui informações de progresso, então não é necessário buscar separadamente
    */
   async getUserCourses(): Promise<UserCourse[]> {
     try {
@@ -87,20 +93,24 @@ class CoursesService {
       // Verificar se a resposta tem a estrutura esperada da documentação
       let userCoursesArray = [];
 
-      if (
-        response &&
-        response.success &&
-        response.data &&
-        response.data.courses &&
-        Array.isArray(response.data.courses)
-      ) {
-        // Estrutura da documentação: { success: true, data: { courses: UserCourse[] }, timestamp: "..." }
-        userCoursesArray = response.data.courses;
-      } else if (
-        response &&
-        response.courses &&
-        Array.isArray(response.courses)
-      ) {
+      // A resposta pode vir em diferentes formatos:
+      // 1. { success: true, completed: [...], inProgress: [...] } - quando status=all ou sem parâmetro
+      // 2. { success: true, courses: [...] } - quando filtrado por status
+      // 3. { success: true, data: { courses: [...] } }
+      // 4. Array direto
+      
+      if (response && response.success) {
+        // Se tem completed e inProgress, combinar os arrays
+        if (response.completed && response.inProgress) {
+          userCoursesArray = [...response.completed, ...response.inProgress];
+        } else if (response.courses && Array.isArray(response.courses)) {
+          userCoursesArray = response.courses;
+        } else if (response.data && response.data.courses && Array.isArray(response.data.courses)) {
+          userCoursesArray = response.data.courses;
+        } else if (Array.isArray(response.data)) {
+          userCoursesArray = response.data;
+        }
+      } else if (response && response.courses && Array.isArray(response.courses)) {
         // Estrutura alternativa: { courses: UserCourse[] }
         userCoursesArray = response.courses;
       } else if (Array.isArray(response)) {
@@ -117,10 +127,59 @@ class CoursesService {
         return [];
       }
 
+      // Mapear os cursos para o formato UserCourse, incluindo progresso que já vem na resposta
+      const mappedCourses: UserCourse[] = userCoursesArray.map((courseData: any) => {
+        // Extrair informações de progresso da resposta
+        // A API retorna progressDetails ou campos diretos (progress, completedLectures, totalLectures)
+        const progressDetails = courseData.progressDetails || {};
+        const progressPercentage = 
+          progressDetails.percentage ?? 
+          courseData.progress ?? 
+          0;
+        const completedLectures = 
+          progressDetails.completedLectures ?? 
+          courseData.completedLectures ?? 
+          0;
+        const totalLectures = 
+          progressDetails.totalLectures ?? 
+          courseData.totalLectures ?? 
+          0;
+
+        // Mapear o curso para o formato Course esperado
+        const course: Course = {
+          _id: courseData.id || courseData._id || courseData.courseId,
+          name: courseData.title || courseData.name,
+          description: courseData.description || "",
+          workload: courseData.workload || 0,
+          points: courseData.points || 0,
+          premiumPoints: courseData.premiumPoints || null,
+          slug: courseData.slug || null,
+          banner: courseData.imageUrl ? {
+            asset: {
+              url: courseData.imageUrl
+            }
+          } : undefined,
+        };
+
+        return {
+          id: courseData.id || courseData._id || courseData.courseId,
+          courseId: courseData.id || courseData._id || courseData.courseId,
+          course: course,
+          enrolledAt: courseData.createdAt || new Date().toISOString(),
+          completedAt: courseData.completedAt || undefined,
+          progress: {
+            completedLectures: completedLectures,
+            totalLectures: totalLectures,
+            percentage: progressPercentage,
+          },
+          lastAccessedAt: courseData.lastActivity || undefined,
+        };
+      });
+
       console.log(
-        `✅ [CoursesService] ${userCoursesArray.length} cursos do usuário encontrados`
+        `✅ [CoursesService] ${mappedCourses.length} cursos do usuário encontrados com progresso incluído`
       );
-      return userCoursesArray;
+      return mappedCourses;
     } catch (error) {
       console.error(
         "❌ [CoursesService] Erro ao buscar cursos do usuário:",
@@ -273,6 +332,218 @@ class CoursesService {
         `❌ [CoursesService] Erro ao adicionar curso ${courseId}:`,
         error
       );
+      throw error;
+    }
+  }
+
+  /**
+   * Busca progresso de um único curso
+   */
+  async getCourseProgress(
+    courseId: string,
+    options?: {
+      includeLectures?: boolean;
+      includeExams?: boolean;
+    }
+  ): Promise<CourseProgressResponse> {
+    try {
+      // Logs visíveis usando console.error para garantir que apareçam
+      console.error(`📊 [CoursesService.getCourseProgress] ==========================================`);
+      console.error(`📊 [CoursesService.getCourseProgress] Iniciando busca de progresso...`);
+      console.error(`📊 [CoursesService.getCourseProgress] Course ID: ${courseId}`);
+      console.error(`📊 [CoursesService.getCourseProgress] Opções:`, {
+        includeLectures: options?.includeLectures ?? false,
+        includeExams: options?.includeExams ?? false,
+      });
+      console.log(`📊 [CoursesService.getCourseProgress] Iniciando busca de progresso...`);
+      console.log(`📊 [CoursesService.getCourseProgress] Course ID: ${courseId}`);
+      console.log(`📊 [CoursesService.getCourseProgress] Opções:`, {
+        includeLectures: options?.includeLectures ?? false,
+        includeExams: options?.includeExams ?? false,
+      });
+      
+      const params = new URLSearchParams();
+      if (options?.includeLectures) {
+        params.append("includeLectures", "true");
+      }
+      if (options?.includeExams) {
+        params.append("includeExams", "true");
+      }
+      
+      const url = `/api/courses/${courseId}/progress${params.toString() ? `?${params.toString()}` : ""}`;
+      console.error(`📊 [CoursesService.getCourseProgress] URL: ${url}`);
+      console.error(`📊 [CoursesService.getCourseProgress] Fazendo requisição GET...`);
+      console.log(`📊 [CoursesService.getCourseProgress] URL: ${url}`);
+      console.log(`📊 [CoursesService.getCourseProgress] Fazendo requisição GET...`);
+      
+      const startTime = Date.now();
+      const response = await httpClient.get<CourseProgressResponse>(url);
+      const duration = Date.now() - startTime;
+      
+      console.error(`✅ [CoursesService.getCourseProgress] Requisição concluída em ${duration}ms`);
+      console.error(`✅ [CoursesService.getCourseProgress] Resposta recebida:`, {
+        success: response?.success,
+        hasCourse: !!response?.course,
+        hasProgress: !!response?.progress,
+        progressPercentage: response?.progress?.percentage,
+        completedLectures: response?.progress?.completedLectures,
+        totalLectures: response?.progress?.totalLectures,
+        hasLectures: !!response?.lectures,
+        lecturesCount: response?.lectures?.length ?? 0,
+      });
+      console.log(`✅ [CoursesService.getCourseProgress] Requisição concluída em ${duration}ms`);
+      console.log(`✅ [CoursesService.getCourseProgress] Resposta recebida:`, {
+        success: response?.success,
+        hasCourse: !!response?.course,
+        hasProgress: !!response?.progress,
+        progressPercentage: response?.progress?.percentage,
+        completedLectures: response?.progress?.completedLectures,
+        totalLectures: response?.progress?.totalLectures,
+        hasLectures: !!response?.lectures,
+        lecturesCount: response?.lectures?.length ?? 0,
+      });
+      
+      // Verificar estrutura da resposta
+      if (response && response.success && response.course && response.progress) {
+        console.error(`✅ [CoursesService.getCourseProgress] Progresso válido retornado para curso ${courseId}`);
+        console.log(`✅ [CoursesService.getCourseProgress] Progresso válido retornado para curso ${courseId}`);
+        console.error(`📊 [CoursesService.getCourseProgress] ==========================================`);
+        return response;
+      } else {
+        console.warn(
+          "⚠️ [CoursesService.getCourseProgress] Resposta do progresso não tem a estrutura esperada:",
+          response
+        );
+        throw new Error("Resposta inválida do servidor");
+      }
+    } catch (error) {
+      console.error(
+        `❌ [CoursesService.getCourseProgress] Erro ao buscar progresso do curso ${courseId}:`,
+        error
+      );
+      if (error instanceof Error) {
+        console.error(`❌ [CoursesService.getCourseProgress] Mensagem: ${error.message}`);
+        console.error(`❌ [CoursesService.getCourseProgress] Stack: ${error.stack}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Busca progresso de múltiplos cursos de uma vez
+   */
+  async getMultipleCoursesProgress(
+    courseIds: string[],
+    options?: {
+      includeLectures?: boolean;
+      includeExams?: boolean;
+    }
+  ): Promise<MultipleCourseProgressResponse> {
+    try {
+      // Logs visíveis usando console.error para garantir que apareçam
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Iniciando busca de progresso de múltiplos cursos`);
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Total de cursos: ${courseIds.length}`);
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] IDs dos cursos:`, courseIds);
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Opções:`, {
+        includeLectures: options?.includeLectures ?? false,
+        includeExams: options?.includeExams ?? false,
+      });
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] Iniciando busca de progresso de múltiplos cursos`);
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] Total de cursos: ${courseIds.length}`);
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] IDs dos cursos:`, courseIds);
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] Opções:`, {
+        includeLectures: options?.includeLectures ?? false,
+        includeExams: options?.includeExams ?? false,
+      });
+      
+      if (courseIds.length === 0) {
+        console.log(`ℹ️ [CoursesService.getMultipleCoursesProgress] Nenhum curso para buscar, retornando array vazio`);
+        return {
+          success: true,
+          courses: [],
+          total: 0,
+        };
+      }
+      
+      const params = new URLSearchParams();
+      params.append("courseIds", courseIds.join(","));
+      if (options?.includeLectures) {
+        params.append("includeLectures", "true");
+      }
+      if (options?.includeExams) {
+        params.append("includeExams", "true");
+      }
+      
+      // Usar o primeiro ID no path (será ignorado se courseIds estiver presente)
+      const url = `/api/courses/${courseIds[0]}/progress?${params.toString()}`;
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] URL: ${url}`);
+      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Fazendo requisição GET...`);
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] URL: ${url}`);
+      console.log(`📊 [CoursesService.getMultipleCoursesProgress] Fazendo requisição GET...`);
+      
+      const startTime = Date.now();
+      const response = await httpClient.get<MultipleCourseProgressResponse>(url);
+      const duration = Date.now() - startTime;
+      
+      console.error(`✅ [CoursesService.getMultipleCoursesProgress] Requisição concluída em ${duration}ms`);
+      console.error(`✅ [CoursesService.getMultipleCoursesProgress] Resposta recebida:`, {
+        success: response?.success,
+        total: response?.total,
+        coursesCount: response?.courses?.length ?? 0,
+      });
+      console.log(`✅ [CoursesService.getMultipleCoursesProgress] Requisição concluída em ${duration}ms`);
+      console.log(`✅ [CoursesService.getMultipleCoursesProgress] Resposta recebida:`, {
+        success: response?.success,
+        total: response?.total,
+        coursesCount: response?.courses?.length ?? 0,
+      });
+      
+      if (response?.courses && response.courses.length > 0) {
+        console.error(`📊 [CoursesService.getMultipleCoursesProgress] Detalhes dos cursos retornados:`);
+        console.log(`📊 [CoursesService.getMultipleCoursesProgress] Detalhes dos cursos retornados:`);
+        response.courses.forEach((courseData, index) => {
+          console.error(`  [${index + 1}] Curso ID: ${courseData.course.id}`);
+          console.error(`      Nome: ${courseData.course.name}`);
+          console.error(`      Progresso: ${courseData.progress.percentage}%`);
+          console.error(`      Aulas: ${courseData.progress.completedLectures}/${courseData.progress.totalLectures}`);
+          console.error(`      Status: ${courseData.progress.status}`);
+          console.error(`      Concluído: ${courseData.progress.isCompleted ? 'Sim' : 'Não'}`);
+          console.log(`  [${index + 1}] Curso ID: ${courseData.course.id}`);
+          console.log(`      Nome: ${courseData.course.name}`);
+          console.log(`      Progresso: ${courseData.progress.percentage}%`);
+          console.log(`      Aulas: ${courseData.progress.completedLectures}/${courseData.progress.totalLectures}`);
+          console.log(`      Status: ${courseData.progress.status}`);
+          console.log(`      Concluído: ${courseData.progress.isCompleted ? 'Sim' : 'Não'}`);
+        });
+      }
+      
+      // Verificar estrutura da resposta
+      if (response && response.success && Array.isArray(response.courses)) {
+        console.error(`✅ [CoursesService.getMultipleCoursesProgress] Progresso válido retornado para ${response.courses.length} cursos`);
+        console.error(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
+        console.log(`✅ [CoursesService.getMultipleCoursesProgress] Progresso válido retornado para ${response.courses.length} cursos`);
+        console.log(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
+        return response;
+      } else {
+        console.warn(
+          "⚠️ [CoursesService.getMultipleCoursesProgress] Resposta do progresso de múltiplos cursos não tem a estrutura esperada:",
+          response
+        );
+        throw new Error("Resposta inválida do servidor");
+      }
+    } catch (error) {
+      console.error(`❌ [CoursesService.getMultipleCoursesProgress] ==========================================`);
+      console.error(
+        `❌ [CoursesService.getMultipleCoursesProgress] Erro ao buscar progresso de múltiplos cursos:`,
+        error
+      );
+      if (error instanceof Error) {
+        console.error(`❌ [CoursesService.getMultipleCoursesProgress] Mensagem: ${error.message}`);
+        console.error(`❌ [CoursesService.getMultipleCoursesProgress] Stack: ${error.stack}`);
+      }
+      console.error(`❌ [CoursesService.getMultipleCoursesProgress] ==========================================`);
       throw error;
     }
   }
