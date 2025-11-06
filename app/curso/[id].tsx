@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { httpClient } from "../services/httpClient";
+import { httpClient } from "../../services/httpClient";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";

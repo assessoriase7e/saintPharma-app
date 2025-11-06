@@ -30,23 +30,23 @@ class LecturesService {
       ) {
         // Estrutura da documentação: { success: true, data: { lecture: Lecture }, timestamp: "..." }
         lecture = response.data.lecture;
-        isCompleted = response.data.isCompleted || lecture.completed || false;
-        completedAt = response.data.completedAt || lecture.completedAt || null;
+        isCompleted = response.data.isCompleted || (lecture ? lecture.completed : false) || false;
+        completedAt = response.data.completedAt || (lecture ? lecture.completedAt : null) || null;
       } else if (response && response._id) {
         // Estrutura real da API: Lecture diretamente
         lecture = response;
-        isCompleted = lecture.completed || false;
-        completedAt = lecture.completedAt || null;
+        isCompleted = lecture ? lecture.completed : false;
+        completedAt = lecture ? (lecture.completedAt ?? null) : null;
       } else if (response && response.data && response.data._id) {
         // Estrutura alternativa: { data: Lecture }
         lecture = response.data;
-        isCompleted = lecture.completed || false;
-        completedAt = lecture.completedAt || null;
+        isCompleted = lecture ? lecture.completed : false;
+        completedAt = lecture ? (lecture.completedAt ?? null) : null;
       } else if (response && response.lecture) {
         // Estrutura: { lecture: Lecture, isCompleted?: boolean, completedAt?: string }
         lecture = response.lecture;
-        isCompleted = response.isCompleted || lecture.completed || false;
-        completedAt = response.completedAt || lecture.completedAt || null;
+        isCompleted = response.isCompleted || (lecture ? lecture.completed : false) || false;
+        completedAt = response.completedAt || (lecture ? (lecture.completedAt ?? null) : null) || null;
       } else {
         console.warn(
           "⚠️ [LecturesService] Resposta da aula não tem a estrutura esperada:",
