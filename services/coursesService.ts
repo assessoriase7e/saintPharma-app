@@ -94,14 +94,18 @@ class CoursesService {
       let userCoursesArray = [];
 
       // A resposta pode vir em diferentes formatos:
-      // 1. { success: true, completed: [...], inProgress: [...] } - quando status=all ou sem parâmetro
-      // 2. { success: true, courses: [...] } - quando filtrado por status
-      // 3. { success: true, data: { courses: [...] } }
-      // 4. Array direto
+      // 1. { success: true, data: { completed: [...], inProgress: [...] } } - estrutura atual da API
+      // 2. { success: true, completed: [...], inProgress: [...] } - estrutura alternativa
+      // 3. { success: true, courses: [...] } - quando filtrado por status
+      // 4. { success: true, data: { courses: [...] } }
+      // 5. Array direto
       
       if (response && response.success) {
-        // Se tem completed e inProgress, combinar os arrays
-        if (response.completed && response.inProgress) {
+        // Verificar primeiro se tem data.completed e data.inProgress (estrutura atual)
+        if (response.data && response.data.completed && response.data.inProgress) {
+          userCoursesArray = [...response.data.completed, ...response.data.inProgress];
+        } else if (response.completed && response.inProgress) {
+          // Estrutura alternativa: completed e inProgress no nível raiz
           userCoursesArray = [...response.completed, ...response.inProgress];
         } else if (response.courses && Array.isArray(response.courses)) {
           userCoursesArray = response.courses;
@@ -145,6 +149,20 @@ class CoursesService {
           courseData.totalLectures ?? 
           0;
 
+        // Garantir que os valores são numéricos
+        const finalProgressPercentage = Number(progressPercentage) || 0;
+        const finalCompletedLectures = Number(completedLectures) || 0;
+        const finalTotalLectures = Number(totalLectures) || 0;
+
+        // Log para debug do progresso
+        console.log(`📊 [CoursesService] Mapeando curso ${courseData.id || courseData._id}:`, {
+          progressDetails,
+          progress: courseData.progress,
+          completedLectures: finalCompletedLectures,
+          totalLectures: finalTotalLectures,
+          progressPercentage: finalProgressPercentage,
+        });
+
         // Mapear o curso para o formato Course esperado
         const course: Course = {
           _id: courseData.id || courseData._id || courseData.courseId,
@@ -168,9 +186,9 @@ class CoursesService {
           enrolledAt: courseData.createdAt || new Date().toISOString(),
           completedAt: courseData.completedAt || undefined,
           progress: {
-            completedLectures: completedLectures,
-            totalLectures: totalLectures,
-            percentage: progressPercentage,
+            completedLectures: finalCompletedLectures,
+            totalLectures: finalTotalLectures,
+            percentage: finalProgressPercentage,
           },
           lastAccessedAt: courseData.lastActivity || undefined,
         };

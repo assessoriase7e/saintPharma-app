@@ -14,107 +14,37 @@ class RankingService {
         page: page.toString(),
         limit: limit.toString(),
       });
-      const response = await httpClient.get(`/api/ranking?${params.toString()}`);
+      const response = await httpClient.get<RankingResponse>(`/api/ranking?${params.toString()}`);
       console.log("✅ [RankingService] Ranking carregado:", response);
 
-      // Verificar se a resposta tem a estrutura esperada e transformar se necessário
-      let rankingData: RankingResponse;
-
-      if (response && response.success && response.ranking) {
-        // Estrutura da documentação: { success: true, ranking: [...], pagination: {...}, month: "..." }
-        // Transformar os dados para garantir que usem firstName e lastName
-        rankingData = {
-          ranking: response.ranking.map((item: any) => {
-            // Se o item já tem a estrutura correta com user.firstName e user.lastName
-            if (item.user && (item.user.firstName || item.user.lastName)) {
-              return item;
-            }
-            
-            // Se o item tem firstName e lastName diretamente (sem user)
-            if (item.firstName || item.lastName) {
-              return {
-                user: {
-                  firstName: item.firstName,
-                  lastName: item.lastName,
-                  profileImage: item.profileImage,
-                },
-                points: item.points || 0,
-                certificatesCount: item.certificatesCount || 0,
-              };
-            }
-            
-            // Se o item tem name (formato antigo), tentar dividir
-            if (item.name) {
-              const nameParts = item.name.trim().split(/\s+/);
-              const firstName = nameParts[0] || "";
-              const lastName = nameParts.slice(1).join(" ") || "";
-              
-              return {
-                user: {
-                  firstName: firstName || undefined,
-                  lastName: lastName || undefined,
-                  profileImage: item.profileImage,
-                },
-                points: item.points || 0,
-                certificatesCount: item.certificatesCount || 0,
-              };
-            }
-            
-            // Fallback: retornar como está
-            return item;
-          }),
-        };
-      } else if (response && Array.isArray(response.ranking)) {
-        // Estrutura alternativa: ranking como array direto
-        rankingData = {
-          ranking: response.ranking.map((item: any) => {
-            if (item.user && (item.user.firstName || item.user.lastName)) {
-              return item;
-            }
-            if (item.firstName || item.lastName) {
-              return {
-                user: {
-                  firstName: item.firstName,
-                  lastName: item.lastName,
-                  profileImage: item.profileImage,
-                },
-                points: item.points || 0,
-                certificatesCount: item.certificatesCount || 0,
-              };
-            }
-            return item;
-          }),
-        };
-      } else if (Array.isArray(response)) {
-        // Estrutura alternativa: array direto
-        rankingData = {
-          ranking: response.map((item: any) => {
-            if (item.user && (item.user.firstName || item.user.lastName)) {
-              return item;
-            }
-            if (item.firstName || item.lastName) {
-              return {
-                user: {
-                  firstName: item.firstName,
-                  lastName: item.lastName,
-                  profileImage: item.profileImage,
-                },
-                points: item.points || 0,
-                certificatesCount: item.certificatesCount || 0,
-              };
-            }
-            return item;
-          }),
-        };
-      } else {
-        console.warn(
-          "⚠️ [RankingService] Resposta do ranking não tem a estrutura esperada:",
-          response
-        );
-        rankingData = { ranking: [] };
+      // Verificar se a resposta tem a estrutura esperada
+      if (response && response.success && response.ranking && response.pagination && response.week) {
+        return response;
       }
 
-      return rankingData;
+      // Fallback para estrutura incompleta
+      console.warn(
+        "⚠️ [RankingService] Resposta do ranking não tem a estrutura esperada:",
+        response
+      );
+      
+      // Retornar estrutura mínima válida
+      return {
+        success: response?.success || false,
+        ranking: response?.ranking || [],
+        pagination: response?.pagination || {
+          page: 1,
+          limit: 20,
+          total: 0,
+          pages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+        week: response?.week || {
+          start: new Date().toISOString().split('T')[0],
+          end: new Date().toISOString().split('T')[0],
+        },
+      };
     } catch (error) {
       console.error("❌ [RankingService] Erro ao buscar ranking:", error);
       throw error;

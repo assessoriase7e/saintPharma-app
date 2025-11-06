@@ -27,8 +27,16 @@ class UserService {
       console.log("✅ [UserService] Usuário criado:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.user) {
-        // Estrutura da documentação: { success: true, message: "...", user: {...} }
+      // A API pode retornar: { success: true, data: { message: "...", user: {...} } }
+      if (response && response.success && response.data && response.data.user) {
+        // Estrutura atual da API: { success: true, data: { message: "...", user: {...} } }
+        return {
+          success: true,
+          message: response.data.message || "Usuário criado com sucesso",
+          user: response.data.user,
+        };
+      } else if (response && response.success && response.user) {
+        // Estrutura alternativa: { success: true, message: "...", user: {...} }
         return response;
       } else if (response && response.user) {
         // Estrutura alternativa: { user: {...} }
@@ -99,8 +107,16 @@ class UserService {
       console.log("✅ [UserService] Usuário encontrado:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.user) {
-        // Estrutura da documentação: { success: true, message: "...", user: {...} }
+      // A API retorna: { success: true, data: { message: "...", user: {...} } }
+      if (response && response.success && response.data && response.data.user) {
+        // Estrutura atual da API: { success: true, data: { message: "...", user: {...} } }
+        return {
+          success: true,
+          message: response.data.message || "Usuário encontrado com sucesso",
+          user: response.data.user,
+        };
+      } else if (response && response.success && response.user) {
+        // Estrutura alternativa: { success: true, message: "...", user: {...} }
         return response;
       } else if (response && response.user) {
         // Estrutura alternativa: { user: {...} }
@@ -138,8 +154,16 @@ class UserService {
       console.log("✅ [UserService] Perfil encontrado:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.profile) {
-        // Estrutura da documentação: { success: true, message: "...", profile: {...} }
+      // A API pode retornar: { success: true, data: { message: "...", profile: {...} } }
+      if (response && response.success && response.data && response.data.profile) {
+        // Estrutura atual da API: { success: true, data: { message: "...", profile: {...} } }
+        return {
+          success: true,
+          message: response.data.message || "Perfil do usuário encontrado com sucesso",
+          profile: response.data.profile,
+        };
+      } else if (response && response.success && response.profile) {
+        // Estrutura alternativa: { success: true, message: "...", profile: {...} }
         return response;
       } else if (response && response.profile) {
         // Estrutura alternativa: { profile: {...} }
@@ -326,8 +350,16 @@ class UserService {
       console.log("✅ [UserService] Usuário atualizado:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.user) {
-        // Estrutura da documentação: { success: true, message: "...", user: {...} }
+      // A API pode retornar: { success: true, data: { message: "...", user: {...} } }
+      if (response && response.success && response.data && response.data.user) {
+        // Estrutura atual da API: { success: true, data: { message: "...", user: {...} } }
+        return {
+          success: true,
+          message: response.data.message || "Usuário atualizado com sucesso",
+          user: response.data.user,
+        };
+      } else if (response && response.success && response.user) {
+        // Estrutura alternativa: { success: true, message: "...", user: {...} }
         return response;
       } else if (response && response.user) {
         // Estrutura alternativa: { user: {...} }
@@ -359,8 +391,16 @@ class UserService {
       console.log("✅ [UserService] Dados completados:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.user) {
-        // Estrutura da documentação: { success: true, message: "...", user: {...} }
+      // A API pode retornar: { success: true, data: { message: "...", user: {...} } }
+      if (response && response.success && response.data && response.data.user) {
+        // Estrutura atual da API: { success: true, data: { message: "...", user: {...} } }
+        return {
+          success: true,
+          message: response.data.message || "Dados do usuário completados com sucesso",
+          user: response.data.user,
+        };
+      } else if (response && response.success && response.user) {
+        // Estrutura alternativa: { success: true, message: "...", user: {...} }
         return response;
       } else if (response && response.user) {
         // Estrutura alternativa: { user: {...} }

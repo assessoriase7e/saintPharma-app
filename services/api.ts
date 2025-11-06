@@ -381,44 +381,30 @@ class ApiClient {
       page: page.toString(),
       limit: limit.toString(),
     });
-    const response = await this.request<any>(`/api/ranking?${params.toString()}`);
+    const response = await this.request<RankingResponse>(`/api/ranking?${params.toString()}`);
     
-    // Transformar resposta para garantir formato correto com firstName e lastName
-    if (response && response.success && response.ranking) {
-      return {
-        ranking: response.ranking.map((item: any) => {
-          if (item.user && (item.user.firstName || item.user.lastName)) {
-            return item;
-          }
-          if (item.firstName || item.lastName) {
-            return {
-              user: {
-                firstName: item.firstName,
-                lastName: item.lastName,
-                profileImage: item.profileImage,
-              },
-              points: item.points || 0,
-              certificatesCount: item.certificatesCount || 0,
-            };
-          }
-          if (item.name) {
-            const nameParts = item.name.trim().split(/\s+/);
-            return {
-              user: {
-                firstName: nameParts[0] || undefined,
-                lastName: nameParts.slice(1).join(" ") || undefined,
-                profileImage: item.profileImage,
-              },
-              points: item.points || 0,
-              certificatesCount: item.certificatesCount || 0,
-            };
-          }
-          return item;
-        }),
-      };
+    // Verificar se a resposta tem a estrutura esperada
+    if (response && response.success && response.ranking && response.pagination && response.week) {
+      return response;
     }
     
-    return response;
+    // Fallback para estrutura incompleta
+    return {
+      success: response?.success || false,
+      ranking: response?.ranking || [],
+      pagination: response?.pagination || {
+        page: 1,
+        limit: 20,
+        total: 0,
+        pages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+      week: response?.week || {
+        start: new Date().toISOString().split('T')[0],
+        end: new Date().toISOString().split('T')[0],
+      },
+    };
   }
 
   async getUserPoints(): Promise<UserPointsResponse> {
