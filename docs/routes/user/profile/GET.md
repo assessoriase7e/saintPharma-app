@@ -89,6 +89,12 @@ Headers:
 
 Ambas retornam os mesmos dados, apenas a estrutura da resposta é diferente.
 
+## Notas Importantes
+
+- O campo `points` sempre retorna os pontos totais acumulados do usuário
+- Os pontos são calculados automaticamente quando o usuário completa cursos, exames ou aulas
+- O campo `points` é garantido estar presente na resposta
+
 ## Modelo de Dados (Banco de Dados)
 
 ### User (Prisma)

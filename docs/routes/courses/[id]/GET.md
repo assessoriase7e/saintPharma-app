@@ -67,3 +67,5 @@ model UserLecture {
 }
 ```
 
+
+

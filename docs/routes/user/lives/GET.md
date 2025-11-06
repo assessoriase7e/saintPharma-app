@@ -59,3 +59,5 @@ model Damage {
 - **Regeneração**: A cada 10 horas após o último dano
 - **Cálculo**: `remainingLives = totalLives - damageCount (últimas 10 horas)`
 
+
+

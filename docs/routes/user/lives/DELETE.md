@@ -87,3 +87,5 @@ model Damage {
 - Limita a quantidade removida pelas vidas disponíveis
 - Próximo reset: 10 horas após a remoção
 
+
+

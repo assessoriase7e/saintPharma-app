@@ -13,7 +13,6 @@ docs/routes/
 ├── exams/             # Rotas de exames
 ├── lectures/          # Rotas de aulas
 ├── certificate/       # Rotas de certificados
-├── auth/              # Rotas de autenticação
 ├── ranking/           # Rotas de ranking
 └── README.md          # Este arquivo
 ```
@@ -75,12 +74,6 @@ Authorization: Bearer <API_TOKEN>
 - [GET /api/certificate](certificate/GET.md) - Listar certificados
 - [POST /api/certificate/create](certificate/create/POST.md) - Criar certificado
 - [GET /api/certificate/[id]](certificate/[id]/GET.md) - Detalhes do certificado
-
-### Autenticação (/api/auth)
-
-- [POST /api/auth/login](auth/login/POST.md) - Login
-- [POST /api/auth/logout](auth/logout/POST.md) - Logout
-- [GET /api/auth/user](auth/user/GET.md) - Usuário autenticado
 
 ### Ranking (/api/ranking)
 
