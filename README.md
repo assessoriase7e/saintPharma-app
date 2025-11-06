@@ -10,7 +10,18 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Configure environment variables
+
+   Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+   ```env
+   EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api
+   EXPO_PUBLIC_API_TOKEN=seu-token-aqui
+   ```
+
+   **Importante:** Sem essas variáveis configuradas, nenhuma requisição será feita ao servidor!
+
+3. Start the app
 
    ```bash
    npx expo start
