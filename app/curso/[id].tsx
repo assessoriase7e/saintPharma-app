@@ -1,24 +1,33 @@
+import { useAuth } from "@clerk/clerk-expo";
+import { httpClient } from "../services/httpClient";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
 import Card from "../../components/Card";
-import { coursesService, examsService, lecturesService } from "../../services";
-import { Lecture } from "../../types/api";
+import {
+  certificatesService,
+  coursesService,
+  examsService,
+  lecturesService,
+} from "../../services";
+import { CourseProgressResponse, Lecture } from "../../types/api";
 
 interface LectureCardProps {
   lecture: Lecture;
   courseId: string;
   index: number;
+  isCourseCompleted: boolean;
 }
 
-function LectureCard({ lecture, courseId, index }: LectureCardProps) {
+function LectureCard({ lecture, courseId, index, isCourseCompleted }: LectureCardProps) {
   const [creatingExam, setCreatingExam] = useState(false);
 
   const handleLecturePress = () => {
@@ -97,8 +106,8 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
           </View>
         </Pressable>
 
-        {/* Botão de Prova - só aparece se a aula estiver concluída */}
-        {lecture.completed && (
+        {/* Botão de Prova - só aparece se a aula estiver concluída E o curso não estiver 100% completo */}
+        {lecture.completed && !isCourseCompleted && (
           <View className="mt-3 pt-3 border-t border-border">
             <Pressable
               onPress={handleQuizPress}
@@ -138,11 +147,14 @@ function LectureCard({ lecture, courseId, index }: LectureCardProps) {
 
 export default function CourseLessons() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { userId } = useAuth();
   const courseId = id || "";
   const [course, setCourse] = useState<any>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [progressData, setProgressData] = useState<CourseProgressResponse | null>(null);
+  const [generatingCertificate, setGeneratingCertificate] = useState(false);
 
   const fetchCourseData = useCallback(async () => {
     try {
@@ -173,10 +185,14 @@ export default function CourseLessons() {
         console.log(`  - Porcentagem: ${progressResponse.progress.percentage}%`);
         console.log(`  - Aulas concluídas: ${progressResponse.progress.completedLectures}/${progressResponse.progress.totalLectures}`);
         console.log(`  - Status: ${progressResponse.progress.status}`);
+        console.log(`  - Pronto para certificado: ${progressResponse.progress.isReadyForCertificate}`);
+        console.log(`  - Concluído: ${progressResponse.progress.isCompleted}`);
+        console.log(`  - Certificado: ${progressResponse.certificate ? 'Sim' : 'Não'}`);
         console.log(`  - Lectures no progresso: ${progressResponse.lectures?.length ?? 0}`);
       }
 
       setCourse(courseResponse);
+      setProgressData(progressResponse);
       
       // Se tiver progresso com lectures, usar essas lectures (elas têm o status completed)
       if (progressResponse?.lectures && progressResponse.lectures.length > 0) {
@@ -272,6 +288,76 @@ export default function CourseLessons() {
   const progressPercentage =
     totalLectures > 0 ? (completedLectures / totalLectures) * 100 : 0;
 
+  // Verificar se o curso está 100% concluído
+  const isCourseCompleted = progressPercentage >= 100 || 
+    (progressData?.progress?.isCompleted ?? false) ||
+    (progressData?.progress?.isReadyForCertificate ?? false) ||
+    (completedLectures === totalLectures && totalLectures > 0);
+
+  // Verificar se já existe certificado
+  const hasCertificate = !!progressData?.certificate;
+  const certificateId = progressData?.certificate?.id;
+
+  // Função para gerar certificado
+  const handleGenerateCertificate = async () => {
+    if (!course) {
+      Alert.alert("Erro", "Informações do curso não disponíveis.");
+      return;
+    }
+
+    if (!userId) {
+      Alert.alert("Erro", "Usuário não autenticado.");
+      return;
+    }
+
+    try {
+      setGeneratingCertificate(true);
+      
+      // Configurar X-User-Id header conforme documentação
+      // A rota /api/certificate/for-user requer X-User-Id no header
+      httpClient.setUserId(userId);
+      
+      // Usar a rota /api/certificate/for-user que verifica se já existe certificado
+      // Se existir, retorna o existente. Se não, cria um novo.
+      const response = await certificatesService.getOrCreateCertificate({
+        course: {
+          _id: courseId, // Também aceita "id"
+          name: course.title || course.name, // Também aceita "title" ou "courseTitle"
+          description: course.description,
+          points: course.points || 0,
+          workload: course.workload || 0,
+          premiumPoints: course.premiumPoints,
+          banner: course.banner,
+          slug: course.slug,
+        },
+      });
+
+      // A resposta tem a estrutura: { success: true, data: { certificate: {...} }, timestamp: "..." }
+      const certificate = response.data?.certificate;
+      
+      if (certificate) {
+        // Redirecionar automaticamente para a página do certificado
+        router.push(`/certificado/${certificate.id}` as any);
+      }
+    } catch (error) {
+      console.error("Erro ao gerar certificado:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erro ao gerar certificado. Tente novamente.";
+      Alert.alert("Erro", errorMessage);
+    } finally {
+      setGeneratingCertificate(false);
+    }
+  };
+
+  // Função para ver certificado
+  const handleViewCertificate = () => {
+    if (certificateId) {
+      router.push(`/certificado/${certificateId}` as any);
+    }
+  };
+
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
@@ -342,6 +428,7 @@ export default function CourseLessons() {
             lecture={lecture}
             courseId={courseId}
             index={index}
+            isCourseCompleted={isCourseCompleted}
           />
         ))}
 
@@ -392,25 +479,64 @@ export default function CourseLessons() {
           </View>
         </Card>
 
-        {/* Botão Iniciar Curso */}
-        <View className="mt-6">
-          <Pressable
-            className="bg-primary rounded-lg py-4 px-6"
-            onPress={() => {
-              // Encontrar a primeira aula não concluída ou a primeira aula
-              const firstIncompleteLecture =
-                lectures.find((lecture) => !lecture.completed) || lectures[0];
-              if (firstIncompleteLecture) {
-                router.push(
-                  `/aula/${firstIncompleteLecture._id}?courseId=${courseId}` as any
-                );
-              }
-            }}
-          >
-            <Text className="text-white text-center font-semibold text-lg">
-              Iniciar Curso
-            </Text>
-          </Pressable>
+        {/* Botões de Ação */}
+        <View className="mt-6 space-y-3">
+          {isCourseCompleted && hasCertificate ? (
+            // Botão Ver Certificado (curso concluído e certificado existe)
+            <Pressable
+              className="bg-secondary rounded-lg py-4 px-6 flex-row items-center justify-center"
+              onPress={handleViewCertificate}
+            >
+              <Ionicons name="trophy" size={24} color="white" />
+              <Text className="text-white text-center font-semibold text-lg ml-2">
+                Ver Certificado
+              </Text>
+            </Pressable>
+          ) : isCourseCompleted ? (
+            // Botão Gerar Certificado (curso concluído mas certificado não existe)
+            <Pressable
+              className={`rounded-lg py-4 px-6 flex-row items-center justify-center ${
+                generatingCertificate ? "bg-secondary/50" : "bg-secondary"
+              }`}
+              onPress={handleGenerateCertificate}
+              disabled={generatingCertificate}
+            >
+              {generatingCertificate ? (
+                <>
+                  <ActivityIndicator size="small" color="white" />
+                  <Text className="text-white text-center font-semibold text-lg ml-2">
+                    Gerando Certificado...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="trophy-outline" size={24} color="white" />
+                  <Text className="text-white text-center font-semibold text-lg ml-2">
+                    Gerar Certificado
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          ) : (
+            // Botão Iniciar Curso (curso não concluído)
+            <Pressable
+              className="bg-primary rounded-lg py-4 px-6"
+              onPress={() => {
+                // Encontrar a primeira aula não concluída ou a primeira aula
+                const firstIncompleteLecture =
+                  lectures.find((lecture) => !lecture.completed) || lectures[0];
+                if (firstIncompleteLecture) {
+                  router.push(
+                    `/aula/${firstIncompleteLecture._id}?courseId=${courseId}` as any
+                  );
+                }
+              }}
+            >
+              <Text className="text-white text-center font-semibold text-lg">
+                Iniciar Curso
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         <View className="h-6" />
