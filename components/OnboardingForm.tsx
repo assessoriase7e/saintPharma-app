@@ -1,6 +1,6 @@
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,6 +21,16 @@ export function OnboardingForm() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  }>({});
+
+  // Refs para focar nos campos
+  const lastNameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
 
   console.log("🔄 [OnboardingForm] Renderizando formulário de onboarding", {
     userId,
@@ -36,6 +46,24 @@ export function OnboardingForm() {
 
   // Endereço e CPF removidos - não são mais necessários
 
+  const showError = (message: string) => {
+    setError(message);
+    // Tentar mostrar Alert também (pode não funcionar na web)
+    setTimeout(() => {
+      try {
+        Alert.alert("Erro", message);
+      } catch (e) {
+        // Alert pode não funcionar em alguns ambientes
+        console.log("Alert não disponível, usando mensagem visual");
+      }
+    }, 100);
+  };
+
+  const clearErrors = () => {
+    setError(null);
+    setFieldErrors({});
+  };
+
   const handleSubmit = async () => {
     console.log("🔄 [OnboardingForm] handleSubmit chamado", {
       userId,
@@ -43,26 +71,86 @@ export function OnboardingForm() {
       firstName,
       lastName,
       email,
+      loading,
     });
+
+    // Limpar erros anteriores
+    clearErrors();
+
+    // Verificar se já está carregando (evitar múltiplos cliques)
+    if (loading) {
+      console.log("⚠️ [OnboardingForm] Já está processando, ignorando clique");
+      return;
+    }
 
     if (!userId || !user) {
       console.log("❌ [OnboardingForm] Usuário não autenticado");
-      Alert.alert("Erro", "Usuário não autenticado");
+      showError("Usuário não autenticado. Faça login novamente.");
       return;
     }
 
     // Validações básicas
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      console.log("❌ [OnboardingForm] Campos obrigatórios não preenchidos", {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
+    let hasError = false;
+    const errors: typeof fieldErrors = {};
+
+    if (!firstName.trim()) {
+      console.log("❌ [OnboardingForm] Nome não preenchido");
+      errors.firstName = "Preencha o campo Nome";
+      hasError = true;
+    }
+    
+    if (!lastName.trim()) {
+      console.log("❌ [OnboardingForm] Sobrenome não preenchido");
+      errors.lastName = "Preencha o campo Sobrenome";
+      hasError = true;
+    }
+    
+    if (!email.trim()) {
+      console.log("❌ [OnboardingForm] Email não preenchido");
+      errors.email = "Preencha o campo Email";
+      hasError = true;
+    } else {
+      // Validação de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        console.log("❌ [OnboardingForm] Email inválido");
+        errors.email = "Digite um email válido";
+        hasError = true;
+      }
+    }
+
+    if (hasError) {
+      setFieldErrors(errors);
+      // Focar no primeiro campo com erro
+      if (errors.firstName) {
+        // Não há ref para firstName, então focar no próximo
+      } else if (errors.lastName) {
+        lastNameRef.current?.focus();
+      } else if (errors.email) {
+        emailRef.current?.focus();
+      }
+      
+      const errorMessage = Object.values(errors)[0] || "Preencha todos os campos obrigatórios";
+      showError(errorMessage);
+      return;
+    }
+
+    // Verificar variáveis de ambiente antes de começar
+    const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+    const apiToken = process.env.EXPO_PUBLIC_API_TOKEN;
+    
+    if (!apiUrl || !apiToken) {
+      console.error("❌ [OnboardingForm] Variáveis de ambiente não configuradas", {
+        hasApiUrl: !!apiUrl,
+        hasApiToken: !!apiToken,
       });
-      Alert.alert("Erro", "Preencha todos os campos obrigatórios");
+      const configError = "As configurações da API não foram encontradas. Verifique o arquivo .env com EXPO_PUBLIC_API_BASE_URL e EXPO_PUBLIC_API_TOKEN";
+      showError(configError);
       return;
     }
 
     setLoading(true);
+    console.log("🔄 [OnboardingForm] Iniciando processo de criação de perfil...");
 
     try {
       const onboardingData: OnboardingData = {
@@ -76,34 +164,70 @@ export function OnboardingForm() {
         // CPF e endereço removidos - não são mais necessários
       };
 
-      console.log("🔄 [OnboardingForm] Enviando dados de onboarding...");
+      console.log("🔄 [OnboardingForm] Enviando dados de onboarding...", {
+        userId: onboardingData.user.id,
+        firstName: onboardingData.user.firstName,
+        lastName: onboardingData.user.lastName,
+        email: onboardingData.user.email,
+      });
 
       const result = await onboardingService.completeOnboarding(onboardingData);
+
+      console.log("📥 [OnboardingForm] Resultado recebido:", result);
 
       if (result.success) {
         console.log("✅ [OnboardingForm] Onboarding concluído com sucesso");
 
-        // Redirecionar diretamente para a página inicial
-        console.log(
-          "🔄 [OnboardingForm] Redirecionando para página inicial..."
-        );
+        // Aguardar um pouco para garantir que a API processou
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Usar setTimeout para garantir que o estado seja atualizado antes do redirecionamento
-        setTimeout(() => {
+        // Verificar novamente o status antes de redirecionar
+        console.log("🔍 [OnboardingForm] Verificando status do onboarding após criação...");
+        try {
+          const status = await onboardingService.checkOnboardingStatus(userId);
+          console.log("📊 [OnboardingForm] Status verificado após criação:", {
+            needsOnboarding: status.needsOnboarding,
+            firstName: status.user?.firstName,
+            lastName: status.user?.lastName,
+          });
+
+          if (!status.needsOnboarding) {
+            console.log("✅ [OnboardingForm] Onboarding confirmado completo, redirecionando...");
+            router.replace("/");
+          } else {
+            console.warn("⚠️ [OnboardingForm] Onboarding ainda não completo segundo a verificação");
+            // Mesmo assim, tentar redirecionar (pode ser cache da API)
+            await new Promise(resolve => setTimeout(resolve, 500));
+            router.replace("/");
+          }
+        } catch (verifyError: any) {
+          console.error("❌ [OnboardingForm] Erro ao verificar status após criação:", verifyError);
+          // Em caso de erro na verificação, redirecionar mesmo assim
           router.replace("/");
-        }, 100);
+        }
       } else {
         console.error("❌ [OnboardingForm] Erro no onboarding:", result.error);
-        Alert.alert(
-          "Erro",
-          result.error || "Erro ao criar perfil. Tente novamente."
-        );
+        const errorMessage = result.error || "Erro ao criar perfil. Tente novamente.";
+        showError(errorMessage);
       }
     } catch (error: any) {
       console.error("❌ [OnboardingForm] Erro inesperado:", error);
-      Alert.alert("Erro", "Erro inesperado. Tente novamente.");
+      console.error("❌ [OnboardingForm] Stack trace:", error.stack);
+      
+      let errorMessage = "Erro inesperado. Tente novamente.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      showError(errorMessage);
     } finally {
       setLoading(false);
+      console.log("🔄 [OnboardingForm] handleSubmit finalizado, loading = false");
     }
   };
 
@@ -130,6 +254,15 @@ export function OnboardingForm() {
               </Text>
             </View>
 
+            {/* Mensagem de erro geral */}
+            {error && (
+              <View className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <Text className="text-red-600 dark:text-red-400 font-medium text-center">
+                  {error}
+                </Text>
+              </View>
+            )}
+
             {/* Formulário */}
             <View className="space-y-6">
               {/* Dados Pessoais */}
@@ -144,13 +277,30 @@ export function OnboardingForm() {
                       Nome *
                     </Text>
                     <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
+                      className={`bg-card border rounded-lg px-4 py-3 text-text-primary ${
+                        fieldErrors.firstName
+                          ? "border-red-500 dark:border-red-400"
+                          : "border-border"
+                      }`}
                       placeholder="Digite seu nome"
                       placeholderTextColor="#9ca3af"
                       value={firstName}
-                      onChangeText={setFirstName}
+                      onChangeText={(text) => {
+                        setFirstName(text);
+                        if (fieldErrors.firstName) {
+                          setFieldErrors((prev) => ({ ...prev, firstName: undefined }));
+                          if (error && !fieldErrors.lastName && !fieldErrors.email) {
+                            setError(null);
+                          }
+                        }
+                      }}
                       autoCapitalize="words"
                     />
+                    {fieldErrors.firstName && (
+                      <Text className="text-red-500 dark:text-red-400 text-sm mt-1">
+                        {fieldErrors.firstName}
+                      </Text>
+                    )}
                   </View>
 
                   <View>
@@ -158,13 +308,31 @@ export function OnboardingForm() {
                       Sobrenome *
                     </Text>
                     <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
+                      ref={lastNameRef}
+                      className={`bg-card border rounded-lg px-4 py-3 text-text-primary ${
+                        fieldErrors.lastName
+                          ? "border-red-500 dark:border-red-400"
+                          : "border-border"
+                      }`}
                       placeholder="Digite seu sobrenome"
                       placeholderTextColor="#9ca3af"
                       value={lastName}
-                      onChangeText={setLastName}
+                      onChangeText={(text) => {
+                        setLastName(text);
+                        if (fieldErrors.lastName) {
+                          setFieldErrors((prev) => ({ ...prev, lastName: undefined }));
+                          if (error && !fieldErrors.firstName && !fieldErrors.email) {
+                            setError(null);
+                          }
+                        }
+                      }}
                       autoCapitalize="words"
                     />
+                    {fieldErrors.lastName && (
+                      <Text className="text-red-500 dark:text-red-400 text-sm mt-1">
+                        {fieldErrors.lastName}
+                      </Text>
+                    )}
                   </View>
 
                   <View>
@@ -172,15 +340,33 @@ export function OnboardingForm() {
                       Email *
                     </Text>
                     <TextInput
-                      className="bg-card border border-border rounded-lg px-4 py-3 text-text-primary"
+                      ref={emailRef}
+                      className={`bg-card border rounded-lg px-4 py-3 text-text-primary ${
+                        fieldErrors.email
+                          ? "border-red-500 dark:border-red-400"
+                          : "border-border"
+                      }`}
                       placeholder="Digite seu email"
                       placeholderTextColor="#9ca3af"
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        if (fieldErrors.email) {
+                          setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                          if (error && !fieldErrors.firstName && !fieldErrors.lastName) {
+                            setError(null);
+                          }
+                        }
+                      }}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoComplete="email"
                     />
+                    {fieldErrors.email && (
+                      <Text className="text-red-500 dark:text-red-400 text-sm mt-1">
+                        {fieldErrors.email}
+                      </Text>
+                    )}
                   </View>
                 </View>
               </View>
@@ -192,8 +378,12 @@ export function OnboardingForm() {
                 className={`bg-primary rounded-lg py-4 ${
                   loading ? "opacity-50" : ""
                 }`}
-                onPress={handleSubmit}
+                onPress={() => {
+                  console.log("🖱️ [OnboardingForm] Botão clicado!");
+                  handleSubmit();
+                }}
                 disabled={loading}
+                activeOpacity={0.8}
               >
                 <Text className="text-white text-center font-semibold text-base">
                   {loading ? "Criando perfil..." : "Criar perfil"}

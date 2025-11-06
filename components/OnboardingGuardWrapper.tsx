@@ -40,8 +40,8 @@ export function OnboardingGuardWrapper({
   useEffect(() => {
     if (!isLoaded) return;
 
-    // Se não estiver logado e não estiver em rota de auth, redirecionar para login
-    if (!isSignedIn && !isAuthRoute && !isSSOCallbackRoute) {
+    // Se não estiver logado e não estiver em rota permitida, redirecionar para login
+    if (!isSignedIn && !isAuthRoute && !isSSOCallbackRoute && !isOnboardingRoute) {
       console.log(
         "🔄 [OnboardingGuard] Usuário não logado, redirecionando para login"
       );
@@ -60,20 +60,21 @@ export function OnboardingGuardWrapper({
 
     // Marcar que já verificou
     setHasChecked(true);
-  }, [isLoaded, isSignedIn, isAuthRoute, isSSOCallbackRoute, router]);
-
-  // Se não estiver logado, não renderizar nada (já redirecionou)
-  if (!isSignedIn) {
-    console.log("🔄 [OnboardingGuard] Usuário não logado, retornando null");
-    return null;
-  }
+  }, [isLoaded, isSignedIn, isAuthRoute, isSSOCallbackRoute, isOnboardingRoute, router]);
 
   // Se estiver em rota de onboarding, renderizar children sem verificação
+  // (permitir acesso mesmo sem estar logado, pois o formulário verifica isso)
   if (isOnboardingRoute) {
     console.log(
       "🔄 [OnboardingGuard] Em rota de onboarding, renderizando children"
     );
     return <>{children}</>;
+  }
+
+  // Se não estiver logado e não estiver em rota permitida, não renderizar nada (já redirecionou)
+  if (!isSignedIn) {
+    console.log("🔄 [OnboardingGuard] Usuário não logado, retornando null");
+    return null;
   }
 
   // Mostrar loading enquanto verifica onboarding
