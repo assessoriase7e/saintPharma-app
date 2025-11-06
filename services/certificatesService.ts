@@ -93,16 +93,106 @@ class CertificatesService {
   }
 
   /**
+   * Obtém ou cria um certificado para o usuário autenticado
+   * Se já existe um certificado para o curso, retorna o existente. Caso contrário, cria um novo.
+   * 
+   * A API aceita:
+   * - course._id ou course.id (será normalizado para _id)
+   * - course.name, course.title ou course.courseTitle (será normalizado para name)
+   * 
+   * Resposta esperada: { success: true, data: { certificate: {...} }, timestamp: "..." }
+   */
+  async getOrCreateCertificate(data: {
+    course: {
+      _id: string;
+      name?: string;
+      description?: string;
+      points?: number;
+      workload?: number;
+      premiumPoints?: number;
+      banner?: {
+        asset: {
+          url: string;
+        };
+      };
+      slug?: string;
+    };
+  }): Promise<CertificateCreateResponse> {
+    try {
+      console.log("🏅 [CertificatesService] Obtendo ou criando certificado...");
+      console.log("🏅 [CertificatesService] Dados:", {
+        courseId: data.course._id,
+        courseName: data.course.name,
+      });
+      
+      const response = await httpClient.post("/api/certificate/for-user", data);
+      console.log("✅ [CertificatesService] Certificado obtido/criado:", response);
+
+      // Verificar se a resposta tem a estrutura esperada da documentação
+      if (
+        response &&
+        response.success &&
+        response.data &&
+        response.data.certificate
+      ) {
+        return response;
+      } else {
+        console.warn(
+          "⚠️ [CertificatesService] Resposta do certificado não tem a estrutura esperada:",
+          response
+        );
+        throw new Error("Resposta inválida do servidor");
+      }
+    } catch (error) {
+      console.error(
+        "❌ [CertificatesService] Erro ao obter/criar certificado:",
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Cria um novo certificado
+   * 
+   * A API aceita:
+   * - userId: Clerk ID (começa com "user_") ou MongoDB ObjectId (será convertido automaticamente)
+   * - course._id ou course.id (será normalizado para _id)
+   * - course.name, course.title ou course.courseTitle (será normalizado para name)
+   * 
+   * Resposta esperada: { success: true, data: { certificate: {...} }, timestamp: "..." }
    */
   async createCertificate(
     data: CertificateCreateRequest
   ): Promise<CertificateCreateResponse> {
     try {
       console.log("🏅 [CertificatesService] Criando certificado...");
+      console.log("🏅 [CertificatesService] Dados:", {
+        userId: data.userId,
+        courseId: data.course._id,
+        courseName: data.course.name,
+      });
+      
       const response = await httpClient.post("/api/certificate/create", data);
       console.log("✅ [CertificatesService] Certificado criado:", response);
-      return response;
+
+      // Verificar se a resposta tem a estrutura esperada da documentação
+      // A API retorna: { success: true, data: { certificate: {...} }, timestamp: "..." }
+      if (
+        response &&
+        response.success &&
+        response.data &&
+        response.data.certificate
+      ) {
+        // Estrutura da documentação: { success: true, data: { certificate: {...} }, timestamp: "..." }
+        return response;
+      } else {
+        console.warn(
+          "⚠️ [CertificatesService] Resposta do certificado não tem a estrutura esperada:",
+          response
+        );
+        throw new Error("Resposta inválida do servidor");
+      }
     } catch (error) {
       console.error(
         "❌ [CertificatesService] Erro ao criar certificado:",

@@ -1,16 +1,18 @@
+import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
+    ActivityIndicator,
+    Alert,
+    Linking,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 import { certificatesService } from "../../services";
+import { httpClient } from "../../services/httpClient";
 
 interface Certificate {
   id: string;
@@ -25,6 +27,7 @@ interface Certificate {
 
 export default function CertificateView() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { userId } = useAuth();
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,9 +40,18 @@ export default function CertificateView() {
         return;
       }
 
+      if (!userId) {
+        setError("Usuário não autenticado");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
+
+        // Configurar X-User-Id header conforme documentação
+        httpClient.setUserId(userId);
 
         const response = await certificatesService.getCertificateById(id);
         
@@ -71,7 +83,7 @@ export default function CertificateView() {
     };
 
     fetchCertificate();
-  }, [id]);
+  }, [id, userId]);
 
   const handleViewCertificate = async () => {
     if (!certificate || !id) {

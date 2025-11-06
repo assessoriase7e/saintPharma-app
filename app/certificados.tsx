@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -9,9 +10,11 @@ import {
   View,
 } from "react-native";
 import { certificatesService } from "../services";
+import { httpClient } from "../services/httpClient";
 import { CertificatesResponse } from "../types/api";
 
 export default function Certificados() {
+  const { userId } = useAuth();
   const [certificates, setCertificates] = useState<CertificatesResponse | null>(
     null
   );
@@ -20,9 +23,18 @@ export default function Certificados() {
 
   useEffect(() => {
     const fetchCertificates = async () => {
+      if (!userId) {
+        setError("Usuário não autenticado");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
+
+        // Configurar X-User-Id header conforme documentação
+        httpClient.setUserId(userId);
 
         const response = await certificatesService.getCertificates();
         setCertificates(response);
@@ -35,7 +47,7 @@ export default function Certificados() {
     };
 
     fetchCertificates();
-  }, []);
+  }, [userId]);
 
   if (loading) {
     return (
