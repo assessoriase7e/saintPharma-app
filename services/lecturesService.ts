@@ -1,5 +1,6 @@
 import {
   CompleteLectureRequest,
+  Lecture,
   LectureDetailResponse,
   LecturesResponse,
   UserLectureResponse,
@@ -17,7 +18,9 @@ class LecturesService {
       console.log("✅ [LecturesService] Aula carregada:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      let lectureData = null;
+      let lecture: Lecture | null = null;
+      let isCompleted = false;
+      let completedAt: string | null = null;
 
       if (
         response &&
@@ -26,13 +29,24 @@ class LecturesService {
         response.data.lecture
       ) {
         // Estrutura da documentação: { success: true, data: { lecture: Lecture }, timestamp: "..." }
-        lectureData = response.data.lecture;
+        lecture = response.data.lecture;
+        isCompleted = response.data.isCompleted || lecture.completed || false;
+        completedAt = response.data.completedAt || lecture.completedAt || null;
       } else if (response && response._id) {
         // Estrutura real da API: Lecture diretamente
-        lectureData = response;
+        lecture = response;
+        isCompleted = lecture.completed || false;
+        completedAt = lecture.completedAt || null;
       } else if (response && response.data && response.data._id) {
         // Estrutura alternativa: { data: Lecture }
-        lectureData = response.data;
+        lecture = response.data;
+        isCompleted = lecture.completed || false;
+        completedAt = lecture.completedAt || null;
+      } else if (response && response.lecture) {
+        // Estrutura: { lecture: Lecture, isCompleted?: boolean, completedAt?: string }
+        lecture = response.lecture;
+        isCompleted = response.isCompleted || lecture.completed || false;
+        completedAt = response.completedAt || lecture.completedAt || null;
       } else {
         console.warn(
           "⚠️ [LecturesService] Resposta da aula não tem a estrutura esperada:",
@@ -41,7 +55,15 @@ class LecturesService {
         throw new Error("Aula não encontrada");
       }
 
-      return lectureData;
+      if (!lecture) {
+        throw new Error("Aula não encontrada");
+      }
+
+      return {
+        lecture,
+        isCompleted,
+        completedAt,
+      };
     } catch (error) {
       console.error(
         `❌ [LecturesService] Erro ao buscar aula ${lectureId}:`,

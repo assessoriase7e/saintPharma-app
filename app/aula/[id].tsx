@@ -371,6 +371,11 @@ export default function LectureView() {
           lectureData.lecture?.content?.length
         );
 
+        // Garantir que a aula existe e tem os dados necessários
+        if (!lectureData.lecture) {
+          throw new Error("Aula não encontrada");
+        }
+
         setLecture(lectureData.lecture);
       } catch (err) {
         console.error("Erro ao buscar dados da aula:", err);
@@ -397,19 +402,21 @@ export default function LectureView() {
   if (error || !lecture) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-6">
-        <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
-        <Text className="text-text-primary text-xl font-semibold mt-4 mb-2">
+        <View className="bg-red-500 rounded-full p-4 mb-6">
+          <Ionicons name="alert-circle" size={48} color="white" />
+        </View>
+        <Text className="text-text-primary text-2xl font-semibold mb-3">
           Aula não encontrada
         </Text>
-        <Text className="text-text-secondary text-center mb-6">
+        <Text className="text-text-secondary text-center mb-8 max-w-sm">
           {error ||
             "A aula que você está procurando não existe ou foi removida."}
         </Text>
         <Pressable
           onPress={() => router.back()}
-          className="bg-primary px-6 py-3 rounded-lg"
+          className="bg-primary px-8 py-4 rounded-lg"
         >
-          <Text className="text-white font-medium">Voltar</Text>
+          <Text className="text-white font-semibold text-base">Voltar</Text>
         </Pressable>
       </View>
     );
