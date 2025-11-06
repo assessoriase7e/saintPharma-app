@@ -114,6 +114,12 @@ function TabsLayout() {
           }}
         />
         <Tabs.Screen
+          name="certificado/[id]"
+          options={{
+            href: null, // Remove from tab bar
+          }}
+        />
+        <Tabs.Screen
           name="vidas-bloqueadas"
           options={{
             href: null, // Remove from tab bar

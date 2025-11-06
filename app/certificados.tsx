@@ -1,6 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { certificatesService } from "../services";
 import { CertificatesResponse } from "../types/api";
 
@@ -148,14 +155,21 @@ export default function Certificados() {
                   </View>
                 </View>
 
-                <View className="mt-3 pt-3 border-t border-border">
-                  <View className="flex-row justify-between">
+                <Pressable
+                  onPress={() => {
+                    router.push(
+                      `/certificado/${certificado.id}` as any
+                    );
+                  }}
+                  className="mt-3 pt-3 border-t border-border"
+                >
+                  <View className="flex-row justify-between items-center">
                     <Text className="text-sm text-primary font-medium">
                       Baixar Certificado
                     </Text>
                     <Ionicons name="download" size={16} color="#3B82F6" />
                   </View>
-                </View>
+                </Pressable>
               </View>
             ))
           ) : (

@@ -231,6 +231,7 @@ export interface Lecture {
   description: string;
   videoUrl?: string;
   completed: boolean;
+  completedAt?: string;
   content?: Array<{
     _key?: string;
     _type: string;
@@ -265,7 +266,10 @@ export interface Exam {
   complete: boolean;
   reproved: boolean;
   userId: string;
+  timeLimit?: number;
+  passingScore?: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
 // Tipos de vidas
@@ -355,6 +359,8 @@ export interface ExamResponse {
       userId: string;
       complete: boolean;
       reproved: boolean;
+      timeLimit?: number;
+      passingScore?: number;
       createdAt: string;
       updatedAt?: string;
     };
@@ -371,7 +377,16 @@ export interface ExamResponse {
 }
 
 export interface CertificatesResponse {
+  success?: boolean;
   certificates: Certificate[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
 export interface RankingResponse {

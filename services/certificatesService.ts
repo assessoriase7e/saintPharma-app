@@ -17,7 +17,37 @@ class CertificatesService {
         "✅ [CertificatesService] Certificados carregados:",
         response
       );
-      return response;
+
+      // Verificar se a resposta tem a estrutura esperada da documentação
+      // A API pode retornar: { success: true, data: { certificates: [...], pagination: {...} }, timestamp: "..." }
+      // ou: { success: true, certificates: [...], pagination: {...} }
+      let certificatesArray = [];
+      let pagination = null;
+
+      if (response && response.success && response.data) {
+        // Estrutura atual da API: { success: true, data: { certificates: [...], pagination: {...} }, timestamp: "..." }
+        if (response.data.certificates && Array.isArray(response.data.certificates)) {
+          certificatesArray = response.data.certificates;
+          pagination = response.data.pagination;
+        }
+      } else if (response && response.certificates && Array.isArray(response.certificates)) {
+        // Estrutura alternativa: { success: true, certificates: [...], pagination: {...} }
+        certificatesArray = response.certificates;
+        pagination = response.pagination;
+      } else if (Array.isArray(response)) {
+        // Estrutura alternativa: Certificate[] diretamente
+        certificatesArray = response;
+      } else if (response && Array.isArray(response.data)) {
+        // Estrutura alternativa: { data: Certificate[] }
+        certificatesArray = response.data;
+      }
+
+      // Retornar no formato esperado pela página
+      return {
+        success: response?.success ?? true,
+        certificates: certificatesArray,
+        pagination: pagination || response?.pagination,
+      };
     } catch (error) {
       console.error(
         "❌ [CertificatesService] Erro ao buscar certificados:",
@@ -47,6 +77,19 @@ class CertificatesService {
       );
       throw error;
     }
+  }
+
+  /**
+   * Retorna a URL para download do PDF do certificado
+   */
+  getCertificatePDFUrl(certificateId: string): string {
+    const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+    
+    if (!baseURL) {
+      throw new Error("URL base da API não configurada");
+    }
+
+    return `${baseURL}/api/certificate/${certificateId}/download`;
   }
 
   /**
