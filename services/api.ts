@@ -417,32 +417,27 @@ class ApiClient {
   }
 
   async updateUserLives(
-    action: "reduce" | "delete_damage" | "reset_all",
-    options?: {
-      amount?: number;
-      damageId?: string;
-    }
+    amount?: number
   ): Promise<{ message: string }> {
+    const body = amount !== undefined ? { amount } : {};
     return this.request<{ message: string }>("/api/user/lives", {
       method: "DELETE",
-      body: JSON.stringify({
-        action,
-        ...options,
-      }),
+      body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
     });
   }
 
   // Métodos de Pontuação
   async updateUserPoints(
-    operation: "add" | "subtract" | "set",
-    points: number
+    points: number,
+    operation?: "add" | "subtract" | "set",
+    reason?: string
   ): Promise<{ message: string }> {
+    const body: any = { points };
+    if (operation) body.operation = operation;
+    if (reason) body.reason = reason;
     return this.request<{ message: string }>("/api/user/points", {
       method: "PUT",
-      body: JSON.stringify({
-        operation,
-        points,
-      }),
+      body: JSON.stringify(body),
     });
   }
 

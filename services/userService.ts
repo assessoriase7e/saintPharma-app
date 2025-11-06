@@ -204,14 +204,14 @@ class UserService {
         if (response.data && response.data.data) {
           return {
             success: true,
-            data: response.data.data,
-          };
+            data: response.data.data as UserSummaryResponse["data"],
+          } as UserSummaryResponse;
         } else if (response.data) {
           // Estrutura direta: { success: true, data: {...} }
           return {
             success: true,
-            data: response.data,
-          };
+            data: response.data as UserSummaryResponse["data"],
+          } as UserSummaryResponse;
         }
       }
       
@@ -219,8 +219,8 @@ class UserService {
       if (response && response.data) {
         return {
           success: true,
-          data: response.data,
-        };
+          data: response.data as UserSummaryResponse["data"],
+        } as UserSummaryResponse;
       }
       
       console.warn(
