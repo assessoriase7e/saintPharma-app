@@ -1,8 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { userService } from "../services";
 import { UserInfoResponse } from "../types/api";
 
@@ -144,24 +143,41 @@ export default function Perfil() {
             Configurações
           </Text>
 
-          <ThemeToggle />
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+                
+                if (!baseURL) {
+                  Alert.alert("Erro", "URL base da API não configurada");
+                  return;
+                }
 
-          <View className="bg-card border border-border rounded-lg p-3 flex-row items-center justify-between mt-4">
-            <View className="flex-row items-center">
-              <Ionicons
-                name="notifications"
-                size={20}
-                color="#6b7280"
-                style={{ marginRight: 12 }}
-              />
-              <Text className="text-text-primary font-medium">
-                Notificações
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
-          </View>
+                // Remover /api do final da URL se existir
+                const serverUrl = baseURL.replace(/\/api\/?$/, "");
+                const privacyUrl = `${serverUrl}/privacy-policy`;
 
-          <View className="bg-card border border-border rounded-lg p-3 flex-row items-center justify-between mt-4">
+                console.log("🔗 [Perfil] Abrindo política de privacidade:", privacyUrl);
+
+                const canOpen = await Linking.canOpenURL(privacyUrl);
+                if (!canOpen) {
+                  Alert.alert("Erro", "Não foi possível abrir a política de privacidade");
+                  return;
+                }
+
+                await Linking.openURL(privacyUrl);
+              } catch (err) {
+                console.error("❌ [Perfil] Erro ao abrir URL:", err);
+                Alert.alert(
+                  "Erro",
+                  err instanceof Error
+                    ? err.message
+                    : "Não foi possível abrir a política de privacidade. Tente novamente."
+                );
+              }
+            }}
+            className="bg-card border border-border rounded-lg p-3 flex-row items-center justify-between mt-4 active:opacity-70"
+          >
             <View className="flex-row items-center">
               <Ionicons
                 name="shield-checkmark"
@@ -172,7 +188,7 @@ export default function Perfil() {
               <Text className="text-text-primary font-medium">Privacidade</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
