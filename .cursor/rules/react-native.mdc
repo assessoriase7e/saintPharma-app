@@ -46,3 +46,15 @@ globs: ["**/*.tsx", "**/*.jsx", "**/app/**", "**/components/**"]
 - Evitar estilos inline quando possível
 - Manter consistência visual
 - Usar variáveis de tema quando disponíveis
+
+## Formulários e Validação
+
+- Sempre implementar validação client-side antes de enviar dados
+- Usar estados separados para erros de campos (`fieldErrors`) e erros gerais (`error`)
+- Mostrar mensagens de erro abaixo de cada campo com erro
+- Destacar campos com erro usando bordas vermelhas (`border-red-500`)
+- Limpar erros automaticamente quando usuário começa a digitar
+- Focar automaticamente no primeiro campo com erro após validação
+- Usar `useRef` para campos de formulário quando precisar focar programaticamente
+- Implementar feedback visual durante loading (botão desabilitado, texto "Salvando...")
+- Não depender apenas de `Alert.alert()` - usar mensagens visíveis no formulário também

@@ -49,6 +49,11 @@ globs: ["**/*.ts", "**/*.tsx", "**/types/**", "**/services/**"]
 - Usar tipos compartilhados entre frontend e backend
 - Implementar validação de tipos em runtime quando necessário
 - Usar tipos opcionais para campos que podem ser undefined
+- **Extrair dados corretamente**: APIs podem retornar dados em diferentes estruturas (`{user: {...}}`, `{data: {user: {...}}}`, `{data: {...}}`, etc.)
+- Sempre verificar múltiplas estruturas possíveis de resposta antes de acessar propriedades
+- Validar tipo de dados antes de usar métodos como `.trim()` (ex: `typeof value === 'string'`)
+- Adicionar logs detalhados para debug de respostas da API
+- Lançar erros descritivos quando estrutura de resposta é inválida
 
 ## Configuração
 

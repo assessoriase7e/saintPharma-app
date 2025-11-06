@@ -30,6 +30,9 @@ alwaysApply: true
 - Usar os serviços já criados em `services/`
 - Manter consistência com os tipos definidos em `types/`
 - Seguir os padrões de error handling já estabelecidos
+- **Usar rotas `/api/user/*` ao invés de `/api/auth/*`** - A autenticação é gerenciada pelo Clerk
+- Sempre incluir header `X-User-Id` com o Clerk ID do usuário nas requisições
+- Usar `httpClient` de `services/httpClient.ts` para todas as requisições HTTP
 
 ## UI/UX
 
@@ -37,3 +40,17 @@ alwaysApply: true
 - Manter consistência com o design system existente
 - Usar os componentes já criados em `components/`
 - Seguir os padrões de acessibilidade
+- **Feedback visual de erros**: Usar mensagens de erro visíveis no formulário, não apenas Alert
+- Validar campos em tempo real e mostrar erros abaixo de cada campo
+- Usar estados de loading adequados durante operações assíncronas
+
+## Autenticação e Onboarding
+
+- **Autenticação**: Gerenciada pelo Clerk via `@clerk/clerk-expo`
+- **Onboarding**: Usuários devem completar perfil após registro
+- Usar `useOnboardingCheck` hook para verificar status do onboarding
+- Usar `OnboardingGuardWrapper` para proteger rotas que requerem onboarding completo
+- **Verificação de onboarding**: Usa `firstName` e `lastName` do endpoint `/api/user`
+- **Redirecionamento automático**: Sistema redireciona para `/onboarding` se perfil incompleto
+- Após completar onboarding, verificar status novamente antes de redirecionar
+- A página `/onboarding` verifica se usuário já completou e redireciona automaticamente
