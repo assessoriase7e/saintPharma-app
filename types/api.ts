@@ -712,23 +712,35 @@ export interface CertificateCreateRequest {
   course: {
     _id: string;
     name: string;
-    points: number;
+    description?: string;
+    points?: number;
+    workload?: number;
+    premiumPoints?: number;
+    banner?: {
+      asset: {
+        url: string;
+      };
+    };
+    slug?: string;
   };
 }
 
 export interface CertificateCreateResponse {
-  message: string;
-  certificate: {
-    id: string;
-    userId: string;
-    courseCmsId: string;
-    courseTitle: string;
-    description: string;
-    points: number;
-    workload: number;
-    createdAt: string;
+  success: boolean;
+  data: {
+    certificate: {
+      id: string;
+      userId: string;
+      courseCmsId: string;
+      courseTitle: string;
+      description: string;
+      points: number;
+      workload: number;
+      createdAt: string;
+      updatedAt: string;
+    };
   };
-  pointsAwarded: number;
+  timestamp: string;
 }
 
 export interface SanityRevalidateRequest {
