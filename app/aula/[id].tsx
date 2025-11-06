@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as MediaLibrary from "expo-media-library";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -62,9 +62,13 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
 
         // Fazer o download da imagem
         const filename = `image_${Date.now()}.jpg`;
+        const documentDir = FileSystem.documentDirectory || FileSystem.cacheDirectory || "";
+        if (!documentDir) {
+          throw new Error("Diretório de documentos não disponível");
+        }
         const downloadResult = await FileSystem.downloadAsync(
           imageUrl,
-          FileSystem.documentDirectory + filename
+          documentDir + filename
         );
 
         // Salvar na galeria
