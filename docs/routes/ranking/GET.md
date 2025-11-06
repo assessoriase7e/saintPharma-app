@@ -1,6 +1,6 @@
 # GET /api/ranking
 
-Retorna o ranking geral de usuários baseado nos pontos.
+Retorna o ranking geral de usuários baseado nos **pontos da semana atual**.
 
 ## Autenticação
 
@@ -49,7 +49,10 @@ GET /api/ranking?page=1&limit=20
     "hasNext": true,
     "hasPrev": false
   },
-  "month": "2024-01"
+  "week": {
+    "start": "2024-01-07",
+    "end": "2024-01-13"
+  }
 }
 ```
 
@@ -71,5 +74,20 @@ model User {
 
 ## Ordenação
 
-Os usuários são ordenados por pontos em ordem decrescente.
+Os usuários são ordenados por **pontos semanais** em ordem decrescente.
+
+## Cálculo de Pontos Semanais
+
+Os pontos semanais são calculados com base em:
+- **Certificados**: Pontos do certificado (definido no curso)
+- **Exames**: 10 pontos por exame concluído
+- **Aulas**: 5 pontos por aula concluída
+
+A semana é calculada de domingo a sábado (semana brasileira).
+
+## Notas Importantes
+
+- O ranking é **resetado semanalmente** - mostra apenas os pontos da semana atual
+- Pontos totais acumulados não são usados para o ranking
+- A semana é calculada automaticamente com base na data atual
 

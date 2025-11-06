@@ -49,6 +49,7 @@ Headers:
     "email": "usuario@exemplo.com",
     "profileImage": "https://example.com/avatar.jpg",
     "points": 100,
+    "lives": 3,
     "quizzes": ["quiz1", "quiz2"],
     "createdAt": "2024-01-01T00:00:00.000Z",
     "updatedAt": "2024-01-01T00:00:00.000Z"
