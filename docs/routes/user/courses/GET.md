@@ -47,6 +47,7 @@ Headers:
       "imageUrl": "https://example.com/image.jpg",
       "points": 100,
       "workload": 40,
+      "premiumPoints": null,
       "status": "completed",
       "progress": 100,
       "progressDetails": {
@@ -82,6 +83,7 @@ Headers:
       "imageUrl": "https://example.com/image2.jpg",
       "points": 150,
       "workload": 60,
+      "premiumPoints": 500,
       "status": "in_progress",
       "progress": 60,
       "progressDetails": {
@@ -95,6 +97,9 @@ Headers:
       },
       "completedLectures": 6,
       "totalLectures": 10,
+      "canAccess": true,
+      "weekPointsRequired": 500,
+      "userWeekPoints": 750,
       "certificate": null,
       "certificateId": null,
       "completedAt": null,
@@ -109,6 +114,7 @@ Headers:
       "imageUrl": "https://example.com/image3.jpg",
       "points": 120,
       "workload": 50,
+      "premiumPoints": null,
       "status": "ready_for_certificate",
       "progress": 100,
       "progressDetails": {
@@ -122,6 +128,9 @@ Headers:
       },
       "completedLectures": 12,
       "totalLectures": 12,
+      "canAccess": true,
+      "weekPointsRequired": null,
+      "userWeekPoints": 750,
       "certificate": null,
       "certificateId": null,
       "completedAt": null,
@@ -151,6 +160,7 @@ Headers:
       "imageUrl": "https://example.com/image.jpg",
       "points": 100,
       "workload": 40,
+      "premiumPoints": null,
       "status": "completed",
       "progress": 100,
       "progressDetails": {
@@ -164,6 +174,9 @@ Headers:
       },
       "completedLectures": 10,
       "totalLectures": 10,
+      "canAccess": true,
+      "weekPointsRequired": null,
+      "userWeekPoints": 750,
       "certificate": {
         "id": "cert_id_1",
         "courseTitle": "Curso de Farmacologia",
@@ -196,6 +209,7 @@ Headers:
       "imageUrl": "https://example.com/image2.jpg",
       "points": 150,
       "workload": 60,
+      "premiumPoints": 500,
       "status": "in_progress",
       "progress": 60,
       "progressDetails": {
@@ -209,6 +223,9 @@ Headers:
       },
       "completedLectures": 6,
       "totalLectures": 10,
+      "canAccess": true,
+      "weekPointsRequired": 500,
+      "userWeekPoints": 750,
       "certificate": null,
       "certificateId": null,
       "completedAt": null,
@@ -232,6 +249,10 @@ Headers:
 - `imageUrl`: URL da imagem de banner do curso
 - `points`: Pontos oferecidos pelo curso
 - `workload`: Carga horária do curso (em horas)
+- `premiumPoints`: Pontos semanais necessários para acessar o curso premium (null se não for premium)
+- `canAccess`: Indica se o usuário pode acessar o curso premium (baseado em pontos da semana)
+- `weekPointsRequired`: Pontos semanais necessários para acessar (null se não for premium)
+- `userWeekPoints`: Pontos semanais do usuário
 
 ### Campos de Status e Progresso
 
@@ -275,6 +296,22 @@ O campo `status` pode ter os seguintes valores:
 - `in_progress`: O usuário está em progresso (algumas lectures concluídas, mas não todas)
 - `ready_for_certificate`: Todas as lectures foram concluídas, mas o certificado ainda não foi gerado
 - `completed`: O curso foi concluído e o certificado foi gerado
+
+## Acesso a Cursos Premium
+
+Cursos premium são identificados pelo campo `premiumPoints` maior que 0. O acesso a esses cursos é determinado pelos pontos que o usuário ganhou durante a semana atual:
+
+- **Lógica de acesso**: Se `userWeekPoints > premiumPoints`, então `canAccess = true`
+- **Cursos não premium**: Cursos sem `premiumPoints` (ou `premiumPoints = null`) sempre têm `canAccess = true`
+
+### Cálculo de Pontos da Semana
+
+Os pontos da semana são calculados com base em:
+- **Certificados**: Pontos do certificado (definido no curso)
+- **Exames**: 10 pontos por exame concluído
+- **Aulas**: 5 pontos por aula concluída
+
+A semana é calculada de domingo a sábado (semana brasileira).
 
 ## Notas
 

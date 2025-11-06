@@ -135,3 +135,4 @@ Body:
 2. **Registro**: Cria um registro `UserLecture` associando o usuário à aula concluída
 3. **Progresso**: Este registro é usado para calcular o progresso do usuário no curso
 
+

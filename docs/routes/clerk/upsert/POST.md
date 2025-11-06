@@ -146,3 +146,4 @@ Body:
 3. **Idempotência**: Criar/atualizar é idempotente - múltiplas chamadas com os mesmos dados não causam problemas
 4. **Eventos não processados**: Eventos não reconhecidos retornam 200 sem processar
 
+

@@ -108,3 +108,4 @@ Headers:
 2. **Ordenação**: Os exames são retornados ordenados por data de criação (mais recentes primeiro)
 3. **Acesso**: O usuário só pode ver seus próprios exames
 
+

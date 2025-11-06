@@ -205,3 +205,4 @@ Body:
 2. **Pontuação**: A pontuação é calculada como (respostas corretas / total de questões) * 100
 3. **Aprovação**: A nota mínima para aprovação é definida no exame (`passingScore`)
 
+

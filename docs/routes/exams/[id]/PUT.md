@@ -203,3 +203,4 @@ Body:
 3. **Auditoria**: Todas as atualizações são registradas para auditoria
 4. **Validação**: A API verifica se o exame pertence ao usuário antes de atualizar
 
+

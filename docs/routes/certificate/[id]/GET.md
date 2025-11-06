@@ -115,3 +115,4 @@ Headers:
 2. **Validação**: A API verifica se o certificado pertence ao usuário antes de retornar
 3. **Segurança**: Tentativas de acessar certificados de outros usuários retornam erro 403
 
+

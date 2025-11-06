@@ -101,3 +101,4 @@ Headers:
 3. **Irreversível**: A operação de deleção é permanente e não pode ser desfeita
 4. **Validação**: A API verifica se o exame pertence ao usuário antes de deletar
 
+

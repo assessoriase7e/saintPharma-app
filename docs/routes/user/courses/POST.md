@@ -145,3 +145,4 @@ Body:
 2. **Verificação de progresso**: A API verifica se todas as aulas foram concluídas antes de criar o certificado
 3. **Idempotência**: Se já existe um certificado, retorna erro 409 com o ID do certificado existente
 
+

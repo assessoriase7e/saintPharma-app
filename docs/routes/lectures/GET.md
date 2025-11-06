@@ -87,3 +87,4 @@ Headers:
 2. **Fonte de dados**: As aulas são buscadas do Sanity CMS
 3. **Ordenação**: As aulas são retornadas na ordem definida no curso
 
+

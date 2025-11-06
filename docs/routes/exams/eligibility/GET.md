@@ -94,3 +94,4 @@ Headers:
 2. **Consumo de vida**: Ao criar um exame, uma vida é automaticamente consumida
 3. **Regeneração**: As vidas regeneram a cada 10 horas
 
+

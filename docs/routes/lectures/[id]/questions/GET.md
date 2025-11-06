@@ -122,3 +122,4 @@ Headers:
 3. **Respostas corretas**: O campo `isCorrect` indica qual resposta está correta
 4. **Valores padrão**: `timeLimit` e `passingScore` têm valores padrão (30 minutos e 70% respectivamente)
 
+

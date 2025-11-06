@@ -83,3 +83,4 @@ Headers:
 2. **Fonte de dados**: A aula é buscada do Sanity CMS
 3. **Informações completas**: Retorna todas as informações da aula, incluindo conteúdo, vídeos, etc.
 
+

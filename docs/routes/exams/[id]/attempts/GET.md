@@ -115,3 +115,4 @@ Headers:
 3. **Acesso**: O usuário só pode ver tentativas de seus próprios exames
 4. **Histórico**: Todas as tentativas do exame são mantidas para histórico
 
+

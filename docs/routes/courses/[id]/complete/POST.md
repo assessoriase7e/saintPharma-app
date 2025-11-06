@@ -140,3 +140,4 @@ Headers:
 2. **Verificação de progresso**: A API verifica se todas as lectures foram concluídas antes de criar o certificado
 3. **Idempotência**: Se já existe um certificado, retorna erro 409 com o certificado existente
 
+

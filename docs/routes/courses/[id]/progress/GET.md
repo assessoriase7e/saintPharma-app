@@ -63,7 +63,11 @@ Quando um único curso é solicitado (sem `courseIds` no query), a resposta mant
     "description": "Curso completo de farmacologia",
     "points": 100,
     "workload": 40,
-    "imageUrl": "https://example.com/banner.jpg"
+    "premiumPoints": null,
+    "imageUrl": "https://example.com/banner.jpg",
+    "canAccess": true,
+    "weekPointsRequired": null,
+    "userWeekPoints": 750
   },
   "progress": {
     "status": "in_progress",
@@ -91,7 +95,11 @@ Quando um único curso é solicitado (sem `courseIds` no query), a resposta mant
     "description": "Curso completo de farmacologia",
     "points": 100,
     "workload": 40,
-    "imageUrl": "https://example.com/banner.jpg"
+    "premiumPoints": null,
+    "imageUrl": "https://example.com/banner.jpg",
+    "canAccess": true,
+    "weekPointsRequired": null,
+    "userWeekPoints": 750
   },
   "progress": {
     "status": "in_progress",
@@ -139,7 +147,11 @@ Quando um único curso é solicitado (sem `courseIds` no query), a resposta mant
     "description": "Curso completo de farmacologia",
     "points": 100,
     "workload": 40,
-    "imageUrl": "https://example.com/banner.jpg"
+    "premiumPoints": null,
+    "imageUrl": "https://example.com/banner.jpg",
+    "canAccess": true,
+    "weekPointsRequired": null,
+    "userWeekPoints": 750
   },
   "progress": {
     "status": "in_progress",
@@ -185,7 +197,11 @@ Quando um único curso é solicitado (sem `courseIds` no query), a resposta mant
     "description": "Curso completo de farmacologia",
     "points": 100,
     "workload": 40,
-    "imageUrl": "https://example.com/banner.jpg"
+    "premiumPoints": null,
+    "imageUrl": "https://example.com/banner.jpg",
+    "canAccess": true,
+    "weekPointsRequired": null,
+    "userWeekPoints": 750
   },
   "progress": {
     "status": "completed",
@@ -223,7 +239,11 @@ Quando múltiplos cursos são solicitados (usando `courseIds` no query), a respo
         "description": "Curso completo de farmacologia",
         "points": 100,
         "workload": 40,
-        "imageUrl": "https://example.com/banner.jpg"
+        "premiumPoints": null,
+        "imageUrl": "https://example.com/banner.jpg",
+        "canAccess": true,
+        "weekPointsRequired": null,
+        "userWeekPoints": 750
       },
       "progress": {
         "status": "in_progress",
@@ -245,7 +265,11 @@ Quando múltiplos cursos são solicitados (usando `courseIds` no query), a respo
         "description": "Curso completo de anatomia",
         "points": 150,
         "workload": 60,
-        "imageUrl": "https://example.com/banner2.jpg"
+        "premiumPoints": 500,
+        "imageUrl": "https://example.com/banner2.jpg",
+        "canAccess": true,
+        "weekPointsRequired": 500,
+        "userWeekPoints": 750
       },
       "progress": {
         "status": "completed",
@@ -295,7 +319,11 @@ Informações do curso obtidas do Sanity CMS.
 - `description`: Descrição do curso
 - `points`: Pontos oferecidos pelo curso
 - `workload`: Carga horária do curso (em horas)
+- `premiumPoints`: Pontos semanais necessários para acessar o curso premium (null se não for premium)
 - `imageUrl`: URL da imagem de banner do curso
+- `canAccess`: Indica se o usuário pode acessar o curso premium (baseado em pontos da semana)
+- `weekPointsRequired`: Pontos semanais necessários para acessar (null se não for premium)
+- `userWeekPoints`: Pontos semanais do usuário
 
 ### progress
 
@@ -440,6 +468,22 @@ model Exam {
   updatedAt    DateTime      @updatedAt
 }
 ```
+
+## Acesso a Cursos Premium
+
+Cursos premium são identificados pelo campo `premiumPoints` maior que 0. O acesso a esses cursos é determinado pelos pontos que o usuário ganhou durante a semana atual:
+
+- **Lógica de acesso**: Se `userWeekPoints > premiumPoints`, então `canAccess = true`
+- **Cursos não premium**: Cursos sem `premiumPoints` (ou `premiumPoints = null`) sempre têm `canAccess = true`
+
+### Cálculo de Pontos da Semana
+
+Os pontos da semana são calculados com base em:
+- **Certificados**: Pontos do certificado (definido no curso)
+- **Exames**: 10 pontos por exame concluído
+- **Aulas**: 5 pontos por aula concluída
+
+A semana é calculada de domingo a sábado (semana brasileira).
 
 ## Notas
 

@@ -108,3 +108,4 @@ Headers:
 2. **Auditoria**: Acesso ao exame é registrado para auditoria
 3. **Validação**: A API verifica se o exame pertence ao usuário antes de retornar
 
+

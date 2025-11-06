@@ -101,3 +101,4 @@ Body:
 3. **Cache**: A revalidação força o Next.js a buscar dados atualizados do Sanity na próxima requisição
 4. **Configuração**: Requer a variável de ambiente `SANITY_HOOK_SECRET` configurada
 
+
