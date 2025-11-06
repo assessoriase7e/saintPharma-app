@@ -9,9 +9,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { coursesService, statsService } from "../services";
-import { useLives } from "../stores";
-import { UserCourse } from "../types/api";
+import { coursesService, statsService, userService } from "../services";
+import { UserCourse, UserInfoResponse } from "../types/api";
 import "../utils/suppressWarnings";
 import "./global.css";
 import { LivesBlockedModal } from "./vidas-bloqueadas";
@@ -39,8 +38,7 @@ const defaultStats = [
 ];
 
 export default function Home() {
-  const { userLives, isLoaded: livesLoaded } = useLives();
-  const { isSignedIn, signOut } = useAuth();
+  const { isSignedIn, signOut, userId } = useAuth();
   const { user } = useUser();
   const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [userCourses, setUserCourses] = useState<UserCourse[]>([]);
@@ -48,6 +46,7 @@ export default function Home() {
   const [statistics, setStatistics] = useState(defaultStats);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfoResponse | null>(null);
   const isFirstMount = useRef(true);
 
   // Função para buscar dados (reutilizável)
@@ -61,7 +60,23 @@ export default function Home() {
         const allCoursesData = await coursesService.getAllCourses();
         setAllCourses(allCoursesData);
 
-        if (isSignedIn) {
+        if (isSignedIn && userId) {
+          // Buscar informações do usuário (incluindo vidas)
+          console.log("👤 Buscando informações do usuário...");
+          const userResponse = await userService.getUser(userId);
+          setUserInfo({
+            id: userResponse.user.id,
+            clerkId: userResponse.user.clerkId,
+            email: userResponse.user.email,
+            firstName: userResponse.user.firstName,
+            lastName: userResponse.user.lastName,
+            profileImage: userResponse.user.profileImage,
+            lives: userResponse.user.lives || 0,
+            points: userResponse.user.points || 0,
+            createdAt: userResponse.user.createdAt || new Date().toISOString(),
+            updatedAt: userResponse.user.updatedAt || new Date().toISOString(),
+          });
+
           // Buscar cursos do usuário usando o service
           // A resposta já inclui informações de progresso, então não é necessário buscar separadamente
           console.log("📚 Buscando cursos do usuário...");
@@ -73,6 +88,7 @@ export default function Home() {
           const userStats = await statsService.getUserStats();
           setStatistics(userStats);
         } else {
+          setUserInfo(null);
           setUserCourses([]);
           // Usuário não logado: usar estatísticas padrão
           setStatistics(statsService.getDefaultStats());
@@ -98,7 +114,7 @@ export default function Home() {
       } finally {
         setLoading(false);
       }
-  }, [isSignedIn]);
+  }, [isSignedIn, userId]);
 
   // Buscar dados quando o componente montar ou isSignedIn mudar
   useEffect(() => {
@@ -143,23 +159,13 @@ export default function Home() {
       return;
     }
 
-    if (userLives && userLives.currentLives > 0) {
+    if (userInfo && userInfo.lives && userInfo.lives > 0) {
       // Iniciar a primeira aula do curso
       router.push(`/aula/1` as any); // Assumindo que a primeira aula tem ID 1
     } else {
       setShowBlockedModal(true);
     }
   };
-
-  // Aguardar carregamento do contexto de vidas
-  if (!livesLoaded) {
-    return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-text-secondary mt-2">Carregando...</Text>
-      </View>
-    );
-  }
 
 
   return (
@@ -181,21 +187,21 @@ export default function Home() {
               </View>
 
               {/* Indicador de Vidas - apenas para usuários logados */}
-              {isSignedIn && livesLoaded && userLives && (
+              {isSignedIn && userInfo && (
                 <View className="bg-card border border-border rounded-lg px-4 py-2 items-center ml-3">
                   <Ionicons
                     name="heart"
                     size={20}
-                    color={userLives.currentLives > 0 ? "#ef4444" : "#9ca3af"}
+                    color={(userInfo.lives || 0) > 0 ? "#ef4444" : "#9ca3af"}
                   />
                   <Text
                     className={`mt-1 font-semibold text-text-primary ${
-                      userLives.currentLives > 0
+                      (userInfo.lives || 0) > 0
                         ? "text-red-500"
                         : "text-text-secondary"
                     }`}
                   >
-                    {userLives.currentLives}
+                    {userInfo.lives || 0}
                   </Text>
                   <Text className="text-text-secondary text-xs text-center">
                     Vidas
