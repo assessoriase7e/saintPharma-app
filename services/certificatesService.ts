@@ -4,6 +4,7 @@ import {
   CertificatesResponse,
 } from "@/types/api";
 import { httpClient } from "./httpClient";
+import { getApiBaseUrl } from "@/utils/env";
 
 class CertificatesService {
   /**
@@ -83,10 +84,10 @@ class CertificatesService {
    * Retorna a URL para download do PDF do certificado
    */
   getCertificatePDFUrl(certificateId: string): string {
-    const baseURL = process.env.API_BASE_URL;
+    const baseURL = getApiBaseUrl();
     
     if (!baseURL) {
-      throw new Error("URL base da API não configurada");
+      throw new Error("URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env ou EAS Secrets");
     }
 
     return `${baseURL}/api/certificate/${certificateId}/download`;

@@ -26,22 +26,20 @@ import {
   UserSummaryResponse,
 } from "@/types/api";
 import { useAuth } from "@clerk/clerk-expo";
+import { getApiBaseUrl, getApiToken } from "@/utils/env";
 
 class ApiClient {
   private config: ApiConfig;
 
   constructor() {
-    const baseUrl = process.env.API_BASE_URL;
-    const apiToken = process.env.API_TOKEN;
+    const baseUrl = getApiBaseUrl();
+    const apiToken = getApiToken();
 
     // Log de configuração para debug
     console.log("🔧 [ApiClient] Inicializando com configuração:", {
       baseUrl: baseUrl || "❌ NÃO CONFIGURADO",
       hasToken: !!apiToken,
       tokenLength: apiToken?.length || 0,
-      allEnvVars: Object.keys(process.env)
-        .filter((key) => key.startsWith("EXPO_PUBLIC"))
-        .map((key) => `${key}=${process.env[key]?.substring(0, 20)}...`),
     });
 
     // Validar se as variáveis de ambiente estão configuradas
@@ -50,7 +48,8 @@ class ApiClient {
         "❌ [ApiClient] API_BASE_URL não está configurada!\n" +
         "Crie um arquivo .env na raiz do projeto com:\n" +
         "API_BASE_URL=http://localhost:3000/api\n" +
-        "API_TOKEN=seu-token-aqui";
+        "API_TOKEN=seu-token-aqui\n\n" +
+        "Ou configure via EAS Secrets para builds na nuvem.";
 
       console.error(errorMessage);
     }

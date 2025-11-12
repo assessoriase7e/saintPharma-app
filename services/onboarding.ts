@@ -5,6 +5,7 @@ import {
   OnboardingStatus,
 } from "@/types/onboarding";
 import { httpClient } from "./httpClient";
+import { getApiBaseUrl, getApiToken } from "@/utils/env";
 
 class OnboardingService {
   /**
@@ -12,22 +13,22 @@ class OnboardingService {
    */
   async completeOnboarding(data: OnboardingData): Promise<OnboardingResult> {
     try {
+      const apiUrl = getApiBaseUrl();
+      const apiToken = getApiToken();
+
       console.log(
         "🔄 [OnboardingService] Iniciando processo de onboarding...",
         {
           userId: data.user.id,
           firstName: data.user.firstName,
           lastName: data.user.lastName,
-          apiUrl: process.env.API_BASE_URL,
-          hasApiToken: !!process.env.API_TOKEN,
+          apiUrl: apiUrl || "❌ NÃO CONFIGURADO",
+          hasApiToken: !!apiToken,
         }
       );
 
       // Verificar se as variáveis de ambiente estão configuradas
-      if (
-        !process.env.API_BASE_URL ||
-        !process.env.API_TOKEN
-      ) {
+      if (!apiUrl || !apiToken) {
         console.error(
           "❌ [OnboardingService] Variáveis de ambiente não configuradas"
         );
@@ -38,11 +39,14 @@ class OnboardingService {
         console.error(
           "❌ [OnboardingService] API_TOKEN=your-api-token"
         );
+        console.error(
+          "❌ [OnboardingService] Ou configure via EAS Secrets para builds na nuvem."
+        );
 
         return {
           success: false,
           error:
-            "Configuração da API não encontrada. Verifique as variáveis de ambiente no arquivo .env",
+            "Configuração da API não encontrada. Verifique as variáveis de ambiente no arquivo .env ou EAS Secrets",
         };
       }
 

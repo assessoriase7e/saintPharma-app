@@ -1,20 +1,18 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { getApiBaseUrl, getApiToken } from "@/utils/env";
 
 class HttpClient {
   private client: AxiosInstance;
 
   constructor() {
-    const baseURL = process.env.API_BASE_URL;
-    const apiToken = process.env.API_TOKEN;
+    const baseURL = getApiBaseUrl();
+    const apiToken = getApiToken();
 
     // Log de configuração para debug
     console.log("🔧 [HttpClient] Inicializando com configuração:", {
       baseURL: baseURL || "❌ NÃO CONFIGURADO",
       hasToken: !!apiToken,
       tokenLength: apiToken?.length || 0,
-      allEnvVars: Object.keys(process.env)
-        .filter((key) => key.startsWith("EXPO_PUBLIC"))
-        .map((key) => `${key}=${process.env[key]?.substring(0, 20)}...`),
     });
 
     // Validar se a variável de ambiente está configurada
@@ -23,7 +21,8 @@ class HttpClient {
         "❌ [HttpClient] API_BASE_URL não está configurada!\n" +
         "Crie um arquivo .env na raiz do projeto com:\n" +
         "API_BASE_URL=http://localhost:3000/api\n" +
-        "API_TOKEN=seu-token-aqui";
+        "API_TOKEN=seu-token-aqui\n\n" +
+        "Ou configure via EAS Secrets para builds na nuvem.";
 
       console.error(errorMessage);
     }
@@ -44,14 +43,14 @@ class HttpClient {
     this.client.interceptors.request.use(
       (config) => {
         // Validar se baseURL está configurada
-        const baseURL = process.env.API_BASE_URL;
+        const baseURL = getApiBaseUrl();
         if (!baseURL) {
           throw new Error(
-            "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env"
+            "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env ou EAS Secrets"
           );
         }
 
-        const token = process.env.API_TOKEN;
+        const token = getApiToken();
 
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
