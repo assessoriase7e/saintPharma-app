@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSSOAuth } from "../../hooks/useSSOAuth";
+import { useSSOAuth } from "@/hooks/useSSOAuth";
 
 // Função para traduzir mensagens de erro do Clerk
 function translateClerkError(error: any): string {

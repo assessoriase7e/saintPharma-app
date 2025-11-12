@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Text, View } from "react-native";
-import { userService } from "../services/userService";
+import { userService } from "@/services/userService";
 
 // Completa qualquer sessão de autenticação pendente
 // Apenas em plataformas nativas (iOS/Android), não na web
@@ -25,51 +25,50 @@ export default function SSOCallbackScreen() {
 
         // O callback é processado automaticamente pelo Clerk
         // Aguardar um pouco para garantir que a sessão foi estabelecida
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // e que o objeto user está disponível
+        await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        console.log("✅ [SSOCallback] Callback processado com sucesso");
+        console.log("✅ [SSOCallback] Callback processado, verificando autenticação...");
 
-        // Aguardar um momento para garantir que a sessão foi estabelecida
-        setTimeout(async () => {
-          if (isSignedIn && user) {
-            console.log(
-              "🚀 [SSOCallback] Usuário autenticado, garantindo existência no banco de dados"
+        if (isSignedIn && user) {
+          console.log(
+            "🚀 [SSOCallback] Usuário autenticado, garantindo existência no banco de dados"
+          );
+
+          try {
+            // Garantir que o usuário existe no banco de dados
+            await userService.ensureUserExists(
+              user.id,
+              user.primaryEmailAddress?.emailAddress || "",
+              user.firstName || undefined,
+              user.lastName || undefined,
+              user.imageUrl || undefined
             );
-
-            try {
-              // Garantir que o usuário existe no banco de dados
-              await userService.ensureUserExists(
-                user.id,
-                user.primaryEmailAddress?.emailAddress || "",
-                user.firstName || undefined,
-                user.lastName || undefined,
-                user.imageUrl || undefined
-              );
-              console.log(
-                "✅ [SSOCallback] Usuário garantido no banco de dados"
-              );
-            } catch (error) {
-              console.error(
-                "❌ [SSOCallback] Erro ao criar usuário no banco:",
-                error
-              );
-              // Não falha o fluxo se não conseguir criar no banco
-            }
-
-            // Redirecionar para onboarding para verificar se precisa completar perfil
-            router.replace("/onboarding");
-          } else {
             console.log(
-              "⚠️ [SSOCallback] Usuário não autenticado, redirecionando para login"
+              "✅ [SSOCallback] Usuário garantido no banco de dados"
             );
-            router.replace("/(auth)/sign-in");
+          } catch (error) {
+            console.error(
+              "❌ [SSOCallback] Erro ao criar usuário no banco:",
+              error
+            );
+            // Não falha o fluxo se não conseguir criar no banco
           }
-        }, 1000);
+
+          // Redirecionar para onboarding - o index.tsx vai verificar se precisa completar
+          // e redirecionar corretamente (onboarding ou home)
+          router.replace("/onboarding");
+        } else {
+          console.log(
+            "⚠️ [SSOCallback] Usuário não autenticado, redirecionando para login"
+          );
+          router.replace("/(auth)/sign-in");
+        }
       } catch (err: any) {
         console.error("❌ [SSOCallback] Erro ao processar callback:", err);
         setError(err.message || "Erro ao processar autenticação");
 
-        // Redirecionar para login em caso de erro
+        // Redirecionar para login em caso de erro após um breve delay
         setTimeout(() => {
           router.replace("/(auth)/sign-in");
         }, 2000);
@@ -81,7 +80,7 @@ export default function SSOCallbackScreen() {
     if (isLoaded) {
       processCallback();
     }
-  }, [isLoaded, isSignedIn, router]);
+  }, [isLoaded, isSignedIn, user, router]);
 
   // Mostrar loading enquanto processa
   if (isProcessing || !isLoaded) {

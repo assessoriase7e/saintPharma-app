@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSSOAuth } from "../../hooks/useSSOAuth";
+import { useSSOAuth } from "@/hooks/useSSOAuth";
 
 // Função para traduzir mensagens de erro do Clerk
 function translateClerkError(error: any): string {
@@ -56,7 +56,8 @@ export default function SignInScreen() {
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        // O guard de onboarding irá verificar se precisa completar o perfil
+        // Redirecionar para index.tsx que vai verificar autenticação e onboarding
+        // e redirecionar para o destino correto (home ou onboarding)
         router.replace("/");
       } else {
         console.error(JSON.stringify(signInAttempt, null, 2));

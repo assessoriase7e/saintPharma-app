@@ -1,67 +1,71 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { Redirect, useRootNavigationState } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
-import { OnboardingForm } from "../components/OnboardingForm";
-import { onboardingService } from "../services/onboarding";
+import { OnboardingForm } from "@/components/OnboardingForm";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 
+/**
+ * Página de onboarding.
+ * 
+ * Esta página permite que usuários completem seu perfil.
+ * Se o usuário já completou o onboarding, redireciona automaticamente para home.
+ * 
+ * A verificação de onboarding é feita pelo hook useOnboardingCheck,
+ * evitando duplicação de lógica.
+ */
 export default function OnboardingPage() {
   const { userId, isLoaded } = useAuth();
-  const router = useRouter();
-  const [isChecking, setIsChecking] = useState(true);
+  const { isLoading, needsOnboarding } = useOnboardingCheck();
+  const navigationState = useRootNavigationState();
 
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      if (!isLoaded) {
-        setIsChecking(false);
-        return;
-      }
-
-      // Se não estiver logado, permitir acesso ao formulário
-      if (!userId) {
-        console.log("⚠️ [OnboardingPage] Usuário não logado, permitindo acesso ao formulário");
-        setIsChecking(false);
-        return;
-      }
-
-      try {
-        console.log("🔍 [OnboardingPage] Verificando se usuário já completou onboarding...");
-        
-        const status = await onboardingService.checkOnboardingStatus(userId);
-        
-        console.log("📊 [OnboardingPage] Status do onboarding:", {
-          needsOnboarding: status.needsOnboarding,
-          firstName: status.user?.firstName,
-          lastName: status.user?.lastName,
-          hasUser: !!status.user,
-        });
-
-        if (!status.needsOnboarding && status.user) {
-          console.log("✅ [OnboardingPage] Onboarding já completo, redirecionando para home");
-          router.replace("/");
-          return;
-        }
-
-        console.log("🔄 [OnboardingPage] Usuário precisa completar onboarding");
-      } catch (error: any) {
-        console.error("❌ [OnboardingPage] Erro ao verificar onboarding:", error);
-        // Em caso de erro, permitir acesso ao formulário
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkOnboardingStatus();
-  }, [isLoaded, userId, router]);
-
-  if (isChecking) {
+  // Aguardar o sistema de navegação estar pronto
+  if (!navigationState?.key) {
     return (
       <View className="flex-1 justify-center items-center bg-background">
         <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-text-secondary mt-2">Verificando perfil...</Text>
+        <Text className="text-text-secondary mt-2">
+          Carregando aplicação...
+        </Text>
       </View>
     );
   }
 
+  // Aguardar Clerk carregar
+  if (!isLoaded) {
+    return (
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text className="text-text-secondary mt-2">
+          Verificando autenticação...
+        </Text>
+      </View>
+    );
+  }
+
+  // Se não estiver logado, permitir acesso ao formulário (pode ser usado para cadastro)
+  if (!userId) {
+    return <OnboardingForm />;
+  }
+
+  // Aguardar verificação de onboarding
+  if (isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text className="text-text-secondary mt-2">
+          Verificando perfil...
+        </Text>
+      </View>
+    );
+  }
+
+  // Se o onboarding já estiver completo, redirecionar para home
+  // O index.tsx vai decidir o destino final (pode redirecionar para onboarding novamente
+  // se houver alguma inconsistência, mas isso é raro)
+  if (!needsOnboarding) {
+    return <Redirect href="/" />;
+  }
+
+  // Usuário precisa completar onboarding, mostrar formulário
   return <OnboardingForm />;
 }
