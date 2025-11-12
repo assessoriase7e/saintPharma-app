@@ -7,7 +7,7 @@ import {
   ExamSubmitRequest,
   ExamSubmitResponse,
   UpdateExamRequest,
-} from "../types/api";
+} from "@/types/api";
 import { httpClient } from "./httpClient";
 
 class ExamsService {

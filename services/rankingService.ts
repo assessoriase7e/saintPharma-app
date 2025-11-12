@@ -1,4 +1,4 @@
-import { RankingResponse, UserPointsResponse } from "../types/api";
+import { RankingResponse, UserPointsResponse } from "@/types/api";
 import { httpClient } from "./httpClient";
 
 class RankingService {

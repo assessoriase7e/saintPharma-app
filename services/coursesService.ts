@@ -3,7 +3,7 @@ import {
   CourseProgressResponse,
   MultipleCourseProgressResponse,
   UserCourse,
-} from "../types/api";
+} from "@/types/api";
 import { httpClient } from "./httpClient";
 
 class CoursesService {

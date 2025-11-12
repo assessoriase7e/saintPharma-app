@@ -4,7 +4,7 @@ import {
   LectureDetailResponse,
   LecturesResponse,
   UserLectureResponse,
-} from "../types/api";
+} from "@/types/api";
 import { httpClient } from "./httpClient";
 
 class LecturesService {

@@ -3,7 +3,7 @@ import {
   OnboardingData,
   OnboardingResult,
   OnboardingStatus,
-} from "../types/onboarding";
+} from "@/types/onboarding";
 import { httpClient } from "./httpClient";
 
 class OnboardingService {

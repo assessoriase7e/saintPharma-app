@@ -25,7 +25,7 @@ import {
   UserPointsResponse,
   UserProgressResponse,
   UserSummaryResponse,
-} from "../types/api";
+} from "@/types/api";
 
 class ApiClient {
   private config: ApiConfig;

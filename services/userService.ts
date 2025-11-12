@@ -13,7 +13,7 @@ import {
   UserActivitiesResponse,
   UserStatsResponse,
   UserSummaryResponse,
-} from "../types/api";
+} from "@/types/api";
 import { httpClient } from "./httpClient";
 
 class UserService {

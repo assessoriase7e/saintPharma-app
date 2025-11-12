@@ -2,7 +2,7 @@ import {
   CertificateCreateRequest,
   CertificateCreateResponse,
   CertificatesResponse,
-} from "../types/api";
+} from "@/types/api";
 import { httpClient } from "./httpClient";
 
 class CertificatesService {
