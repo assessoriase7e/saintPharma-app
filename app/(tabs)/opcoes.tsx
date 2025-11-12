@@ -3,7 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Avatar from "@/components/Avatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/stores";
 
@@ -38,21 +37,6 @@ export default function OpcoesScreen() {
 
       {/* Content */}
       <View className="flex-1 px-4 py-6">
-        {/* Profile Section */}
-        <View className="bg-card border border-border rounded-xl p-6 mb-6 ">
-          <View className="flex-row items-center mb-4">
-            <Avatar size="large" name="João Silva" showBorder={true} />
-            <View className="ml-4 flex-1">
-              <Text className="text-xl font-semibold text-text-primary">
-                Dr. João Silva
-              </Text>
-              <Text className="text-sm text-text-secondary">
-                Farmacêutico Responsável
-              </Text>
-            </View>
-          </View>
-        </View>
-
         {/* Options */}
         <View className="bg-card border border-border rounded-xl  overflow-hidden">
           {/* Theme Toggle */}
