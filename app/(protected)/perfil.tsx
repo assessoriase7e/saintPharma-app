@@ -71,7 +71,7 @@ export default function Perfil() {
 
   return (
     <ScrollView className="flex-1 bg-background">
-      <View className="pt-12 px-4 pb-4">
+      <View className="pt-20 px-4 pb-4">
         {/* Título da Página */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-text-primary mb-2">

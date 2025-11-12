@@ -14,7 +14,7 @@ export default function OpcoesScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className={`pt-12 px-4 pb-6`}>
+      <View className={`pt-20 px-4 pb-6`}>
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
           <Ionicons
             name="arrow-back"

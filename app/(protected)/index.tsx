@@ -251,7 +251,7 @@ export default function Home() {
   return (
     <>
       <ScrollView className="flex-1 bg-background">
-        <View className="pt-12 px-4 pb-4">
+        <View className="pt-20 px-4 pb-4">
           {/* Header */}
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-4">

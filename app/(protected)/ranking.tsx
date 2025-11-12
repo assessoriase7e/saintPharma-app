@@ -73,7 +73,7 @@ export default function Ranking() {
 
   return (
     <ScrollView className="flex-1 bg-background">
-      <View className="pt-12 px-6 pb-6">
+      <View className="pt-20 px-6 pb-6">
         {/* Header */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-text-primary">Ranking</Text>

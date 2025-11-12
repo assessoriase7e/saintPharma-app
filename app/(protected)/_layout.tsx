@@ -161,12 +161,6 @@ export default function ProtectedLayout() {
           href: null, // Remove from tab bar
         }}
       />
-      <Tabs.Screen
-        name="curso-premium-info"
-        options={{
-          href: null, // Remove from tab bar
-        }}
-      />
     </Tabs>
   );
 }
