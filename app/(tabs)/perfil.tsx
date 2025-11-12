@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "@/services";
 import { UserInfoResponse } from "@/types/api";
 
@@ -87,8 +88,9 @@ export default function Perfil() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background">
-      <View className="pt-20 px-4 pb-4">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <ScrollView className="flex-1">
+        <View className="px-4 pb-4 pt-4">
         {/* Título da Página */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-text-primary mb-2">
@@ -109,7 +111,7 @@ export default function Perfil() {
           <Text className="text-2xl font-bold text-text-primary">
             {userInfo?.firstName && userInfo?.lastName
               ? `${userInfo.firstName} ${userInfo.lastName}`
-              : userInfo?.firstName || userInfo?.lastName || "Usuário"}
+              : userInfo?.firstName || userInfo?.lastName || userInfo?.name || "Usuário"}
           </Text>
           <Text className="text-text-secondary">{userInfo?.email}</Text>
 
@@ -208,6 +210,7 @@ export default function Perfil() {
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

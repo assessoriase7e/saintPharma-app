@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import RankingUserCard from "@/components/RankingUserCard";
 import StatCard from "@/components/StatCard";
 import TopUserCard from "@/components/TopUserCard";
@@ -77,6 +78,25 @@ export default function Ranking() {
 
   const ranking = rankingData?.ranking || [];
 
+  // Calcular posição do usuário no ranking
+  const userPosition = userPoints && ranking.length > 0
+    ? (() => {
+        // Primeiro, tentar encontrar pelo userId e usar a position que já vem da API
+        const foundUser = ranking.find(
+          (user) => user.id === userPoints.userId || user.clerkId === userPoints.userId
+        );
+        if (foundUser) {
+          return foundUser.position;
+        }
+        // Se não encontrar, calcular posição baseado nos pontos semanais
+        // Encontrar quantos usuários têm pontos maiores ou iguais
+        const usersWithMorePoints = ranking.filter(
+          (user) => user.points >= userPoints.weekPoints
+        ).length;
+        return usersWithMorePoints + 1;
+      })()
+    : undefined;
+
   if (loading) {
     return (
       <View className="flex-1 bg-background justify-center items-center">
@@ -98,8 +118,9 @@ export default function Ranking() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-background">
-      <View className="pt-20 px-6 pb-6">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <ScrollView className="flex-1">
+        <View className="px-6 pb-6 pt-4">
         {/* Header */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-text-primary">Ranking</Text>
@@ -111,8 +132,8 @@ export default function Ranking() {
         {/* Sua Posição */}
         {userPoints && (
           <UserPositionCard
-            position={userPoints.position}
-            points={userPoints.totalPoints}
+            position={userPosition || ranking.length + 1}
+            points={userPoints.weekPoints}
             badge={getBadge(userPoints.totalPoints)}
           />
         )}
@@ -189,10 +210,10 @@ export default function Ranking() {
               Top 3
             </Text>
             <View className="grid grid-cols-3 gap-1">
-              {ranking.slice(0, 3).map((usuario) => {
+              {ranking.slice(0, 3).map((usuario, index) => {
                 return (
                   <TopUserCard
-                    key={usuario.id}
+                    key={usuario.id || `top-user-${index}`}
                     position={usuario.position}
                     name={usuario.name || "Usuário"}
                     points={usuario.points || 0}
@@ -220,10 +241,10 @@ export default function Ranking() {
           </View>
 
           {ranking.length > 0 ? (
-            ranking.map((usuario) => {
+            ranking.map((usuario, index) => {
               return (
                 <RankingUserCard
-                  key={usuario.id}
+                  key={usuario.id || `ranking-user-${index}`}
                   position={usuario.position}
                   name={usuario.name || "Usuário"}
                   points={usuario.points || 0}
@@ -242,6 +263,7 @@ export default function Ranking() {
           )}
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

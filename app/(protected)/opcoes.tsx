@@ -2,6 +2,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Avatar from "@/components/Avatar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/stores";
@@ -12,9 +13,9 @@ export default function OpcoesScreen() {
   const isDark = theme === "dark";
 
   return (
-    <View className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
-      <View className={`pt-20 px-4 pb-6`}>
+      <View className="px-4 pb-6 pt-4">
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
           <Ionicons
             name="arrow-back"
@@ -78,6 +79,6 @@ export default function OpcoesScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { coursesService, rankingService, statsService, userService } from "@/services";
 import { httpClient } from "@/services/httpClient";
 import { UserCourse, UserInfoResponse } from "@/types/api";
@@ -35,7 +36,7 @@ const defaultStats = [
   {
     titulo: "Horas Estudadas",
     valor: "0h",
-    icone: "time" as const,
+    icone: "time-outline" as const,
     cor: "#f59e0b",
   },
 ];
@@ -81,6 +82,7 @@ export default function Cursos() {
             email: userResponse.user.email,
             firstName: userResponse.user.firstName,
             lastName: userResponse.user.lastName,
+            name: userResponse.user.name,
             profileImage: userResponse.user.profileImage,
             lives: userResponse.user.lives || 0,
             points: userResponse.user.points || 0,
@@ -95,14 +97,21 @@ export default function Cursos() {
           
           // Buscar estatísticas do usuário
           console.log("📊 Buscando estatísticas do usuário...");
-          const userStats = await statsService.getUserStats();
-          setStatistics(userStats);
+          try {
+            const userStats = await statsService.getUserStats();
+            console.log("📊 Estatísticas recebidas:", userStats);
+            setStatistics(userStats);
+          } catch (err) {
+            console.error("❌ Erro ao buscar estatísticas:", err);
+            // Usar estatísticas padrão em caso de erro
+            setStatistics(statsService.getDefaultStats());
+          }
 
           // Buscar pontos semanais do usuário
           console.log("🏆 Buscando pontos semanais do usuário...");
           try {
             const userPoints = await rankingService.getUserPoints();
-            const points = (userPoints as any).weekPoints || userPoints.weeklyPoints || 0;
+            const points = userPoints.weekPoints || 0;
             console.log("🏆 Pontos semanais recebidos:", points);
             setWeeklyPoints(points);
           } catch (err) {
@@ -221,8 +230,9 @@ export default function Cursos() {
 
   return (
     <>
-      <ScrollView className="flex-1 bg-background">
-        <View className="pt-20 px-4 pb-4">
+      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+        <ScrollView className="flex-1">
+          <View className="px-4 pb-4 pt-4">
           {/* Header */}
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-4">
@@ -542,7 +552,8 @@ export default function Cursos() {
             )}
           </View>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
 
       <LivesBlockedModal
         visible={showBlockedModal}

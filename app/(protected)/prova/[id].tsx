@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Card from "@/components/Card";
 import { examsService } from "@/services";
 import { useLives } from "@/stores";
@@ -152,6 +153,7 @@ export default function ExamScreen() {
     courseId?: string;
   }>();
   const examId = id || "";
+  const insets = useSafeAreaInsets();
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -412,7 +414,7 @@ export default function ExamScreen() {
   if (!quizStarted) {
     return (
       <View className="flex-1 bg-background">
-        <View className="bg-card border-b border-border px-6 pt-12 pb-6">
+        <View className="bg-card border-b border-border px-6 pb-6" style={{ paddingTop: insets.top + 12 }}>
           <View className="flex-row items-center mb-4">
             <Pressable onPress={() => router.back()} className="mr-4">
               <Ionicons name="arrow-back" size={24} color="#3b82f6" />
@@ -500,7 +502,7 @@ export default function ExamScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="bg-card border-b border-border px-6 pt-12 pb-4">
+      <View className="bg-card border-b border-border px-6 pb-4" style={{ paddingTop: insets.top + 12 }}>
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-text-primary text-lg font-bold">
             {exam.title}

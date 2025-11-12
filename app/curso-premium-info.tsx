@@ -1,12 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CursoPremiumInfo() {
+  const insets = useSafeAreaInsets();
+  
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="bg-card border-b border-border px-6 pt-20 pb-6">
+      <View className="bg-card border-b border-border px-6 pb-6" style={{ paddingTop: insets.top + 12 }}>
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => router.back()} className="mr-4">
             <Ionicons name="arrow-back" size={24} color="#3b82f6" />

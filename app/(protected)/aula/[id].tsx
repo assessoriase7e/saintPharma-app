@@ -14,6 +14,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { lecturesService } from "@/services";
 import { Lecture } from "@/types/api";
 
@@ -352,6 +353,7 @@ export default function LectureView() {
     courseId?: string;
   }>();
   const lectureId = id || "";
+  const insets = useSafeAreaInsets();
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -451,7 +453,7 @@ export default function LectureView() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="bg-card border-b border-border px-5 py-2">
+      <View className="bg-card border-b border-border px-5 py-2" style={{ paddingTop: insets.top + 8 }}>
         <View className="flex-row items-center">
           <Pressable
             onPress={() => {

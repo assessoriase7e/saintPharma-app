@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Card from "@/components/Card";
 import { examsService } from "@/services";
 import { Question } from "@/types/api";
@@ -242,6 +243,7 @@ export default function ExamResult() {
     quizId: string;
     results: string;
   }>();
+  const insets = useSafeAreaInsets();
 
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -341,7 +343,7 @@ export default function ExamResult() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="bg-card border-b border-border px-6 pt-12 pb-6">
+      <View className="bg-card border-b border-border px-6 pb-6" style={{ paddingTop: insets.top + 12 }}>
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => router.back()} className="mr-4">
             <Ionicons name="arrow-back" size={24} color="#3b82f6" />

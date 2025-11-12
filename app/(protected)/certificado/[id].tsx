@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { certificatesService } from "@/services";
 import { httpClient } from "@/services/httpClient";
 
@@ -28,6 +29,7 @@ interface Certificate {
 export default function CertificateView() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userId } = useAuth();
+  const insets = useSafeAreaInsets();
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +156,7 @@ export default function CertificateView() {
 
   return (
     <ScrollView className="flex-1 bg-background">
-      <View className="pt-12 px-6 pb-6">
+      <View className="px-6 pb-6" style={{ paddingTop: insets.top + 12 }}>
         {/* Header com botão voltar */}
         <Pressable
           onPress={() => router.back()}

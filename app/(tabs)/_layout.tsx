@@ -83,6 +83,12 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="curso-premium-info"
+        options={{
+          href: null, // Oculta da tab bar
+        }}
+      />
     </Tabs>
   );
 }

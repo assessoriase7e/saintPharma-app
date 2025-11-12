@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { certificatesService } from "@/services";
 import { httpClient } from "@/services/httpClient";
 import { CertificatesResponse } from "@/types/api";
@@ -75,8 +76,9 @@ export default function Certificados() {
   const certificados = certificates?.certificates || [];
 
   return (
-    <ScrollView className="flex-1 bg-background">
-      <View className="pt-20 px-6 pb-6">
+    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <ScrollView className="flex-1">
+        <View className="px-6 pb-6 pt-4">
         {/* Header */}
         <View className="mb-6">
           <Text className="text-3xl font-bold text-text-primary mb-2">
@@ -197,6 +199,7 @@ export default function Certificados() {
           )}
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

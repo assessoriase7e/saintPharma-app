@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Card from "@/components/Card";
 import {
   certificatesService,
@@ -150,6 +151,7 @@ export default function CourseLessons() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { userId } = useAuth();
   const courseId = id || "";
+  const insets = useSafeAreaInsets();
   const [course, setCourse] = useState<any>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
@@ -406,7 +408,7 @@ export default function CourseLessons() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="bg-card border-b border-border px-6 pt-12 pb-6">
+      <View className="bg-card border-b border-border px-6 pb-6" style={{ paddingTop: insets.top + 12 }}>
         <View className="flex-row items-center mb-4">
           <Pressable onPress={() => router.back()} className="mr-4">
             <Ionicons name="arrow-back" size={24} color="#3b82f6" />
