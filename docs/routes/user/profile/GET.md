@@ -41,18 +41,21 @@ Headers:
 ```json
 {
   "success": true,
-  "message": "Perfil do usuário encontrado com sucesso",
-  "profile": {
-    "id": "507f1f77bcf86cd799439011",
-    "clerkId": "user_2abc123def456",
-    "name": "João Silva",
-    "email": "usuario@exemplo.com",
-    "profileImage": "https://example.com/avatar.jpg",
-    "points": 100,
-    "quizzes": ["quiz1", "quiz2"],
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
-  }
+  "data": {
+    "message": "Perfil do usuário encontrado com sucesso",
+    "profile": {
+      "id": "507f1f77bcf86cd799439011",
+      "clerkId": "user_2abc123def456",
+      "name": "João Silva",
+      "email": "usuario@exemplo.com",
+      "profileImage": "https://example.com/avatar.jpg",
+      "points": 100,
+      "quizzes": ["quiz1", "quiz2"],
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  },
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 
@@ -70,7 +73,9 @@ Headers:
 
 ```json
 {
-  "error": "Token de API inválido ou ausente"
+  "error": "Token de autorização inválido ou ausente",
+  "code": "UNAUTHORIZED",
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 
@@ -79,6 +84,16 @@ Headers:
 ```json
 {
   "error": "Usuário não encontrado"
+}
+```
+
+### 500 - Internal Server Error
+
+```json
+{
+  "error": "Erro ao buscar perfil do usuário",
+  "code": "INTERNAL_SERVER_ERROR",
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 

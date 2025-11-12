@@ -30,29 +30,30 @@ GET /api/ranking?page=1&limit=20
 ```json
 {
   "success": true,
-  "ranking": [
-    {
-      "id": "user_id_1",
-      "clerkId": "user_2abc123def456",
-      "name": "João Silva",
-      "email": "usuario@exemplo.com",
-      "profileImage": "https://example.com/avatar.jpg",
-      "points": 500,
-      "position": 1
+  "data": {
+    "ranking": [
+      {
+        "userId": "507f1f77bcf86cd799439011",
+        "name": "João Silva",
+        "profileImage": "https://example.com/avatar.jpg",
+        "points": 500,
+        "position": 1
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 100,
+      "pages": 5,
+      "hasNext": true,
+      "hasPrev": false
+    },
+    "week": {
+      "start": "2024-01-07",
+      "end": "2024-01-13"
     }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 100,
-    "pages": 5,
-    "hasNext": true,
-    "hasPrev": false
   },
-  "week": {
-    "start": "2024-01-07",
-    "end": "2024-01-13"
-  }
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 
@@ -85,9 +86,32 @@ Os pontos semanais são calculados com base em:
 
 A semana é calculada de domingo a sábado (semana brasileira).
 
+## Resposta de Erro
+
+### 401 - Unauthorized
+
+```json
+{
+  "error": "Token de autorização inválido ou ausente",
+  "code": "UNAUTHORIZED",
+  "timestamp": "2024-01-10T12:00:00.000Z"
+}
+```
+
+### 500 - Internal Server Error
+
+```json
+{
+  "error": "Erro ao buscar ranking",
+  "code": "INTERNAL_SERVER_ERROR",
+  "timestamp": "2024-01-10T12:00:00.000Z"
+}
+```
+
 ## Notas Importantes
 
 - O ranking é **resetado semanalmente** - mostra apenas os pontos da semana atual
 - Pontos totais acumulados não são usados para o ranking
 - A semana é calculada automaticamente com base na data atual
+- Apenas usuários com pontos na semana atual aparecem no ranking (usuários com 0 pontos são filtrados)
 

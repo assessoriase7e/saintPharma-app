@@ -36,54 +36,57 @@ GET /api/user/stats?clerkId=user_2abc123def456&period=month&includeDetails=true
 ```json
 {
   "success": true,
-  "message": "Estatísticas do usuário encontradas com sucesso",
-  "stats": {
-    "period": "month",
-    "user": {
-      "id": "507f1f77bcf86cd799439011",
-      "clerkId": "user_2abc123def456",
-      "name": "João Silva",
-      "email": "usuario@exemplo.com",
-      "points": 150
-    },
-    "achievements": {
-      "certificates": {
-        "total": 3,
-        "points": 150,
-        "workload": 12
+  "data": {
+    "message": "Estatísticas do usuário encontradas com sucesso",
+    "stats": {
+      "period": "month",
+      "user": {
+        "id": "507f1f77bcf86cd799439011",
+        "clerkId": "user_2abc123def456",
+        "name": "João Silva",
+        "email": "usuario@exemplo.com",
+        "points": 150
       },
-      "lectures": {
-        "completed": 25,
-        "estimatedHours": 12.5
+      "achievements": {
+        "certificates": {
+          "total": 3,
+          "points": 150,
+          "workload": 12
+        },
+        "lectures": {
+          "completed": 25,
+          "estimatedHours": 12.5
+        },
+        "exams": {
+          "total": 10,
+          "completed": 8,
+          "passed": 6,
+          "failed": 2,
+          "averageScore": 75.5
+        },
+        "damages": {
+          "total": 2
+        }
       },
-      "exams": {
-        "total": 10,
-        "completed": 8,
-        "passed": 6,
-        "failed": 2,
-        "averageScore": 75.5
+      "ranking": {
+        "position": 15,
+        "totalUsers": 100,
+        "percentile": 85
       },
-      "damages": {
-        "total": 2
+      "activity": {
+        "totalActivities": 38,
+        "lastActivity": 1704067200000
+      },
+      "details": {
+        "recentCertificates": [...],
+        "recentLectures": [...],
+        "recentExams": [...],
+        "recentExamAttempts": [...],
+        "recentDamages": [...]
       }
-    },
-    "ranking": {
-      "position": 15,
-      "totalUsers": 100,
-      "percentile": 85
-    },
-    "activity": {
-      "totalActivities": 38,
-      "lastActivity": 1704067200000
-    },
-    "details": {
-      "recentCertificates": [...],
-      "recentLectures": [...],
-      "recentExams": [...],
-      "recentExamAttempts": [...],
-      "recentDamages": [...]
     }
-  }
+  },
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 
@@ -101,7 +104,9 @@ GET /api/user/stats?clerkId=user_2abc123def456&period=month&includeDetails=true
 
 ```json
 {
-  "error": "Token de API inválido ou ausente"
+  "error": "Token de autorização inválido ou ausente",
+  "code": "UNAUTHORIZED",
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 
@@ -110,6 +115,16 @@ GET /api/user/stats?clerkId=user_2abc123def456&period=month&includeDetails=true
 ```json
 {
   "error": "Usuário não encontrado"
+}
+```
+
+### 500 - Internal Server Error
+
+```json
+{
+  "error": "Erro ao buscar estatísticas do usuário",
+  "code": "INTERNAL_SERVER_ERROR",
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 

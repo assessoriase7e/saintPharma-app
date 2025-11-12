@@ -29,11 +29,14 @@ Headers:
 ```json
 {
   "success": true,
-  "userId": "507f1f77bcf86cd799439011",
-  "userName": "João Silva",
-  "totalPoints": 500,
-  "weekPoints": 150,
-  "profileImage": "https://example.com/avatar.jpg"
+  "data": {
+    "userId": "507f1f77bcf86cd799439011",
+    "userName": "João Silva",
+    "totalPoints": 500,
+    "weekPoints": 150,
+    "profileImage": "https://example.com/avatar.jpg"
+  },
+  "timestamp": "2024-01-10T12:00:00.000Z"
 }
 ```
 
@@ -51,8 +54,52 @@ model User {
 }
 ```
 
+## Resposta de Erro
+
+### 400 - Bad Request
+
+Quando o header `X-User-Id` não é fornecido:
+
+```json
+{
+  "error": "Header X-User-Id é obrigatório",
+  "code": "MISSING_USER_ID"
+}
+```
+
+### 401 - Unauthorized
+
+```json
+{
+  "error": "Token de autorização inválido ou ausente",
+  "code": "UNAUTHORIZED",
+  "timestamp": "2024-01-10T12:00:00.000Z"
+}
+```
+
+### 404 - Not Found
+
+Quando o usuário não é encontrado:
+
+```json
+{
+  "error": "Usuário não encontrado",
+  "code": "USER_NOT_FOUND"
+}
+```
+
+### 500 - Internal Server Error
+
+```json
+{
+  "error": "Erro ao buscar pontos do usuário",
+  "code": "INTERNAL_SERVER_ERROR",
+  "timestamp": "2024-01-10T12:00:00.000Z"
+}
+```
+
 ## Cálculos
 
 - **totalPoints**: Pontos totais do usuário (campo `points` do modelo User)
-- **weekPoints**: Pontos obtidos na última semana (calculado através de certificados e atividades)
+- **weekPoints**: Pontos obtidos na semana atual (calculado através de certificados, exames e aulas concluídas na semana)
 
