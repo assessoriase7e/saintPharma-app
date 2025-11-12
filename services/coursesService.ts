@@ -406,38 +406,67 @@ class CoursesService {
       console.log(`📊 [CoursesService.getCourseProgress] Fazendo requisição GET...`);
       
       const startTime = Date.now();
-      const response = await httpClient.get<CourseProgressResponse>(url);
+      const response = await httpClient.get<any>(url);
       const duration = Date.now() - startTime;
       
       console.error(`✅ [CoursesService.getCourseProgress] Requisição concluída em ${duration}ms`);
-      console.error(`✅ [CoursesService.getCourseProgress] Resposta recebida:`, {
-        success: response?.success,
-        hasCourse: !!response?.course,
-        hasProgress: !!response?.progress,
-        progressPercentage: response?.progress?.percentage,
-        completedLectures: response?.progress?.completedLectures,
-        totalLectures: response?.progress?.totalLectures,
-        hasLectures: !!response?.lectures,
-        lecturesCount: response?.lectures?.length ?? 0,
-      });
       console.log(`✅ [CoursesService.getCourseProgress] Requisição concluída em ${duration}ms`);
-      console.log(`✅ [CoursesService.getCourseProgress] Resposta recebida:`, {
-        success: response?.success,
-        hasCourse: !!response?.course,
-        hasProgress: !!response?.progress,
-        progressPercentage: response?.progress?.percentage,
-        completedLectures: response?.progress?.completedLectures,
-        totalLectures: response?.progress?.totalLectures,
-        hasLectures: !!response?.lectures,
-        lecturesCount: response?.lectures?.length ?? 0,
-      });
       
-      // Verificar estrutura da resposta
-      if (response && response.success && response.course && response.progress) {
+      // Extrair dados da resposta - pode vir em diferentes estruturas
+      let progressData: CourseProgressResponse | null = null;
+      
+      if (response && response.success) {
+        // Estrutura 1: { success: true, data: { course, progress, lectures, certificate } }
+        if (response.data && response.data.course && response.data.progress) {
+          progressData = {
+            success: true,
+            course: response.data.course,
+            progress: response.data.progress,
+            certificate: response.data.certificate || null,
+            lectures: response.data.lectures || undefined,
+            exams: response.data.exams || undefined,
+            examStats: response.data.examStats || undefined,
+            lastActivity: response.data.lastActivity || new Date().toISOString(),
+          };
+        }
+        // Estrutura 2: { success: true, course, progress, lectures, certificate } (dados no nível raiz)
+        else if (response.course && response.progress) {
+          progressData = {
+            success: true,
+            course: response.course,
+            progress: response.progress,
+            certificate: response.certificate || null,
+            lectures: response.lectures || undefined,
+            exams: response.exams || undefined,
+            examStats: response.examStats || undefined,
+            lastActivity: response.lastActivity || new Date().toISOString(),
+          };
+        }
+      }
+      
+      if (progressData) {
         console.error(`✅ [CoursesService.getCourseProgress] Progresso válido retornado para curso ${courseId}`);
+        console.error(`✅ [CoursesService.getCourseProgress] Resposta processada:`, {
+          hasCourse: !!progressData.course,
+          hasProgress: !!progressData.progress,
+          progressPercentage: progressData.progress.percentage,
+          completedLectures: progressData.progress.completedLectures,
+          totalLectures: progressData.progress.totalLectures,
+          hasLectures: !!progressData.lectures,
+          lecturesCount: progressData.lectures?.length ?? 0,
+        });
         console.log(`✅ [CoursesService.getCourseProgress] Progresso válido retornado para curso ${courseId}`);
+        console.log(`✅ [CoursesService.getCourseProgress] Resposta processada:`, {
+          hasCourse: !!progressData.course,
+          hasProgress: !!progressData.progress,
+          progressPercentage: progressData.progress.percentage,
+          completedLectures: progressData.progress.completedLectures,
+          totalLectures: progressData.progress.totalLectures,
+          hasLectures: !!progressData.lectures,
+          lecturesCount: progressData.lectures?.length ?? 0,
+        });
         console.error(`📊 [CoursesService.getCourseProgress] ==========================================`);
-        return response;
+        return progressData;
       } else {
         console.warn(
           "⚠️ [CoursesService.getCourseProgress] Resposta do progresso não tem a estrutura esperada:",

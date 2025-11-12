@@ -3,7 +3,7 @@ import { userService } from "./userService";
 interface StatItem {
   titulo: string;
   valor: string;
-  icone: "checkmark-circle" | "play-circle" | "time";
+  icone: "checkmark-circle" | "play-circle" | "time-outline";
   cor: string;
 }
 
@@ -25,7 +25,7 @@ class StatsService {
     {
       titulo: "Horas Estudadas",
       valor: "0h",
-      icone: "time",
+      icone: "time-outline",
       cor: "#f59e0b",
     },
   ];
@@ -40,6 +40,8 @@ class StatsService {
 
       const summaryResponse = await userService.getUserSummary();
       
+      console.log("📊 [StatsService] Resposta completa da API:", JSON.stringify(summaryResponse, null, 2));
+      
       // Extrair dados da estrutura normalizada: { success: true, data: { courses: {...}, studyHours: {...} } }
       const coursesData = summaryResponse?.data?.courses;
       const studyHoursData = summaryResponse?.data?.studyHours;
@@ -47,13 +49,28 @@ class StatsService {
       console.log("📊 [StatsService] Dados extraídos:", {
         courses: coursesData,
         studyHours: studyHoursData,
+        hasData: !!summaryResponse?.data,
+        hasCourses: !!coursesData,
+        hasStudyHours: !!studyHoursData,
         fullResponse: summaryResponse,
       });
+
+      // Verificar se os dados existem
+      if (!summaryResponse?.data) {
+        console.warn("⚠️ [StatsService] Resposta não contém 'data', usando valores padrão");
+        return this.defaultStats;
+      }
 
       // Usar dados da API se disponíveis, senão usar valores padrão
       const completed = coursesData?.completed ?? 0;
       const inProgress = coursesData?.inProgress ?? 0;
       const totalHours = studyHoursData?.total ?? 0;
+
+      console.log("📊 [StatsService] Valores calculados:", {
+        completed,
+        inProgress,
+        totalHours,
+      });
 
       const stats: StatItem[] = [
         {
@@ -71,7 +88,7 @@ class StatsService {
         {
           titulo: "Horas Estudadas",
           valor: `${Math.floor(totalHours)}h`,
-          icone: "time",
+          icone: "time-outline",
           cor: "#f59e0b",
         },
       ];
@@ -79,10 +96,12 @@ class StatsService {
       console.log("✅ [StatsService] Estatísticas carregadas:", stats);
       return stats;
     } catch (error) {
-      console.warn(
-        "⚠️ [StatsService] Erro ao buscar estatísticas, usando padrão:",
+      console.error(
+        "❌ [StatsService] Erro ao buscar estatísticas:",
+        error instanceof Error ? error.message : String(error),
         error
       );
+      console.warn("⚠️ [StatsService] Usando valores padrão devido ao erro");
       return this.defaultStats;
     }
   }

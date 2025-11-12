@@ -155,11 +155,17 @@ class UserService {
 
       // Verificar se a resposta tem a estrutura esperada da documentação
       // A API pode retornar: { success: true, data: { message: "...", profile: {...} } }
-      if (response && response.success && response.data && response.data.profile) {
+      if (
+        response &&
+        response.success &&
+        response.data &&
+        response.data.profile
+      ) {
         // Estrutura atual da API: { success: true, data: { message: "...", profile: {...} } }
         return {
           success: true,
-          message: response.data.message || "Perfil do usuário encontrado com sucesso",
+          message:
+            response.data.message || "Perfil do usuário encontrado com sucesso",
           profile: response.data.profile,
         };
       } else if (response && response.success && response.profile) {
@@ -196,33 +202,29 @@ class UserService {
       );
       console.log("✅ [UserService] Resumo encontrado:", response);
 
-      // Verificar se a resposta tem a estrutura esperada da documentação
-      // A API pode retornar: { success: true, data: { success: true, data: {...} } }
-      // ou: { success: true, data: {...} }
-      if (response && response.success) {
-        // Se houver data.data, usar essa estrutura (estrutura aninhada)
-        if (response.data && response.data.data) {
+      // Se a resposta já tem a estrutura esperada, retornar diretamente
+      if (response && response.success && response.data) {
+        // Verificar se data já contém os dados ou se é outra estrutura aninhada
+        if (response.data.success && response.data.data) {
+          // API retornou estrutura duplicada, usar a camada interna
           return {
             success: true,
             data: response.data.data as UserSummaryResponse["data"],
           } as UserSummaryResponse;
-        } else if (response.data) {
-          // Estrutura direta: { success: true, data: {...} }
-          return {
-            success: true,
-            data: response.data as UserSummaryResponse["data"],
-          } as UserSummaryResponse;
         }
-      }
-      
-      // Fallback: tentar retornar a resposta original se tiver data
-      if (response && response.data) {
+        // Estrutura normal: { success: true, data: {...} }
         return {
           success: true,
           data: response.data as UserSummaryResponse["data"],
         } as UserSummaryResponse;
+      } else if (response && response.success) {
+        // Estrutura alternativa: { success: true, ... } (dados no nível raiz)
+        return {
+          success: true,
+          data: response as UserSummaryResponse["data"],
+        } as UserSummaryResponse;
       }
-      
+
       console.warn(
         "⚠️ [UserService] Resposta do resumo não tem a estrutura esperada:",
         response
@@ -260,8 +262,23 @@ class UserService {
       console.log("✅ [UserService] Estatísticas encontradas:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      if (response && response.success && response.stats) {
-        // Estrutura da documentação: { success: true, message: "...", stats: {...} }
+      // A API retorna: { success: true, data: { message: "...", stats: {...} }, timestamp: "..." }
+      if (
+        response &&
+        response.success &&
+        response.data &&
+        response.data.stats
+      ) {
+        // Estrutura da documentação: { success: true, data: { message: "...", stats: {...} }, timestamp: "..." }
+        return {
+          success: true,
+          message:
+            response.data.message ||
+            "Estatísticas do usuário encontradas com sucesso",
+          stats: response.data.stats,
+        };
+      } else if (response && response.success && response.stats) {
+        // Estrutura alternativa: { success: true, message: "...", stats: {...} }
         return response;
       } else if (response && response.stats) {
         // Estrutura alternativa: { stats: {...} }
@@ -350,17 +367,26 @@ class UserService {
       console.log("✅ [UserService] Usuário atualizado:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      // A API pode retornar: { success: true, data: { message: "...", user: {...} } }
-      if (response && response.success && response.data && response.data.user) {
-        // Estrutura atual da API: { success: true, data: { message: "...", user: {...} } }
+      // A API retorna: { success: true, message: "...", user: {...} }
+      if (response && response.success && response.user) {
+        // Estrutura da documentação: { success: true, message: "...", user: {...} }
+        return {
+          success: true,
+          message: response.message || "Usuário atualizado com sucesso",
+          user: response.user,
+        };
+      } else if (
+        response &&
+        response.success &&
+        response.data &&
+        response.data.user
+      ) {
+        // Estrutura alternativa: { success: true, data: { message: "...", user: {...} } }
         return {
           success: true,
           message: response.data.message || "Usuário atualizado com sucesso",
           user: response.data.user,
         };
-      } else if (response && response.success && response.user) {
-        // Estrutura alternativa: { success: true, message: "...", user: {...} }
-        return response;
       } else if (response && response.user) {
         // Estrutura alternativa: { user: {...} }
         return {
@@ -391,17 +417,28 @@ class UserService {
       console.log("✅ [UserService] Dados completados:", response);
 
       // Verificar se a resposta tem a estrutura esperada da documentação
-      // A API pode retornar: { success: true, data: { message: "...", user: {...} } }
-      if (response && response.success && response.data && response.data.user) {
-        // Estrutura atual da API: { success: true, data: { message: "...", user: {...} } }
+      // A API retorna: { success: true, message: "...", user: {...} }
+      if (response && response.success && response.user) {
+        // Estrutura da documentação: { success: true, message: "...", user: {...} }
         return {
           success: true,
-          message: response.data.message || "Dados do usuário completados com sucesso",
+          message:
+            response.message || "Dados do usuário completados com sucesso",
+          user: response.user,
+        };
+      } else if (
+        response &&
+        response.success &&
+        response.data &&
+        response.data.user
+      ) {
+        // Estrutura alternativa: { success: true, data: { message: "...", user: {...} } }
+        return {
+          success: true,
+          message:
+            response.data.message || "Dados do usuário completados com sucesso",
           user: response.data.user,
         };
-      } else if (response && response.success && response.user) {
-        // Estrutura alternativa: { success: true, message: "...", user: {...} }
-        return response;
       } else if (response && response.user) {
         // Estrutura alternativa: { user: {...} }
         return {
