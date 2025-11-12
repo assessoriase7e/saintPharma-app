@@ -18,6 +18,7 @@ export interface User {
   clerkId: string;
   firstName?: string;
   lastName?: string;
+  name?: string; // Campo alternativo para nome completo
   email: string;
   profileImage?: string;
   points?: number;
@@ -392,6 +393,18 @@ export interface CertificatesResponse {
   };
 }
 
+// Resposta da API GET /api/ranking (estrutura completa)
+export interface RankingApiResponse {
+  success: boolean;
+  data: {
+    ranking: RankingUser[];
+    pagination: RankingPagination;
+    week: RankingWeek;
+  };
+  timestamp: string;
+}
+
+// Resposta simplificada para uso interno (após extrair de data)
 export interface RankingResponse {
   success: boolean;
   ranking: RankingUser[];
@@ -399,10 +412,27 @@ export interface RankingResponse {
   week: RankingWeek;
 }
 
+// Resposta da API GET /api/ranking/user (estrutura completa)
+export interface UserPointsApiResponse {
+  success: boolean;
+  data: {
+    userId: string;
+    userName: string;
+    totalPoints: number;
+    weekPoints: number;
+    profileImage?: string;
+  };
+  timestamp: string;
+}
+
+// Resposta simplificada para uso interno (após extrair de data)
 export interface UserPointsResponse {
+  userId: string;
+  userName: string;
   totalPoints: number;
-  weeklyPoints: number;
-  position: number;
+  weekPoints: number;
+  profileImage?: string;
+  position?: number; // Posição no ranking (calculada separadamente se necessário)
 }
 
 export interface UserInfoResponse {
@@ -410,6 +440,7 @@ export interface UserInfoResponse {
   clerkId: string;
   firstName?: string;
   lastName?: string;
+  name?: string; // Campo alternativo para nome completo
   email: string;
   profileImage?: string;
   points: number;
