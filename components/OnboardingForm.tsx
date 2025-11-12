@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { onboardingService } from "@/services/onboarding";
 import { OnboardingData } from "@/types/onboarding";
+import { Logo } from "@/components/Logo";
+import { getApiBaseUrl, getApiToken } from "@/utils/env";
 
 export function OnboardingForm() {
   const { userId } = useAuth();
@@ -136,15 +138,15 @@ export function OnboardingForm() {
     }
 
     // Verificar variáveis de ambiente antes de começar
-    const apiUrl = process.env.API_BASE_URL;
-    const apiToken = process.env.API_TOKEN;
+    const apiUrl = getApiBaseUrl();
+    const apiToken = getApiToken();
     
     if (!apiUrl || !apiToken) {
       console.error("❌ [OnboardingForm] Variáveis de ambiente não configuradas", {
         hasApiUrl: !!apiUrl,
         hasApiToken: !!apiToken,
       });
-      const configError = "As configurações da API não foram encontradas. Verifique o arquivo .env com API_BASE_URL e API_TOKEN";
+      const configError = "As configurações da API não foram encontradas. Verifique o arquivo .env com API_BASE_URL e API_TOKEN ou configure via EAS Secrets";
       showError(configError);
       return;
     }
@@ -247,6 +249,11 @@ export function OnboardingForm() {
           className="flex-1"
         >
           <View className="px-6 py-4">
+            {/* Logo */}
+            <View className="mb-6 items-center">
+              <Logo size={100} />
+            </View>
+
             {/* Header */}
             <View className="mb-6">
               <Text className="text-3xl font-bold text-text-primary text-center mb-2">
