@@ -1,6 +1,6 @@
 import React from "react";
 import { Image, ImageSourcePropType, Text, View } from "react-native";
-import { useTheme } from "../stores";
+import { useTheme } from "@/stores";
 
 interface AvatarProps {
   size?: "small" | "medium" | "large";

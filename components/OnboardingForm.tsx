@@ -12,8 +12,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { onboardingService } from "../services/onboarding";
-import { OnboardingData } from "../types/onboarding";
+import { onboardingService } from "@/services/onboarding";
+import { OnboardingData } from "@/types/onboarding";
 
 export function OnboardingForm() {
   const { userId } = useAuth();
@@ -193,16 +193,19 @@ export function OnboardingForm() {
 
           if (!status.needsOnboarding) {
             console.log("✅ [OnboardingForm] Onboarding confirmado completo, redirecionando...");
+            // Redirecionar para index.tsx que vai verificar e redirecionar corretamente
             router.replace("/");
           } else {
             console.warn("⚠️ [OnboardingForm] Onboarding ainda não completo segundo a verificação");
             // Mesmo assim, tentar redirecionar (pode ser cache da API)
+            // O index.tsx vai verificar novamente e redirecionar para onboarding se necessário
             await new Promise(resolve => setTimeout(resolve, 500));
             router.replace("/");
           }
         } catch (verifyError: any) {
           console.error("❌ [OnboardingForm] Erro ao verificar status após criação:", verifyError);
           // Em caso de erro na verificação, redirecionar mesmo assim
+          // O index.tsx vai verificar e redirecionar corretamente
           router.replace("/");
         }
       } else {
