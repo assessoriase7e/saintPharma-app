@@ -136,15 +136,15 @@ export function OnboardingForm() {
     }
 
     // Verificar variáveis de ambiente antes de começar
-    const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-    const apiToken = process.env.EXPO_PUBLIC_API_TOKEN;
+    const apiUrl = process.env.API_BASE_URL;
+    const apiToken = process.env.API_TOKEN;
     
     if (!apiUrl || !apiToken) {
       console.error("❌ [OnboardingForm] Variáveis de ambiente não configuradas", {
         hasApiUrl: !!apiUrl,
         hasApiToken: !!apiToken,
       });
-      const configError = "As configurações da API não foram encontradas. Verifique o arquivo .env com EXPO_PUBLIC_API_BASE_URL e EXPO_PUBLIC_API_TOKEN";
+      const configError = "As configurações da API não foram encontradas. Verifique o arquivo .env com API_BASE_URL e API_TOKEN";
       showError(configError);
       return;
     }

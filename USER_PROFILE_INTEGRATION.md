@@ -11,8 +11,8 @@ Esta documentação descreve a integração realizada para obter dados do perfil
 **Arquivo:** `.env`
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api
-EXPO_PUBLIC_API_TOKEN=12345678
+API_BASE_URL=http://localhost:3000/api
+API_TOKEN=12345678
 ```
 
 ### 2. Método API Existente

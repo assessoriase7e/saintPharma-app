@@ -83,7 +83,7 @@ class CertificatesService {
    * Retorna a URL para download do PDF do certificado
    */
   getCertificatePDFUrl(certificateId: string): string {
-    const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+    const baseURL = process.env.API_BASE_URL;
     
     if (!baseURL) {
       throw new Error("URL base da API não configurada");

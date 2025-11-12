@@ -94,7 +94,7 @@ export default function CertificateView() {
     }
 
     try {
-      const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+      const baseURL = process.env.API_BASE_URL;
       
       if (!baseURL) {
         Alert.alert("Erro", "URL base da API não configurada");

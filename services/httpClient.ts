@@ -4,8 +4,8 @@ class HttpClient {
   private client: AxiosInstance;
 
   constructor() {
-    const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
-    const apiToken = process.env.EXPO_PUBLIC_API_TOKEN;
+    const baseURL = process.env.API_BASE_URL;
+    const apiToken = process.env.API_TOKEN;
 
     // Log de configuração para debug
     console.log("🔧 [HttpClient] Inicializando com configuração:", {
@@ -19,12 +19,12 @@ class HttpClient {
 
     // Validar se a variável de ambiente está configurada
     if (!baseURL) {
-      const errorMessage = 
-        "❌ [HttpClient] EXPO_PUBLIC_API_BASE_URL não está configurada!\n" +
+      const errorMessage =
+        "❌ [HttpClient] API_BASE_URL não está configurada!\n" +
         "Crie um arquivo .env na raiz do projeto com:\n" +
-        "EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api\n" +
-        "EXPO_PUBLIC_API_TOKEN=seu-token-aqui";
-      
+        "API_BASE_URL=http://localhost:3000/api\n" +
+        "API_TOKEN=seu-token-aqui";
+
       console.error(errorMessage);
     }
 
@@ -44,14 +44,14 @@ class HttpClient {
     this.client.interceptors.request.use(
       (config) => {
         // Validar se baseURL está configurada
-        const baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+        const baseURL = process.env.API_BASE_URL;
         if (!baseURL) {
           throw new Error(
             "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env"
           );
         }
 
-        const token = process.env.EXPO_PUBLIC_API_TOKEN;
+        const token = process.env.API_TOKEN;
 
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
@@ -171,11 +171,17 @@ class HttpClient {
   // Métodos HTTP
   async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
     console.log(`🌐 [HttpClient.get] Iniciando requisição GET para: ${url}`);
-    console.log(`🌐 [HttpClient.get] BaseURL configurada: ${this.client.defaults.baseURL || "NÃO CONFIGURADA"}`);
-    
+    console.log(
+      `🌐 [HttpClient.get] BaseURL configurada: ${
+        this.client.defaults.baseURL || "NÃO CONFIGURADA"
+      }`
+    );
+
     try {
       const response = await this.client.get<T>(url, config);
-      console.log(`✅ [HttpClient.get] Requisição concluída com sucesso para: ${url}`);
+      console.log(
+        `✅ [HttpClient.get] Requisição concluída com sucesso para: ${url}`
+      );
       return response.data;
     } catch (error: any) {
       console.error(`❌ [HttpClient.get] Erro na requisição GET para: ${url}`, {

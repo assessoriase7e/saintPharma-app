@@ -18,25 +18,25 @@ class OnboardingService {
           userId: data.user.id,
           firstName: data.user.firstName,
           lastName: data.user.lastName,
-          apiUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
-          hasApiToken: !!process.env.EXPO_PUBLIC_API_TOKEN,
+          apiUrl: process.env.API_BASE_URL,
+          hasApiToken: !!process.env.API_TOKEN,
         }
       );
 
       // Verificar se as variáveis de ambiente estão configuradas
       if (
-        !process.env.EXPO_PUBLIC_API_BASE_URL ||
-        !process.env.EXPO_PUBLIC_API_TOKEN
+        !process.env.API_BASE_URL ||
+        !process.env.API_TOKEN
       ) {
         console.error(
           "❌ [OnboardingService] Variáveis de ambiente não configuradas"
         );
         console.error("❌ [OnboardingService] Crie um arquivo .env com:");
         console.error(
-          "❌ [OnboardingService] EXPO_PUBLIC_API_BASE_URL=https://your-api-url.com"
+          "❌ [OnboardingService] API_BASE_URL=https://your-api-url.com"
         );
         console.error(
-          "❌ [OnboardingService] EXPO_PUBLIC_API_TOKEN=your-api-token"
+          "❌ [OnboardingService] API_TOKEN=your-api-token"
         );
 
         return {

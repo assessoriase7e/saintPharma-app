@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/clerk-expo";
 import {
   ApiConfig,
   ApiError,
@@ -26,13 +25,14 @@ import {
   UserProgressResponse,
   UserSummaryResponse,
 } from "@/types/api";
+import { useAuth } from "@clerk/clerk-expo";
 
 class ApiClient {
   private config: ApiConfig;
 
   constructor() {
-    const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-    const apiToken = process.env.EXPO_PUBLIC_API_TOKEN;
+    const baseUrl = process.env.API_BASE_URL;
+    const apiToken = process.env.API_TOKEN;
 
     // Log de configuração para debug
     console.log("🔧 [ApiClient] Inicializando com configuração:", {
@@ -46,17 +46,17 @@ class ApiClient {
 
     // Validar se as variáveis de ambiente estão configuradas
     if (!baseUrl) {
-      const errorMessage = 
-        "❌ [ApiClient] EXPO_PUBLIC_API_BASE_URL não está configurada!\n" +
+      const errorMessage =
+        "❌ [ApiClient] API_BASE_URL não está configurada!\n" +
         "Crie um arquivo .env na raiz do projeto com:\n" +
-        "EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api\n" +
-        "EXPO_PUBLIC_API_TOKEN=seu-token-aqui";
-      
+        "API_BASE_URL=http://localhost:3000/api\n" +
+        "API_TOKEN=seu-token-aqui";
+
       console.error(errorMessage);
     }
 
     if (!apiToken) {
-      console.warn("⚠️ [ApiClient] EXPO_PUBLIC_API_TOKEN não está configurado!");
+      console.warn("⚠️ [ApiClient] API_TOKEN não está configurado!");
     }
 
     this.config = {
@@ -123,7 +123,7 @@ class ApiClient {
   ): Promise<T> {
     // Validar se baseUrl está configurada antes de fazer a requisição
     if (!this.config.baseUrl) {
-      const errorMessage = 
+      const errorMessage =
         "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env";
       console.error(`❌ [ApiClient] ${errorMessage}`);
       throw new Error(errorMessage);
@@ -153,9 +153,9 @@ class ApiClient {
       console.log(`🌐 [ApiClient.request] URL completa: ${url}`);
       console.log(`🌐 [ApiClient.request] Método: ${options.method || "GET"}`);
       console.log(`🌐 [ApiClient.request] Headers:`, headers);
-      
+
       const response = await fetch(url, config);
-      
+
       console.log(`📡 [ApiClient.request] Resposta recebida:`, {
         status: response.status,
         statusText: response.statusText,
@@ -230,8 +230,10 @@ class ApiClient {
   }
 
   // Métodos de Exames
-  async getExams(): Promise<{ exams: ExamResponse['data']['exam'][] }> {
-    return this.request<{ exams: ExamResponse['data']['exam'][] }>("/api/exams");
+  async getExams(): Promise<{ exams: ExamResponse["data"]["exam"][] }> {
+    return this.request<{ exams: ExamResponse["data"]["exam"][] }>(
+      "/api/exams"
+    );
   }
 
   async checkExamEligibility() {
@@ -376,18 +378,29 @@ class ApiClient {
   }
 
   // Métodos de Ranking
-  async getRanking(page: number = 1, limit: number = 20): Promise<RankingResponse> {
+  async getRanking(
+    page: number = 1,
+    limit: number = 20
+  ): Promise<RankingResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-    const response = await this.request<RankingResponse>(`/api/ranking?${params.toString()}`);
-    
+    const response = await this.request<RankingResponse>(
+      `/api/ranking?${params.toString()}`
+    );
+
     // Verificar se a resposta tem a estrutura esperada
-    if (response && response.success && response.ranking && response.pagination && response.week) {
+    if (
+      response &&
+      response.success &&
+      response.ranking &&
+      response.pagination &&
+      response.week
+    ) {
       return response;
     }
-    
+
     // Fallback para estrutura incompleta
     return {
       success: response?.success || false,
@@ -401,8 +414,8 @@ class ApiClient {
         hasPrev: false,
       },
       week: response?.week || {
-        start: new Date().toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0],
+        start: new Date().toISOString().split("T")[0],
+        end: new Date().toISOString().split("T")[0],
       },
     };
   }
@@ -416,9 +429,7 @@ class ApiClient {
     return this.request<Lives>("/api/user/lives");
   }
 
-  async updateUserLives(
-    amount?: number
-  ): Promise<{ message: string }> {
+  async updateUserLives(amount?: number): Promise<{ message: string }> {
     const body = amount !== undefined ? { amount } : {};
     return this.request<{ message: string }>("/api/user/lives", {
       method: "DELETE",
