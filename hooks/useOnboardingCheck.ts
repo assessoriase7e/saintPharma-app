@@ -1,12 +1,11 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { useRouter, useSegments } from "expo-router";
+import { useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-import { onboardingService } from "../services/onboarding";
-import { OnboardingCheckResult, OnboardingStatus } from "../types/onboarding";
+import { onboardingService } from "@/services/onboarding";
+import { OnboardingCheckResult, OnboardingStatus } from "@/types/onboarding";
 
 export function useOnboardingCheck(): OnboardingCheckResult {
   const { userId, isLoaded } = useAuth();
-  const router = useRouter();
   const segments = useSegments();
   const [isLoading, setIsLoading] = useState(false);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -23,23 +22,33 @@ export function useOnboardingCheck(): OnboardingCheckResult {
 
     // Não verificar onboarding se estiver em rotas específicas
     if (isOnboardingRoute || isAuthRoute || isSSOCallbackRoute) {
-      // Mas ainda verificar se estiver na rota de onboarding para redirecionar se já completo
+      // Mas ainda verificar se estiver na rota de onboarding para mostrar se já completo
       if (isOnboardingRoute) {
         const checkOnboarding = async () => {
           try {
             setIsLoading(true);
             const status = await onboardingService.checkOnboardingStatus(userId);
             if (!status.needsOnboarding) {
-              console.log("✅ [useOnboardingCheck] Onboarding já completo, redirecionando da rota de onboarding");
-              router.replace("/");
+              console.log("✅ [useOnboardingCheck] Onboarding já completo na rota de onboarding");
+              setNeedsOnboarding(false);
+            } else {
+              console.log("🚀 [useOnboardingCheck] Usuário ainda precisa completar onboarding");
+              setNeedsOnboarding(true);
             }
           } catch (err: any) {
             console.error("❌ [useOnboardingCheck] Erro ao verificar onboarding na rota:", err);
+            setError(err.message || "Erro ao verificar status do onboarding");
+            setNeedsOnboarding(true);
           } finally {
             setIsLoading(false);
           }
         };
         checkOnboarding();
+      } else {
+        // Em rotas de auth, não mostrar loading
+        setIsLoading(false);
+        setNeedsOnboarding(false);
+        setError(undefined);
       }
       return;
     }
@@ -70,17 +79,9 @@ export function useOnboardingCheck(): OnboardingCheckResult {
         if (status.needsOnboarding) {
           console.log("🚀 [useOnboardingCheck] Usuário precisa completar onboarding");
           setNeedsOnboarding(true);
-          // Só redirecionar se não estiver já na rota de onboarding
-          if (!isOnboardingRoute) {
-            router.replace("/onboarding");
-          }
         } else {
           console.log("✅ [useOnboardingCheck] Onboarding já completo");
           setNeedsOnboarding(false);
-          // Se estiver na rota de onboarding mas não precisa, redirecionar para home
-          if (isOnboardingRoute) {
-            router.replace("/");
-          }
         }
       } catch (err: any) {
         console.error(
@@ -91,7 +92,6 @@ export function useOnboardingCheck(): OnboardingCheckResult {
         // Em caso de erro, assumir que precisa de onboarding
         setError(err.message || "Erro ao verificar status do onboarding");
         setNeedsOnboarding(true);
-        router.push("/onboarding");
       } finally {
         setIsLoading(false);
       }
@@ -104,7 +104,6 @@ export function useOnboardingCheck(): OnboardingCheckResult {
     isOnboardingRoute,
     isAuthRoute,
     isSSOCallbackRoute,
-    router,
   ]);
 
   return {
