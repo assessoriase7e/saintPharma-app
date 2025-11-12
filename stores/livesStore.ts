@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
-import { httpClient } from "../services";
+import { httpClient } from "@/services";
 import {
   DEFAULT_LIVES_CONFIG,
   LivesHistoryEntry,
   UserLives,
-} from "../types/lives";
+} from "@/types/lives";
 
 const LIVES_STORAGE_KEY = "@saintpharma_user_lives";
 

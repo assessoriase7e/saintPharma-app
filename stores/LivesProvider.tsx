@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { useEffect } from "react";
-import { httpClient } from "../services";
-import { DEFAULT_LIVES_CONFIG } from "../types/lives";
+import { httpClient } from "@/services";
+import { DEFAULT_LIVES_CONFIG } from "@/types/lives";
 import { useLivesStore } from "./livesStore";
 
 interface LivesProviderProps {
@@ -10,17 +10,29 @@ interface LivesProviderProps {
 
 export function LivesProvider({ children }: LivesProviderProps) {
   const { userId, isSignedIn } = useAuth();
-  const { userLives, isLoaded, initialize, setUserLives, saveLivesToStorage } =
-    useLivesStore();
+  const {
+    userLives,
+    isLoaded,
+    initialize,
+    loadLivesFromStorage,
+    setUserLives,
+    saveLivesToStorage,
+  } = useLivesStore();
 
   // Inicializar quando o usuário mudar
   useEffect(() => {
-    if (isSignedIn && userId) {
-      initialize();
-    } else {
-      initialize();
-    }
-  }, [isSignedIn, userId, initialize]);
+    const setupLives = async () => {
+      if (isSignedIn && userId) {
+        httpClient.setUserId(userId);
+        await initialize();
+      } else {
+        httpClient.clearUserId();
+        await loadLivesFromStorage();
+      }
+    };
+
+    setupLives();
+  }, [isSignedIn, userId, initialize, loadLivesFromStorage]);
 
   // Auto-regeneração de vidas e sincronização com API
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { useColorScheme } from "nativewind";
 import React, { useEffect } from "react";
 import { View } from "react-native";
-import { themes } from "../utils/themes";
+import { themes } from "@/utils/themes";
 import { useThemeStore } from "./themeStore";
 
 interface ThemeProviderProps {
