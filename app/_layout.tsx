@@ -4,6 +4,7 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Slot, useRootNavigationState } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
+import { getClerkPublishableKey } from "@/utils/env";
 
 function RootLayoutContent() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -39,9 +40,18 @@ function RootLayoutContent() {
 }
 
 export default function RootLayout() {
+  const publishableKey = getClerkPublishableKey();
+
+  if (!publishableKey) {
+    console.error(
+      "❌ [RootLayout] CLERK_PUBLISHABLE_KEY não está configurada!\n" +
+        "Configure a variável de ambiente CLERK_PUBLISHABLE_KEY no arquivo .env ou via EAS Secrets"
+    );
+  }
+
   return (
     <ThemeProvider>
-      <ClerkProvider tokenCache={tokenCache}>
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
         <LivesProvider>
           <RootLayoutContent />
         </LivesProvider>

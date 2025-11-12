@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { certificatesService } from "@/services";
 import { httpClient } from "@/services/httpClient";
+import { getApiBaseUrl } from "@/utils/env";
 
 interface Certificate {
   id: string;
@@ -94,10 +95,10 @@ export default function CertificateView() {
     }
 
     try {
-      const baseURL = process.env.API_BASE_URL;
+      const baseURL = getApiBaseUrl();
       
       if (!baseURL) {
-        Alert.alert("Erro", "URL base da API não configurada");
+        Alert.alert("Erro", "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env ou EAS Secrets");
         return;
       }
 

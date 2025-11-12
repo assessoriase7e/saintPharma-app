@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Linking, ScrollView, Text, TouchableOpacity, 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "@/services";
 import { UserInfoResponse } from "@/types/api";
+import { getApiBaseUrl } from "@/utils/env";
 
 export default function Perfil() {
   const { isSignedIn, isLoaded, userId } = useAuth();
@@ -165,10 +166,10 @@ export default function Perfil() {
           <TouchableOpacity
             onPress={async () => {
               try {
-                const baseURL = process.env.API_BASE_URL;
+                const baseURL = getApiBaseUrl();
                 
                 if (!baseURL) {
-                  Alert.alert("Erro", "URL base da API não configurada");
+                  Alert.alert("Erro", "URL base da API não configurada. Verifique as variáveis de ambiente no arquivo .env ou EAS Secrets");
                   return;
                 }
 

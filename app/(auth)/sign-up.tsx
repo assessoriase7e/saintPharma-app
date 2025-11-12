@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSSOAuth } from "@/hooks/useSSOAuth";
+import { Logo } from "@/components/Logo";
 
 // Função para traduzir mensagens de erro do Clerk
 function translateClerkError(error: any): string {
@@ -114,6 +115,11 @@ export default function SignUpScreen() {
           <View className="flex-1 justify-center px-6">
             {!pendingVerification && (
               <>
+                {/* Logo */}
+                <View className="mb-6 items-center">
+                  <Logo size={100} />
+                </View>
+
                 {/* Header */}
                 <View className="mb-8">
                   <Text className="text-3xl font-bold text-text-primary text-center mb-2">
