@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
     "android:run": "expo run:android",
-    "web:run": "expo start --web"
+    "web:run": "expo start --web",
+    "test:ranking": "npx tsx scripts/test-ranking.ts"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.14.23",
