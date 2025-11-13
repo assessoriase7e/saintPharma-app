@@ -72,19 +72,45 @@ export const useLivesStore = create<LivesStore>((set, get) => ({
       set({ error: null });
       const apiLives = await httpClient.get("/api/user/lives");
 
+      console.log("📊 [LivesStore] Vidas carregadas da API:", {
+        remainingLives: apiLives.remainingLives,
+        totalLives: apiLives.totalLives,
+        lastDamageAt: apiLives.lastDamageAt,
+        resetTime: apiLives.resetTime,
+      });
+
       // Converter dados da API para o formato local
+      // ✅ CORREÇÃO: resetTime é quando as vidas serão regeneradas (próximo reset)
+      // lastDamageAt é quando foi o último dano
+      // Para determinar lastRegeneration, calcular de trás para frente
+      let lastRegeneration = new Date();
+      if (apiLives.resetTime) {
+        // Se há resetTime, significa que o último reset foi 24h antes
+        const resetDate = new Date(apiLives.resetTime);
+        lastRegeneration = new Date(
+          resetDate.getTime() - 24 * 60 * 60 * 1000
+        );
+      } else if (apiLives.lastDamageAt) {
+        // Alternativa: usar lastDamageAt como referência
+        lastRegeneration = new Date(apiLives.lastDamageAt);
+      }
+
       const convertedLives: UserLives = {
         currentLives: apiLives.remainingLives,
         maxLives: apiLives.totalLives,
-        lastRegeneration: apiLives.lastDamageAt
-          ? new Date(apiLives.lastDamageAt)
-          : new Date(),
+        lastRegeneration: lastRegeneration,
         livesHistory: [], // Histórico será mantido localmente por enquanto
       };
 
       set({ userLives: convertedLives });
       // Salvar também no AsyncStorage como backup
       await get().saveLivesToStorage(convertedLives);
+
+      console.log("✅ [LivesStore] Vidas carregadas com sucesso:", {
+        currentLives: convertedLives.currentLives,
+        maxLives: convertedLives.maxLives,
+        lastRegeneration: convertedLives.lastRegeneration,
+      });
     } catch (error) {
       console.error("Erro ao carregar vidas da API:", error);
       set({ error: "Erro ao carregar vidas da API" });
@@ -152,28 +178,38 @@ export const useLivesStore = create<LivesStore>((set, get) => ({
   // Perder vidas
   loseLives: async (amount, reason, quizId?, courseId?) => {
     const { userLives } = get();
+    const previousLives = userLives.currentLives;
 
-    // Atualizar estado local imediatamente
-    set((state) => ({
-      userLives: {
-        ...state.userLives,
-        currentLives: Math.max(0, state.userLives.currentLives - amount),
-      },
-    }));
-
-    get().addHistoryEntry("lost", amount, reason, quizId, courseId);
-
-    // Se o usuário estiver autenticado, sincronizar com a API
     try {
-      // Nota: A verificação de autenticação deve ser feita no componente que chama este método
-      await httpClient.delete("/api/user/lives", {
+      // Sincronizar com a API PRIMEIRO
+      console.log(`🔴 [LivesStore] Removendo ${amount} vida(s) - Razão: ${reason}`);
+      const response = await httpClient.delete("/api/user/lives", {
         data: {
           amount,
         },
       });
+
+      // Após sucesso na API, atualizar estado local com valores do servidor
+      set((state) => ({
+        userLives: {
+          ...state.userLives,
+          currentLives: response.remainingLives || Math.max(0, state.userLives.currentLives - amount),
+          maxLives: response.totalLives || state.userLives.maxLives,
+        },
+      }));
+
+      get().addHistoryEntry("lost", amount, reason, quizId, courseId);
+      console.log(`✅ [LivesStore] Vidas removidas com sucesso. Vidas restantes: ${response.remainingLives}`);
     } catch (error) {
-      console.error("Erro ao atualizar vidas na API:", error);
-      // Em caso de erro, manter apenas o estado local
+      console.error(`❌ [LivesStore] Erro ao remover vidas da API:`, error);
+      // Reverter para o estado anterior em caso de erro
+      set((state) => ({
+        userLives: {
+          ...state.userLives,
+          currentLives: previousLives,
+        },
+      }));
+      throw error; // Propagar erro para o componente tratar
     }
   },
 
