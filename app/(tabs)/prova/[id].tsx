@@ -1,6 +1,5 @@
 import Card from "@/components/Card";
 import { examsService } from "@/services";
-import { useLives } from "@/stores";
 import { Question } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -65,7 +64,7 @@ function QuestionCard({
           {question.text}
         </Text>
 
-        <View className="space-y-3">
+        <View className="flex-col gap-3">
           {question.options?.map((option) => (
             <Pressable
               key={option.id}
@@ -158,7 +157,6 @@ export default function ExamScreen() {
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { loseLives, userLives } = useLives();
   const [showBlockedModal, setShowBlockedModal] = useState(false);
   const [eligibilityError, setEligibilityError] = useState<string | null>(null);
 
@@ -200,18 +198,16 @@ export default function ExamScreen() {
           }
         } catch (eligibilityErr) {
           console.warn(
-            "⚠️ [ExamScreen] Erro ao verificar elegibilidade (prosseguindo):",
+            "⚠️ [ExamScreen] Erro ao verificar elegibilidade:",
             eligibilityErr
           );
-          // Prosseguir mesmo assim, usar estado local
-          if (userLives.currentLives === 0) {
-            setEligibilityError(
-              "Você não possui vidas disponíveis para iniciar esta prova."
-            );
-            setShowBlockedModal(true);
-            setLoading(false);
-            return;
-          }
+          // Se falhar a verificação de elegibilidade, mostrar erro
+          setEligibilityError(
+            "Não foi possível verificar se você pode fazer esta prova. Tente novamente."
+          );
+          setShowBlockedModal(true);
+          setLoading(false);
+          return;
         }
 
         // Buscar dados do exame e questões via API
@@ -264,7 +260,7 @@ export default function ExamScreen() {
     if (examId) {
       fetchExam();
     }
-  }, [examId, userLives.currentLives]);
+  }, [examId]);
 
   const handleSubmitQuiz = () => {
     if (answeredQuestions < totalQuestions) {
@@ -299,44 +295,25 @@ export default function ExamScreen() {
           };
         }) || [];
 
+      console.log(
+        `📊 [ExamScreen] Submetendo exame com ${results.correctAnswers}/${totalQuestions} acertos`
+      );
+
       // Submeter resultados via API
+      // O backend é responsável por descontar vidas automaticamente
       const submitResponse = await examsService.submitExam(examId, {
         answers: submitAnswers,
         timeSpent: timeSpent,
       });
 
-      // ✅ Calcular vidas a perder com limite máximo de 3
+      // Extrair informações sobre vidas perdidas da resposta do backend
+      // O backend deve retornar livesLost na resposta
+      const livesLostFromBackend = (submitResponse.data as any)?.livesLost ?? 0;
       const wrongAnswers = totalQuestions - results.correctAnswers;
-      const MAX_LIVES_PER_EXAM = 3;
-      const livesToLose = Math.min(wrongAnswers, MAX_LIVES_PER_EXAM);
 
-      let livesLostInAttempt = 0;
-
-      if (livesToLose > 0) {
-        try {
-          console.log(
-            `📊 [ExamScreen] Erros: ${wrongAnswers}, Vidas a perder: ${livesToLose} (máx: ${MAX_LIVES_PER_EXAM})`
-          );
-          await loseLives(
-            livesToLose,
-            `Erros no exame: ${exam?.title || "Exame"} (${wrongAnswers} erros)`,
-            parseInt(exam?.id || "") || undefined
-          );
-          livesLostInAttempt = livesToLose;
-          console.log("✅ Vidas removidas com sucesso");
-        } catch (lossError) {
-          console.error("❌ Erro ao remover vidas:", lossError);
-          Alert.alert(
-            "Aviso",
-            "Não foi possível registrar a perda de vidas. Tente novamente.",
-            [
-              { text: "Tentar Novamente", onPress: submitQuiz },
-              { text: "Cancelar" },
-            ]
-          );
-          return;
-        }
-      }
+      console.log(
+        `✅ [ExamScreen] Exame submetido. Vidas perdidas (backend): ${livesLostFromBackend}`
+      );
 
       // Navigate to results screen with results data
       router.push(
@@ -345,9 +322,8 @@ export default function ExamScreen() {
             ...results,
             timeSpent,
             totalQuestions,
-            livesLost: livesLostInAttempt,
+            livesLost: livesLostFromBackend,
             wrongAnswers: wrongAnswers,
-            maxLivesLostPerExam: MAX_LIVES_PER_EXAM,
           })
         )}` as any
       );
@@ -530,7 +506,7 @@ export default function ExamScreen() {
                 </Text>
               </View>
 
-              <View className="space-y-4 mb-6">
+              <View className="flex-col gap-4 mb-6">
                 <View className="flex-row items-center justify-between p-4 bg-background rounded-lg">
                   <View className="flex-row items-center">
                     <Ionicons name="help-outline" size={20} color="#6b7280" />

@@ -34,7 +34,6 @@ interface QuizResults {
   totalQuestions: number;
   livesLost?: number;
   wrongAnswers?: number;
-  maxLivesLostPerExam?: number;
 }
 
 function formatTime(seconds: number): string {
@@ -132,7 +131,7 @@ function PerformanceBreakdown({
           Desempenho Detalhado
         </Text>
 
-        <View className="space-y-4">
+        <View className="flex-col gap-4">
           {/* Score Progress */}
           <View>
             <View className="flex-row justify-between items-center mb-2">
@@ -206,7 +205,7 @@ function ActionButtons({
   };
 
   return (
-    <View className="space-y-3">
+    <View className="flex-col gap-3">
       {!passed && (
         <Pressable
           onPress={handleRetakeQuiz}
@@ -379,26 +378,24 @@ export default function ExamResult() {
             <StatCard
               icon="heart-outline"
               label="Vidas Perdidas"
-              value={`${results.livesLost}/${results.maxLivesLostPerExam || 3}`}
+              value={`${results.livesLost}`}
               color="#ef4444"
             />
           )}
         </View>
 
-        {/* Info sobre limite de vidas */}
-        {results.wrongAnswers !== undefined && results.maxLivesLostPerExam !== undefined && (
-          <Card className="mb-6 border border-blue-200 bg-blue-50">
+        {/* Info sobre vidas perdidas */}
+        {results.wrongAnswers !== undefined && results.livesLost !== undefined && results.livesLost > 0 && (
+          <Card className="mb-6 border border-orange-200 bg-orange-50">
             <View className="p-4">
               <View className="flex-row items-center mb-2">
-                <Ionicons name="information-circle" size={20} color="#3b82f6" />
-                <Text className="text-primary font-semibold ml-2">
-                  Sistema de Vidas
+                <Ionicons name="heart" size={20} color="#ef4444" />
+                <Text className="text-orange-600 font-semibold ml-2">
+                  Vidas Perdidas
                 </Text>
               </View>
               <Text className="text-text-secondary text-sm">
-                {results.wrongAnswers > results.maxLivesLostPerExam
-                  ? `Você cometeu ${results.wrongAnswers} erros, mas o limite máximo de vidas por prova é ${results.maxLivesLostPerExam}. Apenas ${results.livesLost} vida(s) foi/foram perdida(s).`
-                  : `Você perdeu ${results.livesLost} vida(s) correspondente aos ${results.wrongAnswers} erro(s) cometido(s).`}
+                Você perdeu {results.livesLost} vida(s) na tentativa. Próxima vez vá com mais cuidado!
               </Text>
             </View>
           </Card>
