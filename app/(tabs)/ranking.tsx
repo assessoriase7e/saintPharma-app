@@ -228,7 +228,7 @@ export default function Ranking() {
         )}
 
         {/* Ranking Completo */}
-        <View className="space-y-3">
+        <View className="flex-col gap-3">
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-lg font-semibold text-text-primary">
               Ranking Completo

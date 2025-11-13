@@ -162,7 +162,7 @@ export default function Certificados() {
                     </View>
                   </View>
 
-                  <View className="space-y-2">
+                  <View className="flex-col gap-2">
                     <View className="flex-row items-center">
                       <Ionicons name="calendar" size={16} color="#6B7280" />
                       <Text className="text-sm text-text-secondary ml-2">

@@ -317,7 +317,7 @@ export default function Cursos() {
               <Text className="text-lg font-semibold text-text-primary mb-4">
                 Seus Cursos
               </Text>
-              <View className="space-y-3">
+              <View className="flex-col gap-3">
                 {userCourses.map((course) => {
                   const isPremium = course.course.premiumPoints && course.course.premiumPoints > 0;
                   const canAccess = canAccessPremiumCourse(course);
@@ -440,7 +440,7 @@ export default function Cursos() {
                 </Text>
               </View>
             ) : (
-              <View className="space-y-3">
+              <View className="flex-col gap-3">
                 {(() => {
                   const exploreCourses = getExploreCourses();
                   return exploreCourses && exploreCourses.length > 0 ? (

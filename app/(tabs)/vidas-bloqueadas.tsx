@@ -101,7 +101,7 @@ export function LivesBlockedModal({
                 Como Funciona o Sistema de Vidas:
               </Text>
 
-              <View className="space-y-2">
+              <View className="flex-col gap-2">
                 <View className="flex-row items-start">
                   <Ionicons
                     name="checkmark-circle"
@@ -141,7 +141,7 @@ export function LivesBlockedModal({
             </View>
 
             {/* Botões */}
-            <View className="w-full space-y-3">
+            <View className="w-full flex-col gap-3">
               <Pressable
                 onPress={onClose}
                 className="bg-primary px-6 py-4 rounded-lg"

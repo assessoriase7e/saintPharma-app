@@ -197,7 +197,7 @@ export default function CertificateView() {
           )}
 
           {/* Informações */}
-          <View className="space-y-4 mb-6">
+          <View className="flex-col gap-4 mb-6">
             <View className="flex-row items-center justify-between py-3 border-b border-border">
               <View className="flex-row items-center">
                 <Ionicons name="time" size={20} color="#6B7280" />
@@ -238,7 +238,7 @@ export default function CertificateView() {
         </View>
 
         {/* Botão de Ação */}
-        <View className="space-y-3">
+        <View className="flex-col gap-3">
           <Pressable
             onPress={handleViewCertificate}
             className="bg-primary rounded-lg py-4 px-6 flex-row items-center justify-center"

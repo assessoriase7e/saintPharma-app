@@ -488,7 +488,7 @@ export default function LectureView() {
         <LectureContentRenderer lecture={lecture} />
 
         {/* Action Buttons */}
-        <View className="mt-6 space-y-3">
+        <View className="mt-6 flex-col gap-3">
           {!lecture.completed && (
             <Pressable
               onPress={handleMarkComplete}
