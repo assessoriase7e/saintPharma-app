@@ -33,6 +33,8 @@ interface QuizResults {
   timeSpent: number;
   totalQuestions: number;
   livesLost?: number;
+  wrongAnswers?: number;
+  maxLivesLostPerExam?: number;
 }
 
 function formatTime(seconds: number): string {
@@ -377,11 +379,30 @@ export default function ExamResult() {
             <StatCard
               icon="heart-outline"
               label="Vidas Perdidas"
-              value={results.livesLost.toString()}
+              value={`${results.livesLost}/${results.maxLivesLostPerExam || 3}`}
               color="#ef4444"
             />
           )}
         </View>
+
+        {/* Info sobre limite de vidas */}
+        {results.wrongAnswers !== undefined && results.maxLivesLostPerExam !== undefined && (
+          <Card className="mb-6 border border-blue-200 bg-blue-50">
+            <View className="p-4">
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="information-circle" size={20} color="#3b82f6" />
+                <Text className="text-primary font-semibold ml-2">
+                  Sistema de Vidas
+                </Text>
+              </View>
+              <Text className="text-text-secondary text-sm">
+                {results.wrongAnswers > results.maxLivesLostPerExam
+                  ? `Você cometeu ${results.wrongAnswers} erros, mas o limite máximo de vidas por prova é ${results.maxLivesLostPerExam}. Apenas ${results.livesLost} vida(s) foi/foram perdida(s).`
+                  : `Você perdeu ${results.livesLost} vida(s) correspondente aos ${results.wrongAnswers} erro(s) cometido(s).`}
+              </Text>
+            </View>
+          </Card>
+        )}
 
         <PerformanceBreakdown results={results} exam={exam} />
 
