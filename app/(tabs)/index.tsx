@@ -358,7 +358,7 @@ export default function Cursos() {
                             </View>
                           )}
                         </View>
-                        <Text className="text-text-secondary text-sm mb-3">
+                        <Text className="text-text-secondary text-sm mb-3" numberOfLines={4} ellipsizeMode="tail">
                           {course.course.description}
                         </Text>
                       <View className="flex-row items-center justify-between mb-2">
@@ -484,7 +484,7 @@ export default function Cursos() {
                                 </View>
                               )}
                             </View>
-                            <Text className="text-text-secondary text-sm mb-3">
+                            <Text className="text-text-secondary text-sm mb-3" numberOfLines={4} ellipsizeMode="tail">
                               {course.course.description}
                             </Text>
                           <View className="flex-row items-center justify-between mb-2">
