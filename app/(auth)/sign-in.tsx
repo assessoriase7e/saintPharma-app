@@ -103,7 +103,7 @@ export default function SignInScreen() {
             </View>
 
             {/* Form */}
-            <View className="space-y-4">
+            <View className="flex-col gap-4">
               <View>
                 <Text className="text-text-primary font-medium mb-2">
                   Email
