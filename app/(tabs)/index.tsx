@@ -240,11 +240,15 @@ export default function Cursos() {
                 <Text className="text-3xl font-bold text-text-primary mb-2">
                   Cursos
                 </Text>
-                <Text className="text-text-secondary">
-                  {isSignedIn
-                    ? `Olá, ${user?.fullName || "Usuário"}!`
-                    : "Explore nossos cursos e desenvolva suas habilidades"}
-                </Text>
+                {isSignedIn ? (
+                  <Text className="text-text-secondary">
+                    Olá, {user?.fullName || "Usuário"}!
+                  </Text>
+                ) : (
+                  <Text className="text-text-secondary text-sm">
+                    Explore nossos cursos e desenvolva suas habilidades
+                  </Text>
+                )}
               </View>
 
               {/* Indicador de Vidas - apenas para usuários logados */}
