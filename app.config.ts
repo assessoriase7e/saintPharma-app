@@ -47,16 +47,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: "saintPharma-app",
+    name: "SaintPharma",
     slug: "saintPharma-app",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "saintpharma-app",
+    scheme: "saintpharma",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.saintpharma.app",
     },
     android: {
       adaptiveIcon: {
@@ -64,7 +65,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      package: "com.anonymous.saintPharmaapp",
+      package: "com.saintpharma.app",
+      splash: {
+        image: "./assets/images/splash-icon.png",
+        resizeMode: "contain",
+        backgroundColor: "#ffffff",
+      },
     },
     web: {
       bundler: "metro",
@@ -76,7 +82,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-splash-screen",
         {
-          image: "./assets/images/icon.png",
+          image: "./assets/images/splash-icon.png",
           imageWidth: 200,
           resizeMode: "contain",
           backgroundColor: "#ffffff",
