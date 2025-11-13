@@ -4,9 +4,10 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Slot, useRootNavigationState } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { getClerkPublishableKey } from "@/utils/env";
+import { Logo } from "@/components/Logo";
 
 // Manter a splash screen visível até que o app esteja pronto
 SplashScreen.preventAutoHideAsync();
@@ -14,34 +15,26 @@ SplashScreen.preventAutoHideAsync();
 function RootLayoutContent() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigationState = useRootNavigationState();
+  const splashHidden = useRef(false);
 
   // Esconder a splash screen quando tudo estiver pronto
   useEffect(() => {
-    if (navigationState?.key && isLoaded) {
-      SplashScreen.hideAsync();
+    if (navigationState?.key && isLoaded && !splashHidden.current) {
+      splashHidden.current = true;
+      SplashScreen.hideAsync().catch(() => {
+        // Ignorar erro se splash screen já foi escondida
+      });
     }
   }, [navigationState?.key, isLoaded]);
 
-  // Aguardar o sistema de navegação estar pronto
-  if (!navigationState?.key) {
+  // Mostrar splash customizada enquanto carrega
+  if (!navigationState?.key || !isLoaded) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-text-secondary mt-2">
-          Carregando aplicação...
-        </Text>
-      </View>
-    );
-  }
-
-  // Aguardar Clerk carregar
-  if (!isLoaded) {
-    return (
-      <View className="flex-1 justify-center items-center bg-background">
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text className="text-text-secondary mt-2">
-          Verificando autenticação...
-        </Text>
+      <View className="flex-1 justify-center items-center bg-white dark:bg-slate-900">
+        <Logo size={150} />
+        <View className="mt-8">
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
       </View>
     );
   }
