@@ -3,12 +3,24 @@ import "@/utils/suppressWarnings";
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Slot, useRootNavigationState } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { getClerkPublishableKey } from "@/utils/env";
+
+// Manter a splash screen visível até que o app esteja pronto
+SplashScreen.preventAutoHideAsync();
 
 function RootLayoutContent() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigationState = useRootNavigationState();
+
+  // Esconder a splash screen quando tudo estiver pronto
+  useEffect(() => {
+    if (navigationState?.key && isLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [navigationState?.key, isLoaded]);
 
   // Aguardar o sistema de navegação estar pronto
   if (!navigationState?.key) {
