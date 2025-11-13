@@ -1,3 +1,7 @@
+import Card from "@/components/Card";
+import { examsService } from "@/services";
+import { useLives } from "@/stores";
+import { Question } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -10,10 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Card from "@/components/Card";
-import { examsService } from "@/services";
-import { useLives } from "@/stores";
-import { Question } from "@/types/api";
+import { LivesBlockedModal } from "../vidas-bloqueadas";
 
 // Interface local para dados completos do exame
 interface ExamData {
@@ -157,7 +158,9 @@ export default function ExamScreen() {
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { loseLives } = useLives();
+  const { loseLives, userLives } = useLives();
+  const [showBlockedModal, setShowBlockedModal] = useState(false);
+  const [eligibilityError, setEligibilityError] = useState<string | null>(null);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [questionIndex: number]: string }>(
@@ -172,6 +175,44 @@ export default function ExamScreen() {
       try {
         setLoading(true);
         setError(null);
+        setEligibilityError(null);
+
+        // ✅ VERIFICAR ELEGIBILIDADE PRIMEIRO (se usuário tem vidas)
+        console.log(
+          "🔍 [ExamScreen] Verificando elegibilidade para iniciar prova..."
+        );
+        try {
+          const eligibilityResponse = await examsService.checkExamEligibility();
+          const canTake = eligibilityResponse.data?.canTakeExam || false;
+          const remainingLives = eligibilityResponse.data?.remainingLives || 0;
+
+          console.log(
+            `📊 [ExamScreen] Elegibilidade: ${canTake}, Vidas restantes: ${remainingLives}`
+          );
+
+          if (!canTake) {
+            setEligibilityError(
+              `Você não pode iniciar esta prova. Vidas restantes: ${remainingLives}`
+            );
+            setShowBlockedModal(true);
+            setLoading(false);
+            return;
+          }
+        } catch (eligibilityErr) {
+          console.warn(
+            "⚠️ [ExamScreen] Erro ao verificar elegibilidade (prosseguindo):",
+            eligibilityErr
+          );
+          // Prosseguir mesmo assim, usar estado local
+          if (userLives.currentLives === 0) {
+            setEligibilityError(
+              "Você não possui vidas disponíveis para iniciar esta prova."
+            );
+            setShowBlockedModal(true);
+            setLoading(false);
+            return;
+          }
+        }
 
         // Buscar dados do exame e questões via API
         const examResponse = await examsService.getExam(examId);
@@ -183,8 +224,8 @@ export default function ExamScreen() {
 
         if (examData && examWithQuestions) {
           // Transformar questões da API para o formato usado no frontend
-          const transformedQuestions: Question[] = examWithQuestions.questions.map(
-            (q: any, index: number) => ({
+          const transformedQuestions: Question[] =
+            examWithQuestions.questions.map((q: any, index: number) => ({
               id: q.id || String(index),
               text: q.question || q.title || "",
               options: q.answers.map((answer: any, optIndex: number) => ({
@@ -193,8 +234,7 @@ export default function ExamScreen() {
                 isCorrect: answer.isCorrect || false,
               })),
               points: 1, // Valor padrão, pode ser ajustado
-            })
-          );
+            }));
 
           // Criar objeto compatível com ExamData
           const fullExamData: ExamData = {
@@ -202,7 +242,8 @@ export default function ExamScreen() {
             title: "Exame da Aula",
             description: "Teste seus conhecimentos sobre esta aula",
             timeLimit: examWithQuestions.timeLimit || examData.timeLimit || 30,
-            passingScore: examWithQuestions.passingScore || examData.passingScore || 70,
+            passingScore:
+              examWithQuestions.passingScore || examData.passingScore || 70,
             questions: transformedQuestions,
           };
 
@@ -223,7 +264,7 @@ export default function ExamScreen() {
     if (examId) {
       fetchExam();
     }
-  }, [examId]);
+  }, [examId, userLives.currentLives]);
 
   const handleSubmitQuiz = () => {
     if (answeredQuestions < totalQuestions) {
@@ -249,13 +290,14 @@ export default function ExamScreen() {
 
     try {
       // Preparar respostas no formato esperado pela API
-      const submitAnswers = exam?.questions?.map((question, index) => {
-        const selectedOptionId = answers[index];
-        return {
-          questionId: question.id,
-          selectedAnswer: selectedOptionId || "",
-        };
-      }) || [];
+      const submitAnswers =
+        exam?.questions?.map((question, index) => {
+          const selectedOptionId = answers[index];
+          return {
+            questionId: question.id,
+            selectedAnswer: selectedOptionId || "",
+          };
+        }) || [];
 
       // Submeter resultados via API
       const submitResponse = await examsService.submitExam(examId, {
@@ -263,14 +305,37 @@ export default function ExamScreen() {
         timeSpent: timeSpent,
       });
 
-      // Calcular quantas vidas perder baseado nos erros
+      // ✅ Calcular vidas a perder com limite máximo de 3
       const wrongAnswers = totalQuestions - results.correctAnswers;
-      if (wrongAnswers > 0) {
-        loseLives(
-          wrongAnswers,
-          `Erros no exame: ${exam?.title || "Exame"}`,
-          parseInt(exam?.id || "") || undefined
-        );
+      const MAX_LIVES_PER_EXAM = 3;
+      const livesToLose = Math.min(wrongAnswers, MAX_LIVES_PER_EXAM);
+
+      let livesLostInAttempt = 0;
+
+      if (livesToLose > 0) {
+        try {
+          console.log(
+            `📊 [ExamScreen] Erros: ${wrongAnswers}, Vidas a perder: ${livesToLose} (máx: ${MAX_LIVES_PER_EXAM})`
+          );
+          await loseLives(
+            livesToLose,
+            `Erros no exame: ${exam?.title || "Exame"} (${wrongAnswers} erros)`,
+            parseInt(exam?.id || "") || undefined
+          );
+          livesLostInAttempt = livesToLose;
+          console.log("✅ Vidas removidas com sucesso");
+        } catch (lossError) {
+          console.error("❌ Erro ao remover vidas:", lossError);
+          Alert.alert(
+            "Aviso",
+            "Não foi possível registrar a perda de vidas. Tente novamente.",
+            [
+              { text: "Tentar Novamente", onPress: submitQuiz },
+              { text: "Cancelar" },
+            ]
+          );
+          return;
+        }
       }
 
       // Navigate to results screen with results data
@@ -280,7 +345,9 @@ export default function ExamScreen() {
             ...results,
             timeSpent,
             totalQuestions,
-            livesLost: wrongAnswers,
+            livesLost: livesLostInAttempt,
+            wrongAnswers: wrongAnswers,
+            maxLivesLostPerExam: MAX_LIVES_PER_EXAM,
           })
         )}` as any
       );
@@ -321,15 +388,31 @@ export default function ExamScreen() {
     );
   }
 
+  // Mostrar modal se usuário não tem vidas
+  if (showBlockedModal) {
+    return (
+      <>
+        <LivesBlockedModal
+          visible={showBlockedModal}
+          onClose={() => {
+            setShowBlockedModal(false);
+            router.back();
+          }}
+        />
+      </>
+    );
+  }
+
   if (error || !exam) {
     return (
       <View className="flex-1 bg-background items-center justify-center p-6">
         <Ionicons name="alert-circle-outline" size={64} color="#ef4444" />
         <Text className="text-text-primary text-xl font-semibold mt-4 mb-2">
-          Exame não encontrado
+          {eligibilityError ? "Acesso Bloqueado" : "Exame não encontrado"}
         </Text>
         <Text className="text-text-secondary text-center mb-6">
-          {error ||
+          {eligibilityError ||
+            error ||
             "O exame que você está procurando não existe ou foi removido."}
         </Text>
         <Pressable
@@ -414,7 +497,10 @@ export default function ExamScreen() {
   if (!quizStarted) {
     return (
       <View className="flex-1 bg-background">
-        <View className="bg-card border-b border-border px-6 pb-6" style={{ paddingTop: insets.top + 12 }}>
+        <View
+          className="bg-card border-b border-border px-6 pb-6"
+          style={{ paddingTop: insets.top + 12 }}
+        >
           <View className="flex-row items-center mb-4">
             <Pressable onPress={() => router.back()} className="mr-4">
               <Ionicons name="arrow-back" size={24} color="#3b82f6" />
@@ -502,7 +588,10 @@ export default function ExamScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="bg-card border-b border-border px-6 pb-4" style={{ paddingTop: insets.top + 12 }}>
+      <View
+        className="bg-card border-b border-border px-6 pb-4"
+        style={{ paddingTop: insets.top + 12 }}
+      >
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-text-primary text-lg font-bold">
             {exam.title}
