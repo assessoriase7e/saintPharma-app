@@ -274,14 +274,14 @@ export function OnboardingForm() {
             )}
 
             {/* Formulário */}
-            <View className="space-y-6">
+            <View className="flex-col gap-6">
               {/* Dados Pessoais */}
               <View>
                 <Text className="text-lg font-semibold text-text-primary mb-4">
                   Dados Pessoais
                 </Text>
 
-                <View className="space-y-4">
+                <View className="flex-col gap-4">
                   <View>
                     <Text className="text-text-primary font-medium mb-2">
                       Nome *
