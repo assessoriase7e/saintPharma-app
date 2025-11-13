@@ -108,40 +108,6 @@ function LectureCard({ lecture, courseId, index, isCourseCompleted }: LectureCar
           </View>
         </Pressable>
 
-        {/* Botão de Prova - só aparece se a aula estiver concluída E o curso não estiver 100% completo */}
-        {lecture.completed && !isCourseCompleted && (
-          <View className="mt-3 pt-3 border-t border-border">
-            <Pressable
-              onPress={handleQuizPress}
-              disabled={creatingExam}
-              className={`flex-row items-center justify-center py-2 px-4 rounded-lg ${
-                creatingExam
-                  ? "bg-border"
-                  : "bg-primary/10 border border-primary"
-              }`}
-            >
-              {creatingExam ? (
-                <>
-                  <ActivityIndicator size="small" color="#6b7280" />
-                  <Text className="text-text-secondary ml-2 font-medium">
-                    Criando prova...
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <Ionicons
-                    name="help-circle-outline"
-                    size={18}
-                    color="#3b82f6"
-                  />
-                  <Text className="text-primary ml-2 font-medium">
-                    Fazer Prova
-                  </Text>
-                </>
-              )}
-            </Pressable>
-          </View>
-        )}
       </View>
     </Card>
   );
@@ -337,14 +303,43 @@ export default function CourseLessons() {
     totalLectures > 0 ? (completedLectures / totalLectures) * 100 : 0;
 
   // Verificar se o curso está 100% concluído
-  const isCourseCompleted = progressPercentage >= 100 || 
-    (progressData?.progress?.isCompleted ?? false) ||
-    (progressData?.progress?.isReadyForCertificate ?? false) ||
-    (completedLectures === totalLectures && totalLectures > 0);
+  // Para estar completo, precisa ter:
+  // 1. Todas as aulas concluídas
+  // 2. Todas as provas concluídas
+  const allLecturesCompleted = completedLectures === totalLectures && totalLectures > 0;
+  const allExamsCompleted = 
+    progressData?.examStats && 
+    progressData.examStats.total > 0 && 
+    progressData.examStats.completed === progressData.examStats.total;
+  
+  const isCourseCompleted = 
+    allLecturesCompleted && 
+    (allExamsCompleted || !progressData?.examStats || progressData.examStats.total === 0);
 
   // Verificar se já existe certificado
   const hasCertificate = !!progressData?.certificate;
   const certificateId = progressData?.certificate?.id;
+
+  // Debug logs
+  console.log("📚 [Course] Status do Curso:");
+  console.log(`  - Aulas: ${completedLectures}/${totalLectures} (${allLecturesCompleted ? '✅ Concluídas' : '❌ Pendentes'})`);
+  if (progressData?.examStats) {
+    console.log(`  - Provas: ${progressData.examStats.completed}/${progressData.examStats.total} (${allExamsCompleted ? '✅ Concluídas' : '❌ Pendentes'})`);
+  }
+  console.log(`  - Certificado: ${hasCertificate ? '✅ Gerado' : '❌ Não gerado'}`);
+  let botaoExibido = '';
+  if (isCourseCompleted && hasCertificate) {
+    botaoExibido = 'Ver Certificado';
+  } else if (isCourseCompleted && allLecturesCompleted && allExamsCompleted) {
+    botaoExibido = 'Gerar Certificado';
+  } else if (allLecturesCompleted && !allExamsCompleted) {
+    botaoExibido = 'Fazer Prova';
+  } else if (completedLectures === 0) {
+    botaoExibido = 'Iniciar Curso';
+  } else {
+    botaoExibido = 'Continuar Curso';
+  }
+  console.log(`  - Botão exibido: ${botaoExibido}`);
 
   // Função para gerar certificado
   const handleGenerateCertificate = async () => {
@@ -552,8 +547,31 @@ export default function CourseLessons() {
           </View>
         </Card>
 
+        {/* Status das Provas */}
+        {allLecturesCompleted && !allExamsCompleted && progressData?.examStats && (
+          <Card className="mt-6 bg-yellow-50 border border-yellow-200">
+            <View className="p-4">
+              <View className="flex-row items-center mb-2">
+                <Ionicons name="alert-circle-outline" size={20} color="#f59e0b" />
+                <Text className="text-yellow-800 font-semibold ml-2">
+                  Provas Pendentes
+                </Text>
+              </View>
+              <Text className="text-yellow-700 text-sm mb-3">
+                Complete as {progressData.examStats.total - progressData.examStats.completed} prova(s) restante(s) para gerar seu certificado.
+              </Text>
+              <View className="flex-row items-center bg-white rounded px-2 py-1">
+                <Ionicons name="help-circle-outline" size={16} color="#f59e0b" />
+                <Text className="text-yellow-800 text-xs ml-2">
+                  {progressData.examStats.completed}/{progressData.examStats.total} provas concluídas
+                </Text>
+              </View>
+            </View>
+          </Card>
+        )}
+
         {/* Botões de Ação */}
-        <View className="mt-6 space-y-3">
+        <View className="mt-6 flex-col gap-3">
           {isCourseCompleted && hasCertificate ? (
             // Botão Ver Certificado (curso concluído e certificado existe)
             <Pressable
@@ -565,7 +583,7 @@ export default function CourseLessons() {
                 Ver Certificado
               </Text>
             </Pressable>
-          ) : isCourseCompleted ? (
+          ) : isCourseCompleted && allLecturesCompleted && allExamsCompleted ? (
             // Botão Gerar Certificado (curso concluído mas certificado não existe)
             <Pressable
               className={`rounded-lg py-4 px-6 flex-row items-center justify-center ${
@@ -590,14 +608,77 @@ export default function CourseLessons() {
                 </>
               )}
             </Pressable>
-          ) : (
-            // Botão Iniciar Curso (curso não concluído)
+          ) : allLecturesCompleted && !allExamsCompleted ? (
+            // Botão Fazer Prova (todas as aulas concluídas mas provas pendentes)
+            <Pressable
+              className="bg-primary rounded-lg py-4 px-6 flex-row items-center justify-center"
+              onPress={async () => {
+                // Encontrar a primeira aula concluída para fazer a prova
+                const firstCompletedLecture = lectures.find((lecture) => lecture.completed);
+                if (!firstCompletedLecture) {
+                  Alert.alert("Erro", "Nenhuma aula concluída encontrada.");
+                  return;
+                }
+
+                try {
+                  // Verificar elegibilidade antes de criar o exame
+                  const eligibilityResponse = await examsService.checkExamEligibility();
+
+                  if (!eligibilityResponse.data.canTakeExam) {
+                    Alert.alert(
+                      eligibilityResponse.data.message ||
+                        "Você não possui vidas suficientes para iniciar o exame."
+                    );
+                    return;
+                  }
+
+                  const examResponse = await examsService.createExam({
+                    lectureCMSid: firstCompletedLecture._id,
+                  });
+
+                  router.push(
+                    `/prova/${examResponse.data.exam.id}?lectureId=${firstCompletedLecture._id}&courseId=${courseId}` as any
+                  );
+                } catch (error) {
+                  console.error("Erro ao criar exame:", error);
+                  const errorMessage =
+                    error instanceof Error
+                      ? error.message
+                      : "Erro inesperado ao criar exame. Tente novamente.";
+                  Alert.alert("Erro", errorMessage);
+                }
+              }}
+            >
+              <Ionicons name="help-circle-outline" size={24} color="white" />
+              <Text className="text-white text-center font-semibold text-lg ml-2">
+                Fazer Prova
+              </Text>
+            </Pressable>
+          ) : completedLectures === 0 ? (
+            // Botão Iniciar Curso (curso ainda não iniciado)
             <Pressable
               className="bg-primary rounded-lg py-4 px-6"
               onPress={() => {
-                // Encontrar a primeira aula não concluída ou a primeira aula
+                // Encontrar a primeira aula
+                if (lectures.length > 0) {
+                  router.push(
+                    `/aula/${lectures[0]._id}?courseId=${courseId}` as any
+                  );
+                }
+              }}
+            >
+              <Text className="text-white text-center font-semibold text-lg">
+                Iniciar Curso
+              </Text>
+            </Pressable>
+          ) : (
+            // Botão Continuar Curso (curso em progresso, mas aulas incompletas)
+            <Pressable
+              className="bg-primary rounded-lg py-4 px-6"
+              onPress={() => {
+                // Encontrar a primeira aula não concluída
                 const firstIncompleteLecture =
-                  lectures.find((lecture) => !lecture.completed) || lectures[0];
+                  lectures.find((lecture) => !lecture.completed);
                 if (firstIncompleteLecture) {
                   router.push(
                     `/aula/${firstIncompleteLecture._id}?courseId=${courseId}` as any
@@ -606,7 +687,7 @@ export default function CourseLessons() {
               }}
             >
               <Text className="text-white text-center font-semibold text-lg">
-                Iniciar Curso
+                Continuar Curso
               </Text>
             </Pressable>
           )}
