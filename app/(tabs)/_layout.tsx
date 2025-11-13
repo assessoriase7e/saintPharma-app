@@ -1,13 +1,13 @@
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
+import { useTheme } from "@/stores";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
-import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
-import { useTheme } from "@/stores";
 
 /**
  * Layout para rotas com tabs.
- * 
+ *
  * Verifica autenticação e onboarding antes de permitir acesso.
  * Serve como camada de segurança adicional caso alguém acesse diretamente
  * uma rota protegida (ex: deep link).
@@ -33,7 +33,7 @@ export default function TabsLayout() {
   // Permitir acesso público à listagem de cursos (index)
   // Mas exigir autenticação para outras rotas protegidas
   // A verificação de autenticação para rotas específicas será feita nas próprias rotas
-  
+
   // Se estiver logado, verificar onboarding
   if (isSignedIn) {
     // Mostrar loading enquanto verifica onboarding
@@ -125,6 +125,12 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="aula/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="curso-premium-info"
         options={{
           href: null, // Remove from tab bar
         }}
