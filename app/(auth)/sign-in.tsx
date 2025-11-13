@@ -82,11 +82,29 @@ export default function SignInScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
+        {/* Botão Voltar */}
+        <View className="px-6 pt-2 pb-2">
+          <TouchableOpacity
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                // Se não houver histórico, redirecionar para a página de listagem de cursos
+                router.replace("/");
+              }
+            }}
+            className="w-10 h-10 items-center justify-center"
+          >
+            <Ionicons name="arrow-back" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
           keyboardShouldPersistTaps="handled"
         >
           <View className="flex-1 justify-center px-6">
+
             {/* Logo */}
             <View className="mb-6 items-center">
               <Logo size={100} />
