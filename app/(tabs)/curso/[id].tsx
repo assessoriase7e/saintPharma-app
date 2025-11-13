@@ -159,6 +159,7 @@ export default function CourseLessons() {
   const [progressData, setProgressData] = useState<CourseProgressResponse | null>(null);
   const [generatingCertificate, setGeneratingCertificate] = useState(false);
   const [weeklyPoints, setWeeklyPoints] = useState<number>(0);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   const fetchCourseData = useCallback(async () => {
     try {
@@ -418,7 +419,32 @@ export default function CourseLessons() {
           </Text>
         </View>
 
-        <Text className="text-text-secondary mb-4">{course.description}</Text>
+        {/* Descrição com Collapse */}
+        <View className="mb-4">
+          <Text className="text-text-secondary">
+            {isDescriptionExpanded
+              ? course.description
+              : course.description?.length > 150
+              ? `${course.description.substring(0, 150)}...`
+              : course.description}
+          </Text>
+          {course.description && course.description.length > 150 && (
+            <Pressable
+              onPress={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+              className="mt-2 flex-row items-center"
+            >
+              <Text className="text-primary text-sm font-medium">
+                {isDescriptionExpanded ? "Ver menos" : "Ver mais"}
+              </Text>
+              <Ionicons
+                name={isDescriptionExpanded ? "chevron-up" : "chevron-down"}
+                size={16}
+                color="#3b82f6"
+                style={{ marginLeft: 4 }}
+              />
+            </Pressable>
+          )}
+        </View>
 
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
