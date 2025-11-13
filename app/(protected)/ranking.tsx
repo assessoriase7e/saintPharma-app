@@ -184,10 +184,10 @@ export default function Ranking() {
               Top 3
             </Text>
             <View className="grid grid-cols-3 gap-1">
-              {ranking.slice(0, 3).map((usuario) => {
+              {ranking.slice(0, 3).map((usuario, index) => {
                 return (
                   <TopUserCard
-                    key={usuario.id}
+                    key={usuario.id || usuario.clerkId || `top-${index}`}
                     position={usuario.position}
                     name={usuario.name || "Usuário"}
                     points={usuario.points || 0}
@@ -215,10 +215,10 @@ export default function Ranking() {
           </View>
 
           {ranking.length > 0 ? (
-            ranking.map((usuario) => {
+            ranking.map((usuario, index) => {
               return (
                 <RankingUserCard
-                  key={usuario.id}
+                  key={usuario.id || usuario.clerkId || `ranking-${index}`}
                   position={usuario.position}
                   name={usuario.name || "Usuário"}
                   points={usuario.points || 0}

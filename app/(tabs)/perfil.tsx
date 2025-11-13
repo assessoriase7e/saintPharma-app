@@ -23,7 +23,7 @@ export default function Perfil() {
 
   // Se não estiver logado, redirecionar para login
   if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
+    return <Redirect href="/sign-in" />;
   }
 
   const [userInfo, setUserInfo] = useState<UserInfoResponse | null>(null);

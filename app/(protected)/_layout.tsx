@@ -33,7 +33,7 @@ export default function ProtectedLayout() {
   // Se não estiver logado, redirecionar para login
   // (camada de segurança adicional - index.tsx já deveria ter redirecionado)
   if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
+    return <Redirect href="/sign-in" />;
   }
 
   // Mostrar loading enquanto verifica onboarding

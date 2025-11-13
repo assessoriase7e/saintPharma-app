@@ -1,9 +1,9 @@
+import { userService } from "@/services/userService";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Text, View } from "react-native";
-import { userService } from "@/services/userService";
 
 // Completa qualquer sessão de autenticação pendente
 // Apenas em plataformas nativas (iOS/Android), não na web
@@ -28,7 +28,9 @@ export default function SSOCallbackScreen() {
         // e que o objeto user está disponível
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
-        console.log("✅ [SSOCallback] Callback processado, verificando autenticação...");
+        console.log(
+          "✅ [SSOCallback] Callback processado, verificando autenticação..."
+        );
 
         if (isSignedIn && user) {
           console.log(
@@ -44,9 +46,7 @@ export default function SSOCallbackScreen() {
               user.lastName || undefined,
               user.imageUrl || undefined
             );
-            console.log(
-              "✅ [SSOCallback] Usuário garantido no banco de dados"
-            );
+            console.log("✅ [SSOCallback] Usuário garantido no banco de dados");
           } catch (error) {
             console.error(
               "❌ [SSOCallback] Erro ao criar usuário no banco:",
@@ -62,7 +62,7 @@ export default function SSOCallbackScreen() {
           console.log(
             "⚠️ [SSOCallback] Usuário não autenticado, redirecionando para login"
           );
-          router.replace("/(auth)/sign-in");
+          router.replace("/sign-in" as any);
         }
       } catch (err: any) {
         console.error("❌ [SSOCallback] Erro ao processar callback:", err);
@@ -70,7 +70,7 @@ export default function SSOCallbackScreen() {
 
         // Redirecionar para login em caso de erro após um breve delay
         setTimeout(() => {
-          router.replace("/(auth)/sign-in");
+          router.replace("/sign-in" as any);
         }, 2000);
       } finally {
         setIsProcessing(false);

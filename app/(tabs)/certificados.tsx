@@ -29,7 +29,7 @@ export default function Certificados() {
 
   // Se não estiver logado, redirecionar para login
   if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
+    return <Redirect href="/sign-in" />;
   }
 
   const [certificates, setCertificates] = useState<CertificatesResponse | null>(
@@ -188,7 +188,7 @@ export default function Certificados() {
                 <Pressable
                   onPress={() => {
                     router.push(
-                      `/(protected)/certificado/${certificado.id}` as any
+                      `/certificado/${certificado.id}` as any
                     );
                   }}
                   className="mt-3 pt-3 border-t border-border"

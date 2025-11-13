@@ -1,11 +1,20 @@
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, Text, View } from "react-native";
+import { useOnboardingCheck } from "@/hooks/useOnboardingCheck";
 import { useTheme } from "@/stores";
 
+/**
+ * Layout para rotas com tabs.
+ * 
+ * Verifica autenticação e onboarding antes de permitir acesso.
+ * Serve como camada de segurança adicional caso alguém acesse diretamente
+ * uma rota protegida (ex: deep link).
+ */
 export default function TabsLayout() {
-  const { isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { isLoading, needsOnboarding, error } = useOnboardingCheck();
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -19,6 +28,37 @@ export default function TabsLayout() {
         </Text>
       </View>
     );
+  }
+
+  // Permitir acesso público à listagem de cursos (index)
+  // Mas exigir autenticação para outras rotas protegidas
+  // A verificação de autenticação para rotas específicas será feita nas próprias rotas
+  
+  // Se estiver logado, verificar onboarding
+  if (isSignedIn) {
+    // Mostrar loading enquanto verifica onboarding
+    if (isLoading) {
+      return (
+        <View className="flex-1 justify-center items-center bg-background">
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text className="text-text-secondary mt-2">
+            Verificando perfil...
+          </Text>
+        </View>
+      );
+    }
+
+    // Se precisar de onboarding, redirecionar
+    if (needsOnboarding) {
+      return <Redirect href="/onboarding" />;
+    }
+
+    // Se houver erro, ainda assim permitir acesso (mas logar o erro)
+    // Isso permite que o usuário continue usando o app mesmo se houver problema na verificação
+    if (error) {
+      console.error("⚠️ [TabsLayout] Erro ao verificar onboarding:", error);
+      // Continuar renderizando, mas o erro será tratado pela página
+    }
   }
 
   return (
@@ -84,9 +124,39 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="curso-premium-info"
+        name="aula/[id]"
         options={{
-          href: null, // Oculta da tab bar
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="curso/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="prova/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="resultado/[quizId]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="certificado/[id]"
+        options={{
+          href: null, // Remove from tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="vidas-bloqueadas"
+        options={{
+          href: null, // Remove from tab bar
         }}
       />
     </Tabs>

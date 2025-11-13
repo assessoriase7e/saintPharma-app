@@ -17,7 +17,7 @@ import { httpClient } from "@/services/httpClient";
 import { UserCourse, UserInfoResponse } from "@/types/api";
 import "@/utils/suppressWarnings";
 import "../global.css";
-import { LivesBlockedModal } from "../(protected)/vidas-bloqueadas";
+import { LivesBlockedModal } from "./vidas-bloqueadas";
 
 // Estatísticas padrão quando não há dados da API
 const defaultStats = [
@@ -169,7 +169,7 @@ export default function Cursos() {
   };
 
   const handleSignIn = () => {
-    router.push("/(auth)/sign-in" as any);
+    router.push("/sign-in" as any);
   };
 
   // Função para verificar se o usuário pode acessar curso premium
@@ -212,7 +212,7 @@ export default function Cursos() {
       }
     }
 
-    router.push(`/(protected)/curso/${course.course._id}` as any);
+    router.push(`/curso/${course.course._id}` as any);
   };
 
   const handleStartCourse = (courseId: string | number) => {
@@ -222,7 +222,7 @@ export default function Cursos() {
     }
 
     if (userInfo && userInfo.lives && userInfo.lives > 0) {
-      router.push(`/(protected)/aula/1` as any);
+      router.push(`/aula/1` as any);
     } else {
       setShowBlockedModal(true);
     }
