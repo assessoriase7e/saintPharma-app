@@ -148,7 +148,10 @@ export default function Certificados() {
                       <Text className="text-lg font-semibold text-text-primary mb-1">
                         {certificado.courseTitle}
                       </Text>
-                      <Text className="text-sm text-text-secondary">
+                      <Text
+                        className="text-sm text-text-secondary"
+                        numberOfLines={3}
+                      >
                         {certificado.description}
                       </Text>
                     </View>
