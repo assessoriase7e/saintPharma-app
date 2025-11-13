@@ -77,3 +77,4 @@ utils/env.ts          # Helper para acessar as variáveis
 services/*.ts         # Usa getApiBaseUrl(), getApiToken(), etc.
 ```
 
+
