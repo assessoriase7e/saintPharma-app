@@ -26,6 +26,15 @@ export default function OpcoesScreen() {
     return <Redirect href="/sign-in" />;
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      // O redirect será feito automaticamente pelo TabsLayout quando isSignedIn mudar
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
@@ -58,7 +67,7 @@ export default function OpcoesScreen() {
 
           {/* Sign Out */}
           <TouchableOpacity
-            onPress={async () => await signOut()}
+            onPress={handleSignOut}
             className="px-6 py-4 active:opacity-70"
           >
             <View className="flex-row items-center">
