@@ -6,6 +6,9 @@ import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { Alert, Platform } from "react-native";
 
+// ⚠️ IMPORTANTE: Configurar para usar navegador externo ao invés de WebView
+// O Google OAuth não permite WebViews embutidas, causando tela branca em produção
+// O Clerk gerencia isso internamente, mas garantimos que o redirect URI use o esquema nativo
 // Pré-aquece o navegador para reduzir o tempo de carregamento da autenticação
 // Apenas em plataformas nativas (iOS/Android), não na web
 if (Platform.OS !== "web") {
@@ -67,9 +70,13 @@ export function useSSOAuth() {
     try {
       console.log(`🔄 [useSSOAuth] Iniciando SSO com estratégia: ${strategy}`);
 
+      // ⚠️ IMPORTANTE: Usar apenas o esquema nativo (sem proxy) para forçar navegador externo
+      // O proxy usa WebView que é bloqueado pelo Google OAuth em produção
       const redirectUrl = AuthSession.makeRedirectUri({
         scheme: "saintpharma-app", // Esquema personalizado do app
         path: "sso-callback", // Rota de callback
+        // Não usar useProxy - deixar undefined para usar comportamento padrão do Expo
+        // que prefere navegador externo quando o scheme está configurado
       });
 
       console.log("🔗 [useSSOAuth] URL de redirecionamento:", redirectUrl);
