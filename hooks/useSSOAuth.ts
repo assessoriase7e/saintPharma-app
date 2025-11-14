@@ -1,10 +1,10 @@
+import { userService } from "@/services/userService";
 import { useSSO, useUser } from "@clerk/clerk-expo";
 import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { Alert, Platform } from "react-native";
-import { userService } from "@/services/userService";
 
 // Pré-aquece o navegador para reduzir o tempo de carregamento da autenticação
 // Apenas em plataformas nativas (iOS/Android), não na web
