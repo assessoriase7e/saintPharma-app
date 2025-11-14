@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Text, View } from "react-native";
+import { useUserVerification } from "@/hooks/useUserVerification";
 
 // Completa qualquer sessão de autenticação pendente
 // Apenas em plataformas nativas (iOS/Android), não na web
@@ -17,6 +18,7 @@ export default function SSOCallbackScreen() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { startVerification } = useUserVerification();
 
   useEffect(() => {
     const processCallback = async () => {
@@ -45,8 +47,19 @@ export default function SSOCallbackScreen() {
               "❌ [SSOCallback] Erro ao criar usuário no banco:",
               error
             );
-            // Não falha o fluxo se não conseguir criar no banco
+            // Se não conseguiu criar, o webhook pode criar depois
+            console.log(
+              "🔄 [SSOCallback] Aguardando webhook criar usuário no banco"
+            );
           }
+
+          // Sempre iniciar verificação após SSO
+          // O webhook pode estar processando assincronamente
+          // Aguardamos 10 segundos para garantir que o usuário foi criado no banco
+          console.log(
+            "🔄 [SSOCallback] Iniciando verificação - aguardando webhook processar"
+          );
+          startVerification();
 
           // Redirecionar para onboarding - o sistema verifica se precisa completar perfil
           router.replace("/onboarding");
@@ -73,7 +86,7 @@ export default function SSOCallbackScreen() {
     if (isLoaded) {
       processCallback();
     }
-  }, [isLoaded, isSignedIn, user, router]);
+  }, [isLoaded, isSignedIn, user, router, startVerification]);
 
   // Mostrar loading enquanto processa
   if (isProcessing || !isLoaded) {

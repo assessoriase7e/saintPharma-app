@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSSOAuth } from "@/hooks/useSSOAuth";
+import { useUserVerification } from "@/hooks/useUserVerification";
 import { Logo } from "@/components/Logo";
 
 // Função para traduzir mensagens de erro do Clerk
@@ -45,6 +46,7 @@ function translateClerkError(error: any): string {
 export default function SignUpScreen() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const { handleGoogleSSO, isLoading: ssoLoading } = useSSOAuth();
+  const { startVerification } = useUserVerification();
   const router = useRouter();
 
   const [emailAddress, setEmailAddress] = useState("");
@@ -84,6 +86,12 @@ export default function SignUpScreen() {
 
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
+        
+        // Iniciar verificação do usuário no banco de dados
+        // Aguarda 10 segundos e verifica se o webhook criou o usuário
+        // Se não encontrar, faz logout e redireciona para sign-in
+        startVerification();
+        
         // Redirecionar para onboarding após criação bem-sucedida
         router.replace("/onboarding");
       } else {
