@@ -23,18 +23,11 @@ export default function SSOCallbackScreen() {
       try {
         console.log("🔄 [SSOCallback] Processando callback do SSO...");
 
-        // O callback é processado automaticamente pelo Clerk
-        // Aguardar um pouco para garantir que a sessão foi estabelecida
-        // e que o objeto user está disponível
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        console.log(
-          "✅ [SSOCallback] Callback processado, verificando autenticação..."
-        );
-
+        // O Clerk processa o callback automaticamente via WebBrowser.maybeCompleteAuthSession()
+        // Verificar se a autenticação foi bem-sucedida
         if (isSignedIn && user) {
           console.log(
-            "🚀 [SSOCallback] Usuário autenticado, garantindo existência no banco de dados"
+            "✅ [SSOCallback] Usuário autenticado, garantindo existência no banco de dados"
           );
 
           try {
@@ -55,10 +48,10 @@ export default function SSOCallbackScreen() {
             // Não falha o fluxo se não conseguir criar no banco
           }
 
-          // Redirecionar para onboarding - o index.tsx vai verificar se precisa completar
-          // e redirecionar corretamente (onboarding ou home)
+          // Redirecionar para onboarding - o sistema verifica se precisa completar perfil
           router.replace("/onboarding");
-        } else {
+        } else if (isLoaded && !isSignedIn) {
+          // Se carregou mas não está autenticado, redirecionar para login
           console.log(
             "⚠️ [SSOCallback] Usuário não autenticado, redirecionando para login"
           );

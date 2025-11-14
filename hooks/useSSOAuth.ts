@@ -90,21 +90,11 @@ export function useSSOAuth() {
         console.log("✅ [useSSOAuth] SSO bem-sucedido, estabelecendo sessão");
         await setActive!({ session: createdSessionId });
 
-        // Aguardar um pouco para o usuário estar disponível
-        setTimeout(async () => {
-          try {
-            // Garantir que o usuário existe no banco de dados
-            await ensureUserInDatabase();
-          } catch (error) {
-            console.error(
-              "❌ [useSSOAuth] Erro ao criar usuário no banco:",
-              error
-            );
-          }
-        }, 1000);
-
-        // Redirecionar para onboarding para verificar se precisa completar perfil
-        router.replace("/onboarding");
+        // O callback em sso-callback.tsx vai processar a criação do usuário no banco
+        // Não precisa fazer aqui para evitar duplicação
+        console.log(
+          "🔄 [useSSOAuth] Sessão estabelecida, aguardando processamento do callback..."
+        );
       } else {
         console.log("⚠️ [useSSOAuth] SSO requer ação adicional (ex: MFA)");
         // O usuário pode precisar completar MFA ou outras verificações

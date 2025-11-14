@@ -52,7 +52,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/images/ic_launcher/1024.png",
-    scheme: "saintpharma",
+    scheme: "saintpharma-app",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
