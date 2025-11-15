@@ -16,6 +16,7 @@ export function useOnboardingCheck(): OnboardingCheckResult {
   const isOnboardingRoute = currentRoute === "onboarding";
   const isAuthRoute = currentRoute === "sign-in" || currentRoute === "sign-up";
   const isSSOCallbackRoute = currentRoute === "sso-callback";
+  const isWaitingRegistrationRoute = currentRoute === "waiting-registration";
 
   useEffect(() => {
     // Não executar verificação se não houver userId válido
@@ -35,7 +36,7 @@ export function useOnboardingCheck(): OnboardingCheckResult {
     }
 
     // Não verificar onboarding se estiver em rotas específicas
-    if (isOnboardingRoute || isAuthRoute || isSSOCallbackRoute) {
+    if (isOnboardingRoute || isAuthRoute || isSSOCallbackRoute || isWaitingRegistrationRoute) {
       // Mas ainda verificar se estiver na rota de onboarding para mostrar se já completo
       if (isOnboardingRoute) {
         const checkOnboarding = async () => {
@@ -130,7 +131,7 @@ export function useOnboardingCheck(): OnboardingCheckResult {
     };
 
     checkOnboarding();
-  }, [isLoaded, userId, isOnboardingRoute, isAuthRoute, isSSOCallbackRoute]);
+  }, [isLoaded, userId, isOnboardingRoute, isAuthRoute, isSSOCallbackRoute, isWaitingRegistrationRoute]);
 
   return {
     isLoading,
