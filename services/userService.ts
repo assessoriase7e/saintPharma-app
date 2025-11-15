@@ -139,6 +139,39 @@ class UserService {
   }
 
   /**
+   * Verifica se um usuário existe no banco sem lançar erro para 404
+   * Retorna true se existe, false se não existe (404)
+   * Lança erro apenas para outros tipos de erro (rede, servidor, etc)
+   * 
+   * Útil para verificações periódicas onde 404 é um estado esperado
+   * (ex: aguardando webhook criar usuário no banco)
+   */
+  async checkUserExists(clerkId?: string): Promise<boolean> {
+    try {
+      await this.getUser(clerkId);
+      return true;
+    } catch (error: any) {
+      // Verificar se é erro 404 (usuário não encontrado - estado esperado)
+      const is404Error = 
+        error.response?.status === 404 ||
+        error.message?.includes("404") ||
+        error.message?.includes("não encontrado") ||
+        error.message?.includes("not found") ||
+        error.message?.includes("Conteúdo não encontrado");
+
+      if (is404Error) {
+        // 404 não é erro neste contexto, apenas indica que usuário ainda não existe
+        // Não logar como erro, apenas retornar false
+        return false;
+      }
+
+      // Para outros erros (rede, servidor, etc), relançar
+      // Estes são erros reais que devem ser tratados
+      throw error;
+    }
+  }
+
+  /**
    * Busca o perfil completo de um usuário
    */
   async getUserProfile(clerkId?: string): Promise<GetUserProfileResponse> {
