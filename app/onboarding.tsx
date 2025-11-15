@@ -42,9 +42,11 @@ export default function OnboardingPage() {
     );
   }
 
-  // Se não estiver logado, permitir acesso ao formulário (pode ser usado para cadastro)
+  // Se não estiver logado, redirecionar para login
+  // Onboarding só faz sentido para usuários já autenticados no Clerk
+  // que precisam completar o perfil no banco de dados
   if (!userId) {
-    return <OnboardingForm />;
+    return <Redirect href="/sign-in" />;
   }
 
   // Aguardar verificação de onboarding

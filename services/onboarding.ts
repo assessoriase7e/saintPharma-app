@@ -170,9 +170,30 @@ class OnboardingService {
     } catch (error: any) {
       console.error("❌ [OnboardingService] Erro ao verificar status:", error);
 
-      // Em caso de erro, assumir que precisa de onboarding
+      // Verificar se é erro 404 (usuário não encontrado no banco)
+      const is404Error = 
+        error.response?.status === 404 ||
+        error.message?.includes("404") ||
+        error.message?.includes("não encontrado") ||
+        error.message?.includes("not found");
+
+      if (is404Error) {
+        console.log("🔍 [OnboardingService] Usuário não encontrado no banco de dados (404)");
+        // Se o usuário não existe no banco, precisa completar onboarding
+        // Mas só se existir no Clerk (userId foi passado)
+        return {
+          needsOnboarding: true,
+          userExists: false,
+          storeCustomerExists: false,
+          hasAddress: false,
+        };
+      }
+
+      // Para outros erros (rede, servidor, etc), não assumir que precisa de onboarding
+      // Isso evita redirecionar usuários quando há problemas de conexão
+      console.warn("⚠️ [OnboardingService] Erro inesperado ao verificar status, não assumindo onboarding necessário");
       return {
-        needsOnboarding: true,
+        needsOnboarding: false, // Não redirecionar em caso de erro inesperado
         userExists: false,
         storeCustomerExists: false,
         hasAddress: false,

@@ -18,7 +18,21 @@ export function useOnboardingCheck(): OnboardingCheckResult {
   const isSSOCallbackRoute = currentRoute === "sso-callback";
 
   useEffect(() => {
-    if (!isLoaded || !userId) return;
+    // Não executar verificação se não houver userId válido
+    // Isso evita redirecionar usuários não autenticados
+    if (!isLoaded) {
+      setIsLoading(false);
+      setNeedsOnboarding(false);
+      return;
+    }
+
+    if (!userId) {
+      // Se não houver userId, não precisa de onboarding (usuário não autenticado)
+      setIsLoading(false);
+      setNeedsOnboarding(false);
+      setError(undefined);
+      return;
+    }
 
     // Não verificar onboarding se estiver em rotas específicas
     if (isOnboardingRoute || isAuthRoute || isSSOCallbackRoute) {
@@ -46,8 +60,11 @@ export function useOnboardingCheck(): OnboardingCheckResult {
               "❌ [useOnboardingCheck] Erro ao verificar onboarding na rota:",
               err
             );
+            // O serviço já trata erros e retorna um status apropriado
+            // Se chegou aqui, é um erro inesperado (exceção não tratada)
+            // Não assumir que precisa de onboarding para evitar redirecionamentos indevidos
             setError(err.message || "Erro ao verificar status do onboarding");
-            setNeedsOnboarding(true);
+            setNeedsOnboarding(false); // Não redirecionar em caso de erro inesperado
           } finally {
             setIsLoading(false);
           }
@@ -102,9 +119,11 @@ export function useOnboardingCheck(): OnboardingCheckResult {
           err
         );
 
-        // Em caso de erro, assumir que precisa de onboarding
+        // O serviço já trata erros e retorna um status apropriado
+        // Se chegou aqui, é um erro inesperado (ex: exceção não tratada)
+        // Não assumir que precisa de onboarding para evitar redirecionamentos indevidos
         setError(err.message || "Erro ao verificar status do onboarding");
-        setNeedsOnboarding(true);
+        setNeedsOnboarding(false); // Não redirecionar em caso de erro inesperado
       } finally {
         setIsLoading(false);
       }
