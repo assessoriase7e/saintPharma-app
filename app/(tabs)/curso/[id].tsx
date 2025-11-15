@@ -583,7 +583,7 @@ export default function CourseLessons() {
                 Ver Certificado
               </Text>
             </Pressable>
-          ) : isCourseCompleted && allLecturesCompleted && allExamsCompleted ? (
+          ) : isCourseCompleted && !hasCertificate ? (
             // Botão Gerar Certificado (curso concluído mas certificado não existe)
             <Pressable
               className={`rounded-lg py-4 px-6 flex-row items-center justify-center ${
