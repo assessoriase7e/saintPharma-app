@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Platform, Text, View } from "react-native";
-import { useUserVerification } from "@/hooks/useUserVerification";
 
 // Completa qualquer sessão de autenticação pendente
 // Apenas em plataformas nativas (iOS/Android), não na web
@@ -18,7 +17,6 @@ export default function SSOCallbackScreen() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { startVerification } = useUserVerification();
 
   useEffect(() => {
     const processCallback = async () => {
@@ -53,16 +51,13 @@ export default function SSOCallbackScreen() {
             );
           }
 
-          // Sempre iniciar verificação após SSO
-          // O webhook pode estar processando assincronamente
-          // Aguardamos 10 segundos para garantir que o usuário foi criado no banco
+          // Redirecionar para tela de espera de cadastro
+          // A tela verificará se o webhook criou o usuário no banco
+          // e então redirecionará para onboarding se necessário
           console.log(
-            "🔄 [SSOCallback] Iniciando verificação - aguardando webhook processar"
+            "🔄 [SSOCallback] Redirecionando para verificação de cadastro"
           );
-          startVerification();
-
-          // Redirecionar para onboarding - o sistema verifica se precisa completar perfil
-          router.replace("/onboarding");
+          router.replace("/waiting-registration");
         } else if (isLoaded && !isSignedIn) {
           // Se carregou mas não está autenticado, redirecionar para login
           console.log(
@@ -86,7 +81,7 @@ export default function SSOCallbackScreen() {
     if (isLoaded) {
       processCallback();
     }
-  }, [isLoaded, isSignedIn, user, router, startVerification]);
+  }, [isLoaded, isSignedIn, user, router]);
 
   // Mostrar loading enquanto processa
   if (isProcessing || !isLoaded) {
