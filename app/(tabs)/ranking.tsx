@@ -1,11 +1,11 @@
 import { useAuth } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import RankingUserCard from "@/components/RankingUserCard";
 import StatCard from "@/components/StatCard";
 import TopUserCard from "@/components/TopUserCard";
-import UserPositionCard from "@/components/UserPositionCard";
 import { rankingService } from "@/services";
 import { RankingResponse, RankingUser, UserPointsResponse } from "@/types/api";
 
@@ -26,6 +26,8 @@ export default function Ranking() {
   const [userPoints, setUserPoints] = useState<UserPointsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageLoading, setPageLoading] = useState(false);
 
   // Função para determinar badge baseado nos pontos
   const getBadge = (points: number): string => {
@@ -42,60 +44,93 @@ export default function Ranking() {
     return avatars[index];
   };
 
-  useEffect(() => {
-    const fetchRankingData = async () => {
-      try {
+  const fetchRankingData = async (page: number = 1) => {
+    try {
+      if (page === 1) {
         setLoading(true);
-        setError(null);
+      } else {
+        setPageLoading(true);
+      }
+      setError(null);
 
-        // Buscar ranking geral (público)
-        const rankingResponse = await rankingService.getRanking();
-        setRankingData(rankingResponse);
+      // Buscar ranking geral (público) com paginação
+      const rankingResponse = await rankingService.getRanking(page, 20);
+      setRankingData(rankingResponse);
+      setCurrentPage(page);
 
-        // Buscar pontos do usuário apenas se estiver logado
-        if (isSignedIn) {
-          try {
-            const userPointsResponse = await rankingService.getUserPoints();
-            setUserPoints(userPointsResponse);
-          } catch (err) {
-            // Se falhar ao buscar pontos do usuário, continuar sem mostrar posição
-            console.warn("Não foi possível carregar pontos do usuário:", err);
-            setUserPoints(null);
-          }
-        } else {
+      // Buscar pontos do usuário apenas se estiver logado (apenas na primeira página)
+      if (isSignedIn && page === 1) {
+        try {
+          const userPointsResponse = await rankingService.getUserPoints();
+          setUserPoints(userPointsResponse);
+        } catch (err) {
+          // Se falhar ao buscar pontos do usuário, continuar sem mostrar posição
+          console.warn("Não foi possível carregar pontos do usuário:", err);
           setUserPoints(null);
         }
-      } catch (err) {
-        console.error("Erro ao carregar dados do ranking:", err);
-        setError("Erro ao carregar dados do ranking");
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error("Erro ao carregar dados do ranking:", err);
+      setError("Erro ao carregar dados do ranking");
+    } finally {
+      setLoading(false);
+      setPageLoading(false);
+    }
+  };
 
-    fetchRankingData();
+  useEffect(() => {
+    fetchRankingData(1);
   }, [isSignedIn]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && rankingData?.pagination && newPage <= rankingData.pagination.pages) {
+      fetchRankingData(newPage);
+      // Scroll para o topo quando mudar de página
+      // (isso será feito automaticamente pelo ScrollView quando os dados mudarem)
+    }
+  };
 
   const ranking = rankingData?.ranking || [];
 
   // Calcular posição do usuário no ranking
   const userPosition = userPoints && ranking.length > 0
     ? (() => {
+        console.log("🔍 [Ranking] Calculando posição do usuário:");
+        console.log("  - User ID:", userPoints.userId);
+        console.log("  - Pontos semanais do usuário:", userPoints.weekPoints);
+        console.log("  - Total de usuários no ranking:", ranking.length);
+        
         // Primeiro, tentar encontrar pelo userId e usar a position que já vem da API
         const foundUser = ranking.find(
-          (user) => user.id === userPoints.userId || user.clerkId === userPoints.userId
+          (user) => {
+            const match = user.id === userPoints.userId || user.clerkId === userPoints.userId;
+            console.log(`  - Comparando: ${user.id} / ${user.clerkId} com ${userPoints.userId} = ${match}`);
+            return match;
+          }
         );
+        
         if (foundUser) {
+          console.log(`  ✅ Usuário encontrado no ranking na posição: ${foundUser.position}`);
           return foundUser.position;
         }
+        
+        console.log("  ⚠️ Usuário não encontrado no ranking, calculando baseado nos pontos");
+        
         // Se não encontrar, calcular posição baseado nos pontos semanais
-        // Encontrar quantos usuários têm pontos maiores ou iguais
+        // Encontrar quantos usuários têm pontos MAIORES (não incluir o próprio usuário)
         const usersWithMorePoints = ranking.filter(
-          (user) => user.points >= userPoints.weekPoints
+          (user) => user.points > userPoints.weekPoints
         ).length;
-        return usersWithMorePoints + 1;
+        
+        const calculatedPosition = usersWithMorePoints + 1;
+        console.log(`  - Usuários com mais pontos: ${usersWithMorePoints}`);
+        console.log(`  - Posição calculada: ${calculatedPosition}`);
+        
+        return calculatedPosition;
       })()
     : undefined;
+  
+  console.log("📊 [Ranking] Posição final do usuário:", userPosition);
 
   if (loading) {
     return (
@@ -128,15 +163,6 @@ export default function Ranking() {
             Veja os melhores desempenhos da plataforma
           </Text>
         </View>
-
-        {/* Sua Posição */}
-        {userPoints && (
-          <UserPositionCard
-            position={userPosition || ranking.length + 1}
-            points={userPoints.weekPoints}
-            badge={getBadge(userPoints.totalPoints)}
-          />
-        )}
 
         {/* Informações da Semana */}
         {rankingData?.week && (
@@ -240,20 +266,86 @@ export default function Ranking() {
             )}
           </View>
 
-          {ranking.length > 0 ? (
-            ranking.map((usuario, index) => {
-              return (
-                <RankingUserCard
-                  key={usuario.id || `ranking-user-${index}`}
-                  position={usuario.position}
-                  name={usuario.name || "Usuário"}
-                  points={usuario.points || 0}
-                  completedCourses={0}
-                  badge={getBadge(usuario.points || 0)}
-                  avatar={getAvatar(usuario.name || "Usuário")}
-                />
-              );
-            })
+          {pageLoading ? (
+            <View className="bg-card border border-border rounded-lg p-6 items-center">
+              <ActivityIndicator size="small" color="#3b82f6" />
+              <Text className="text-text-secondary mt-2">Carregando...</Text>
+            </View>
+          ) : ranking.length > 0 ? (
+            <>
+              {ranking.map((usuario, index) => {
+                return (
+                  <RankingUserCard
+                    key={usuario.id || `ranking-user-${index}`}
+                    position={usuario.position}
+                    name={usuario.name || "Usuário"}
+                    points={usuario.points || 0}
+                    completedCourses={0}
+                    badge={getBadge(usuario.points || 0)}
+                    avatar={getAvatar(usuario.name || "Usuário")}
+                  />
+                );
+              })}
+
+              {/* Controles de Paginação */}
+              {rankingData?.pagination && rankingData.pagination.pages > 1 && (
+                <View className="flex-row justify-between items-center mt-4 pt-4 border-t border-border">
+                  <TouchableOpacity
+                    onPress={() => handlePageChange(currentPage - 1)}
+                    disabled={!rankingData.pagination.hasPrev || pageLoading}
+                    className={`flex-row items-center px-4 py-2 rounded-lg ${
+                      rankingData.pagination.hasPrev && !pageLoading
+                        ? "bg-primary"
+                        : "bg-gray-300 dark:bg-gray-700 opacity-50"
+                    }`}
+                  >
+                    <Ionicons
+                      name="chevron-back"
+                      size={20}
+                      color={rankingData.pagination.hasPrev && !pageLoading ? "white" : "#9ca3af"}
+                    />
+                    <Text
+                      className={`ml-2 font-semibold ${
+                        rankingData.pagination.hasPrev && !pageLoading
+                          ? "text-white"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Anterior
+                    </Text>
+                  </TouchableOpacity>
+
+                  <Text className="text-text-secondary font-medium">
+                    {currentPage} / {rankingData.pagination.pages}
+                  </Text>
+
+                  <TouchableOpacity
+                    onPress={() => handlePageChange(currentPage + 1)}
+                    disabled={!rankingData.pagination.hasNext || pageLoading}
+                    className={`flex-row items-center px-4 py-2 rounded-lg ${
+                      rankingData.pagination.hasNext && !pageLoading
+                        ? "bg-primary"
+                        : "bg-gray-300 dark:bg-gray-700 opacity-50"
+                    }`}
+                  >
+                    <Text
+                      className={`mr-2 font-semibold ${
+                        rankingData.pagination.hasNext && !pageLoading
+                          ? "text-white"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      Próxima
+                    </Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={20}
+                      color={rankingData.pagination.hasNext && !pageLoading ? "white" : "#9ca3af"}
+                    />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
           ) : (
             <View className="bg-card border border-border rounded-lg p-6 items-center">
               <Text className="text-text-secondary text-center">
