@@ -376,14 +376,7 @@ class CoursesService {
     }
   ): Promise<CourseProgressResponse> {
     try {
-      // Logs visíveis usando console.error para garantir que apareçam
-      console.error(`📊 [CoursesService.getCourseProgress] ==========================================`);
-      console.error(`📊 [CoursesService.getCourseProgress] Iniciando busca de progresso...`);
-      console.error(`📊 [CoursesService.getCourseProgress] Course ID: ${courseId}`);
-      console.error(`📊 [CoursesService.getCourseProgress] Opções:`, {
-        includeLectures: options?.includeLectures ?? false,
-        includeExams: options?.includeExams ?? false,
-      });
+      console.log(`📊 [CoursesService.getCourseProgress] ==========================================`);
       console.log(`📊 [CoursesService.getCourseProgress] Iniciando busca de progresso...`);
       console.log(`📊 [CoursesService.getCourseProgress] Course ID: ${courseId}`);
       console.log(`📊 [CoursesService.getCourseProgress] Opções:`, {
@@ -400,8 +393,6 @@ class CoursesService {
       }
       
       const url = `/api/courses/${courseId}/progress${params.toString() ? `?${params.toString()}` : ""}`;
-      console.error(`📊 [CoursesService.getCourseProgress] URL: ${url}`);
-      console.error(`📊 [CoursesService.getCourseProgress] Fazendo requisição GET...`);
       console.log(`📊 [CoursesService.getCourseProgress] URL: ${url}`);
       console.log(`📊 [CoursesService.getCourseProgress] Fazendo requisição GET...`);
       
@@ -409,7 +400,6 @@ class CoursesService {
       const response = await httpClient.get<any>(url);
       const duration = Date.now() - startTime;
       
-      console.error(`✅ [CoursesService.getCourseProgress] Requisição concluída em ${duration}ms`);
       console.log(`✅ [CoursesService.getCourseProgress] Requisição concluída em ${duration}ms`);
       
       // Extrair dados da resposta - pode vir em diferentes estruturas
@@ -445,16 +435,6 @@ class CoursesService {
       }
       
       if (progressData) {
-        console.error(`✅ [CoursesService.getCourseProgress] Progresso válido retornado para curso ${courseId}`);
-        console.error(`✅ [CoursesService.getCourseProgress] Resposta processada:`, {
-          hasCourse: !!progressData.course,
-          hasProgress: !!progressData.progress,
-          progressPercentage: progressData.progress.percentage,
-          completedLectures: progressData.progress.completedLectures,
-          totalLectures: progressData.progress.totalLectures,
-          hasLectures: !!progressData.lectures,
-          lecturesCount: progressData.lectures?.length ?? 0,
-        });
         console.log(`✅ [CoursesService.getCourseProgress] Progresso válido retornado para curso ${courseId}`);
         console.log(`✅ [CoursesService.getCourseProgress] Resposta processada:`, {
           hasCourse: !!progressData.course,
@@ -465,7 +445,7 @@ class CoursesService {
           hasLectures: !!progressData.lectures,
           lecturesCount: progressData.lectures?.length ?? 0,
         });
-        console.error(`📊 [CoursesService.getCourseProgress] ==========================================`);
+        console.log(`📊 [CoursesService.getCourseProgress] ==========================================`);
         return progressData;
       } else {
         console.warn(
@@ -479,10 +459,6 @@ class CoursesService {
         `❌ [CoursesService.getCourseProgress] Erro ao buscar progresso do curso ${courseId}:`,
         error
       );
-      if (error instanceof Error) {
-        console.error(`❌ [CoursesService.getCourseProgress] Mensagem: ${error.message}`);
-        console.error(`❌ [CoursesService.getCourseProgress] Stack: ${error.stack}`);
-      }
       throw error;
     }
   }
@@ -498,15 +474,6 @@ class CoursesService {
     }
   ): Promise<MultipleCourseProgressResponse> {
     try {
-      // Logs visíveis usando console.error para garantir que apareçam
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Iniciando busca de progresso de múltiplos cursos`);
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Total de cursos: ${courseIds.length}`);
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] IDs dos cursos:`, courseIds);
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Opções:`, {
-        includeLectures: options?.includeLectures ?? false,
-        includeExams: options?.includeExams ?? false,
-      });
       console.log(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
       console.log(`📊 [CoursesService.getMultipleCoursesProgress] Iniciando busca de progresso de múltiplos cursos`);
       console.log(`📊 [CoursesService.getMultipleCoursesProgress] Total de cursos: ${courseIds.length}`);
@@ -536,8 +503,6 @@ class CoursesService {
       
       // Usar o primeiro ID no path (será ignorado se courseIds estiver presente)
       const url = `/api/courses/${courseIds[0]}/progress?${params.toString()}`;
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] URL: ${url}`);
-      console.error(`📊 [CoursesService.getMultipleCoursesProgress] Fazendo requisição GET...`);
       console.log(`📊 [CoursesService.getMultipleCoursesProgress] URL: ${url}`);
       console.log(`📊 [CoursesService.getMultipleCoursesProgress] Fazendo requisição GET...`);
       
@@ -545,12 +510,6 @@ class CoursesService {
       const response = await httpClient.get<MultipleCourseProgressResponse>(url);
       const duration = Date.now() - startTime;
       
-      console.error(`✅ [CoursesService.getMultipleCoursesProgress] Requisição concluída em ${duration}ms`);
-      console.error(`✅ [CoursesService.getMultipleCoursesProgress] Resposta recebida:`, {
-        success: response?.success,
-        total: response?.total,
-        coursesCount: response?.courses?.length ?? 0,
-      });
       console.log(`✅ [CoursesService.getMultipleCoursesProgress] Requisição concluída em ${duration}ms`);
       console.log(`✅ [CoursesService.getMultipleCoursesProgress] Resposta recebida:`, {
         success: response?.success,
@@ -559,15 +518,8 @@ class CoursesService {
       });
       
       if (response?.courses && response.courses.length > 0) {
-        console.error(`📊 [CoursesService.getMultipleCoursesProgress] Detalhes dos cursos retornados:`);
         console.log(`📊 [CoursesService.getMultipleCoursesProgress] Detalhes dos cursos retornados:`);
         response.courses.forEach((courseData, index) => {
-          console.error(`  [${index + 1}] Curso ID: ${courseData.course.id}`);
-          console.error(`      Nome: ${courseData.course.name}`);
-          console.error(`      Progresso: ${courseData.progress.percentage}%`);
-          console.error(`      Aulas: ${courseData.progress.completedLectures}/${courseData.progress.totalLectures}`);
-          console.error(`      Status: ${courseData.progress.status}`);
-          console.error(`      Concluído: ${courseData.progress.isCompleted ? 'Sim' : 'Não'}`);
           console.log(`  [${index + 1}] Curso ID: ${courseData.course.id}`);
           console.log(`      Nome: ${courseData.course.name}`);
           console.log(`      Progresso: ${courseData.progress.percentage}%`);
@@ -579,8 +531,6 @@ class CoursesService {
       
       // Verificar estrutura da resposta
       if (response && response.success && Array.isArray(response.courses)) {
-        console.error(`✅ [CoursesService.getMultipleCoursesProgress] Progresso válido retornado para ${response.courses.length} cursos`);
-        console.error(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
         console.log(`✅ [CoursesService.getMultipleCoursesProgress] Progresso válido retornado para ${response.courses.length} cursos`);
         console.log(`📊 [CoursesService.getMultipleCoursesProgress] ==========================================`);
         return response;
@@ -592,16 +542,10 @@ class CoursesService {
         throw new Error("Resposta inválida do servidor");
       }
     } catch (error) {
-      console.error(`❌ [CoursesService.getMultipleCoursesProgress] ==========================================`);
       console.error(
         `❌ [CoursesService.getMultipleCoursesProgress] Erro ao buscar progresso de múltiplos cursos:`,
         error
       );
-      if (error instanceof Error) {
-        console.error(`❌ [CoursesService.getMultipleCoursesProgress] Mensagem: ${error.message}`);
-        console.error(`❌ [CoursesService.getMultipleCoursesProgress] Stack: ${error.stack}`);
-      }
-      console.error(`❌ [CoursesService.getMultipleCoursesProgress] ==========================================`);
       throw error;
     }
   }
