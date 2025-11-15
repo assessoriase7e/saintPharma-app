@@ -33,6 +33,15 @@
         // Suprimir este aviso específico
         return;
       }
+      
+      // Suprimir avisos do Reanimated sobre leitura de valores compartilhados durante render
+      if (
+        firstArg.includes('[Reanimated]') && 
+        (firstArg.includes('Reading from `value` during component render') ||
+         firstArg.includes('strict mode'))
+      ) {
+        return;
+      }
     }
     
     // Verificar também se há uma stack trace relacionada ao expo-router/Sitemap
@@ -48,7 +57,10 @@
     
     // Verificar em todos os argumentos
     const allArgs = args.join(' ');
-    if (allArgs.includes('shadow') && allArgs.includes('deprecated')) {
+    if (
+      (allArgs.includes('shadow') && allArgs.includes('deprecated')) ||
+      (allArgs.includes('[Reanimated]') && allArgs.includes('Reading from `value`'))
+    ) {
       return;
     }
     
