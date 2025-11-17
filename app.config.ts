@@ -51,7 +51,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: "saintPharma-app",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/ic_launcher/1024.png",
+    icon: "./assets/images/ic_launcher/play_store_512.png",
     scheme: "saintpharma-app",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -61,7 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/images/adaptive-icon.png",
+        foregroundImage: "./assets/images/ic_launcher/play_store_512.png",
         backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
