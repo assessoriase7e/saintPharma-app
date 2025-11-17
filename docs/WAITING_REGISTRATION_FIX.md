@@ -169,3 +169,5 @@ A nova tela `waiting-registration` exibe:
    - Confirmar que após 15s usuário é deslogado
    - Verificar mensagem de erro apropriada
 
+
+
