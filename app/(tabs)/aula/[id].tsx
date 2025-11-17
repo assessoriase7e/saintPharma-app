@@ -358,6 +358,8 @@ export default function LectureView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
+  const [hasQuiz, setHasQuiz] = useState<boolean>(false);
+  const [checkingQuiz, setCheckingQuiz] = useState(true);
 
   useEffect(() => {
     const fetchLecture = async () => {
@@ -379,6 +381,28 @@ export default function LectureView() {
         }
 
         setLecture(lectureData.lecture);
+
+        // Verificar se a aula tem quiz
+        try {
+          setCheckingQuiz(true);
+          const quizResponse = await lecturesService.getLectureQuestions(lectureId);
+          console.log("🔍 [Lecture] Quiz Response:", quizResponse);
+          
+          // Se conseguiu buscar questões, a aula tem quiz
+          if (quizResponse && quizResponse.data && quizResponse.data.questions && quizResponse.data.questions.length > 0) {
+            setHasQuiz(true);
+            console.log("✅ [Lecture] Aula possui quiz com", quizResponse.data.questions.length, "questões");
+          } else {
+            setHasQuiz(false);
+            console.log("ℹ️ [Lecture] Aula não possui quiz");
+          }
+        } catch (quizError: any) {
+          // Se der erro 404, significa que não tem quiz
+          console.log("ℹ️ [Lecture] Erro ao buscar quiz (provavelmente não existe):", quizError?.message || quizError);
+          setHasQuiz(false);
+        } finally {
+          setCheckingQuiz(false);
+        }
       } catch (err) {
         console.error("Erro ao buscar dados da aula:", err);
         setError("Erro ao carregar a aula. Verifique sua conexão.");
@@ -489,27 +513,53 @@ export default function LectureView() {
 
         {/* Action Buttons */}
         <View className="mt-6 flex-col gap-3">
-          {!lecture.completed && (
-            <Pressable
-              onPress={handleMarkComplete}
-              disabled={completing}
-              className={`px-6 py-4 rounded-lg flex-row items-center justify-center ${
-                completing ? "bg-secondary/50" : "bg-secondary"
-              }`}
-            >
-              {completing ? (
-                <ActivityIndicator size="small" color="white" />
+          {!lecture.completed && !checkingQuiz && (
+            <>
+              {hasQuiz ? (
+                // Se a aula tem quiz, mostrar botão para fazer o quiz
+                <Pressable
+                  onPress={() => {
+                    if (!courseId) {
+                      Alert.alert("Erro", "Informações do curso não disponíveis.");
+                      return;
+                    }
+                    router.push(`/quiz-aula/${lectureId}?courseId=${courseId}` as any);
+                  }}
+                  className="px-6 py-4 rounded-lg flex-row items-center justify-center bg-primary"
+                >
+                  <Ionicons
+                    name="help-circle-outline"
+                    size={20}
+                    color="white"
+                  />
+                  <Text className="text-white font-semibold ml-2">
+                    Fazer Quiz
+                  </Text>
+                </Pressable>
               ) : (
-                <Ionicons
-                  name="checkmark-circle-outline"
-                  size={20}
-                  color="white"
-                />
+                // Se não tem quiz, mostrar botão para marcar como concluída
+                <Pressable
+                  onPress={handleMarkComplete}
+                  disabled={completing}
+                  className={`px-6 py-4 rounded-lg flex-row items-center justify-center ${
+                    completing ? "bg-secondary/50" : "bg-secondary"
+                  }`}
+                >
+                  {completing ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={20}
+                      color="white"
+                    />
+                  )}
+                  <Text className="text-white font-semibold ml-2">
+                    {completing ? "Completando..." : "Marcar como Concluída"}
+                  </Text>
+                </Pressable>
               )}
-              <Text className="text-white font-semibold ml-2">
-                {completing ? "Completando..." : "Marcar como Concluída"}
-              </Text>
-            </Pressable>
+            </>
           )}
         </View>
 

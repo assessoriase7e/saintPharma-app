@@ -81,9 +81,16 @@ function LectureCard({ lecture, courseId, index, isCourseCompleted }: LectureCar
         <Pressable onPress={handleLecturePress}>
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-1">
-              <Text className="text-text-primary text-lg font-semibold mb-1">
-                Aula {index + 1}: {lecture.title}
-              </Text>
+              <View className="flex-row items-center mb-1">
+                <Text className="text-text-primary text-lg font-semibold">
+                  Aula {index + 1}: {lecture.title}
+                </Text>
+                {lecture.hasQuiz && (
+                  <View className="bg-primary/10 px-2 py-1 rounded-full ml-2">
+                    <Text className="text-primary text-xs font-semibold">QUIZ</Text>
+                  </View>
+                )}
+              </View>
               <Text className="text-text-secondary text-sm mb-2">
                 {lecture.description}
               </Text>
@@ -209,10 +216,11 @@ export default function CourseLessons() {
       setProgressData(progressResponse);
       
       // Se tiver progresso com lectures, usar essas lectures (elas têm o status completed)
+      let lecturesWithProgress: Lecture[] = [];
       if (progressResponse?.lectures && progressResponse.lectures.length > 0) {
         console.log("📊 [Course] Mesclando lectures com progresso...");
         // Mesclar lectures do progresso com as lectures retornadas
-        const lecturesWithProgress = (lecturesResponse.lectures || []).map((lecture) => {
+        lecturesWithProgress = (lecturesResponse.lectures || []).map((lecture) => {
           const progressLecture = progressResponse.lectures?.find(
             (pl) => pl.id === lecture._id
           );
@@ -227,11 +235,36 @@ export default function CourseLessons() {
           };
         });
         console.log(`✅ [Course] ${lecturesWithProgress.filter(l => l.completed).length} aulas marcadas como concluídas`);
-        setLectures(lecturesWithProgress);
       } else {
         console.log("⚠️ [Course] Sem progresso ou lectures, usando dados padrão");
-        setLectures(lecturesResponse.lectures || []);
+        lecturesWithProgress = lecturesResponse.lectures || [];
       }
+
+      // Verificar se cada aula tem quiz
+      console.log("🔍 [Course] Verificando quais aulas têm quiz...");
+      const lecturesWithQuizInfo = await Promise.all(
+        lecturesWithProgress.map(async (lecture) => {
+          try {
+            const quizResponse = await lecturesService.getLectureQuestions(lecture._id);
+            const hasQuiz = quizResponse?.data?.questions?.length > 0;
+            if (hasQuiz) {
+              console.log(`  📝 Aula "${lecture.title}" possui quiz`);
+            }
+            return {
+              ...lecture,
+              hasQuiz,
+            };
+          } catch (error) {
+            // Se der erro, assume que não tem quiz
+            return {
+              ...lecture,
+              hasQuiz: false,
+            };
+          }
+        })
+      );
+      
+      setLectures(lecturesWithQuizInfo);
       
       console.log("✅ [Course] Dados do curso carregados com sucesso");
       console.log("📊 [Course] ==========================================");

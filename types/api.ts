@@ -236,6 +236,7 @@ export interface Lecture {
   videoUrl?: string;
   completed: boolean;
   completedAt?: string;
+  hasQuiz?: boolean; // Indica se a aula tem quiz
   content?: Array<{
     _key?: string;
     _type: string;
