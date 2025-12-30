@@ -4,6 +4,12 @@
     "appVersionSource": "remote"
   },
   "build": {
+    "apk": {
+      "android": {
+        "buildType": "apk",
+        "autoIncrement": true
+      }
+    },
     "production": {
       "releaseChannel": "production",
       "android": {
