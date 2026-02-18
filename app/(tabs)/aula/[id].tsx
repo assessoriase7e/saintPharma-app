@@ -22,12 +22,20 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
   const [imageErrors, setImageErrors] = useState<{ [key: string]: boolean }>(
     {}
   );
+  const [imageRatios, setImageRatios] = useState<{ [key: string]: number }>(
+    {}
+  );
   const [downloading, setDownloading] = useState<{ [key: string]: boolean }>(
     {}
   );
 
   const handleImageError = (key: string) => {
     setImageErrors((prev) => ({ ...prev, [key]: true }));
+  };
+
+  const handleImageLoad = (key: string, width?: number, height?: number) => {
+    if (!width || !height) return;
+    setImageRatios((prev) => ({ ...prev, [key]: width / height }));
   };
 
   const downloadImage = async (imageUrl: string, blockKey: string) => {
@@ -262,21 +270,28 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
               }
 
               return (
-                <View key={blockKey} className="mb-4">
+                <View key={blockKey} className="mb-4 -mx-4">
                   <Pressable
                     onPress={() => downloadImage(cleanImageUrl, blockKey)}
                     disabled={downloading[blockKey]}
-                    className="rounded-lg overflow-hidden bg-card relative"
+                    className="relative w-full"
                     style={{
-                      height: 200,
                       alignSelf: "stretch",
                     }}
                   >
                     <Image
                       source={{ uri: cleanImageUrl }}
-                      className="flex-1"
-                      resizeMode="cover"
+                      className="w-full"
+                      style={{ aspectRatio: imageRatios[blockKey] || 16 / 9 }}
+                      resizeMode="contain"
                       onError={() => handleImageError(blockKey)}
+                      onLoad={(event: any) =>
+                        handleImageLoad(
+                          blockKey,
+                          event.nativeEvent.source?.width,
+                          event.nativeEvent.source?.height
+                        )
+                      }
                     />
                     {downloading[blockKey] && (
                       <View className="absolute inset-0 bg-black/50 items-center justify-center">
@@ -297,7 +312,7 @@ function LectureContentRenderer({ lecture }: { lecture: Lecture }) {
                     )}
                   </Pressable>
                   {block.caption && (
-                    <Text className="text-text-secondary text-sm mt-2 text-center mx-6">
+                    <Text className="text-text-secondary text-sm mt-2 text-center px-4">
                       {block.caption}
                     </Text>
                   )}
